@@ -20,13 +20,13 @@ from progressbar import ProgressBar
 
 def read_csv_dir(filepath):
     "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
-    datasets = {}
+    datasets = []
     csv_files = [csv_file for csv_file in listdir(filepath) if match('^.+\.csv$', csv_file)]
     for csv_file in csv_files:
         dataset = pd.read_csv(join(filepath,csv_file))
         X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
         dataset_name = sub(".csv", "", csv_file)
-        datasets[dataset_name] = (X, y)
+        datasets.append( (dataset_name, (X, y)) )
     return datasets
 
 def summarize_datasets(datasets):
@@ -100,6 +100,7 @@ class BinaryExperiment:
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         datasets = check_datasets(self.datasets)
+        self.datasets_names_ = [dataset_name for dataset_name, _ in datasets]
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
         self.classifiers_ = check_models(self.classifiers, "classifier")
         self.oversamplers_ = check_models(self.oversamplers, "oversampler")
@@ -107,11 +108,11 @@ class BinaryExperiment:
         iterations = 0
 
         # Populate results dataframe
-        results_columns = ['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score']
-        results = pd.DataFrame(columns=results_columns)
+        results_columns = ['Dataset', 'Classifier', 'Oversampler', 'Metric', 'CV score']
+        self.results_ = pd.DataFrame(columns=results_columns)
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
-            for dataset_name, (X, y) in datasets.items():
+            for dataset_name, (X, y) in datasets:
                 for clf_name, clf, in self.classifiers_:
                     if 'random_state' in clf.get_params().keys():
                         clf.set_params(random_state=random_state)
@@ -126,11 +127,10 @@ class BinaryExperiment:
                             cv_score = cv_output["test_" + scorer].mean()
                             result_list = [dataset_name, clf_name, oversampler_name, scorer, cv_score]
                             result = pd.DataFrame([result_list], columns=results_columns)
-                            results = results.append(result, ignore_index=True)
+                            self.results_ = self.results_.append(result, ignore_index=True)
                             
-
         # Group results dataframe by dataset, classifier and metric
-        grouped_results = results.groupby(list(results.columns[:-1]))
+        grouped_results = self.results_.groupby(list(self.results_.columns[:-1]))
 
         # Calculate mean and std results
         self.mean_cv_results_ = grouped_results.mean().reset_index().rename(columns={'CV score': 'Mean CV score'})
@@ -140,7 +140,7 @@ class BinaryExperiment:
             self.std_cv_results_ = "Standard deviation is not calculated. More than one experiment repetition is needed."
         
         # Transform mean results to wide format
-        mean_cv_results_wide = self.mean_cv_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampling method'], values='Mean CV score').reset_index()
+        mean_cv_results_wide = self.mean_cv_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Mean CV score').reset_index()
         mean_cv_results_wide.columns.rename(None, inplace=True)
 
         # Calculate mean ranking for each classifier/metric across datasets
@@ -152,3 +152,5 @@ class BinaryExperiment:
             self.friedman_test_results_ = ranking_results.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'}).set_index(['Classifier', 'Metric'])
         else:
             self.friedman_test_results_ = 'Friedman test is not applied. More than two oversampling methods are needed.'
+        
+        del self.datasets
