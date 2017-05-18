@@ -27,9 +27,9 @@ def confusion_matrix_values(y_true, y_pred, pos_label):
     """
 
     true_positive = (y_pred == pos_label)[y_true == pos_label].sum()
-    false_positive = (y_pred == pos_label)[y_true =! pos_label].sum()
-    true_negative = (y_pred =! pos_label)[y_true =! pos_label].sum()
-    false_negative = (y_pred =! pos_label)[y_true == pos_label].sum()
+    false_positive = (y_pred == pos_label)[y_true != pos_label].sum()
+    true_negative = (y_pred != pos_label)[y_true != pos_label].sum()
+    false_negative = (y_pred != pos_label)[y_true == pos_label].sum()
     return true_positive, false_positive, true_negative, false_negative
 
 def precision(y_true, y_pred, pos_label=1):
