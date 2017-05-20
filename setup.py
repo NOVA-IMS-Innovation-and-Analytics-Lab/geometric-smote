@@ -1,7 +1,7 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name="imbalanced-metrics",
+    name="imbalanced-tools",
     version="0.0.1",
-    py_modules=["binmetrics"],
+    packages=find_packages(),
 )
