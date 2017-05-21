@@ -5,7 +5,7 @@ from re import match, sub
 
 class BinaryExperiment:
     """Class for comparison of oversampling algorithms performance 
-    on imbalanced classification problems."""
+    on imbalanced binary classification problems."""
 
     def __init__(self, 
         oversampling_methods, 
