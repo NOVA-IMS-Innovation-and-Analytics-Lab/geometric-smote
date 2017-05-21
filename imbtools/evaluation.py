@@ -21,7 +21,7 @@ class BinaryExperiment:
         self.oversampling_methods = oversampling_methods
         self.classifiers = classifiers
         self.metrics = metrics
-        self.datasets = datasets,
+        self.datasets = datasets
         self.n_splits = n_splits
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
