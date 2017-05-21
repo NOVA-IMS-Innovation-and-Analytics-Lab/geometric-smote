@@ -34,7 +34,7 @@ class BinaryExperiment:
                 X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
                 dataset_name = re.sub(".csv", "", csv_file)
                 self.datasets[dataset_name] = (X, y)
-        self.random_states_ = [self.experiment_repetitions * index for index in range(self.experiment_repetitions)]
+        self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
         self.cv_scores_ = []
         self.classifiers_names_ = [classifier.__class__.__name__ for classifier in self.classifiers]
         self.oversampling_methods_names_ = [oversampling_method.__class__.__name__ for oversampling_method in self.oversampling_methods]
