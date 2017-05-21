@@ -11,7 +11,7 @@ class BinaryExperiment:
         oversampling_methods, 
         classifiers, 
         metrics, 
-        imbalanced_datasets,
+        datasets,
         n_splits=5, 
         experiment_repetitions=5, 
         random_state=None):
