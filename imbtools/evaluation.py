@@ -4,6 +4,8 @@ from re import match, sub
 from sklearn.model_selection import StratifiedKFold
 from imblearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
+from sklearn.metrics import roc_auc_score, f1_score
+from imblearn.metrics import geometric_mean_score
 from sklearn.metrics import make_scorer
 
 
@@ -27,9 +29,9 @@ class BinaryExperiment:
 
     def __init__(self, 
         oversampling_methods, 
-        classifiers, 
-        metrics, 
+        classifiers,
         datasets,
+        metrics=[roc_auc_score, f1_score, geometric_mean_score],
         n_splits=3, 
         experiment_repetitions=5, 
         random_state=None):
