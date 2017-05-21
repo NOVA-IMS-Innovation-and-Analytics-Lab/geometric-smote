@@ -35,7 +35,7 @@ class BinaryExperiment:
             for csv_file in csv_files:
                 dataset = pd.read_csv(csv_file)
                 X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
-                dataset_name = re.sub(".csv", "", csv_file)
+                dataset_name = sub(".csv", "", csv_file)
                 self.datasets[dataset_name] = (X, y)
         self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
         self.cv_scores_ = []
