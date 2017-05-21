@@ -2,8 +2,9 @@ import pandas as pd
 from os import listdir, chdir
 from re import match, sub
 from sklearn.model_selection import StratifiedKFold
-from sklearn.pipeline import make_pipeline
+from imblearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score
+from sklearn.metrics import make_scorer
 
 
 class BinaryExperiment:
@@ -28,6 +29,7 @@ class BinaryExperiment:
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
+        self.scorers_ = [make_scorer(metric) for metric in self.metrics]
         if isinstance(self.datasets, str):
             chdir(self.datasets)
             self.datasets = {}
@@ -54,11 +56,11 @@ class BinaryExperiment:
                 clf.set_params(random_state=random_state)
                 for oversampling_method in self.oversampling_methods:
                     oversampling_method.set_params(random_state=random_state)
-                    for metric in self.metrics:
-                        for X, y in self.datasets:
+                    for scorer in self.scorers_:
+                        for X, y in self.datasets.values():
                             if oversampling_method is not None:
                                 clf = make_pipeline(oversampling_method, clf)
-                            self.cv_scores_.append(cross_val_score(clf, X, y, cv=cv, scoring=metric).mean())
+                            self.cv_scores_.append(cross_val_score(clf, X, y, cv=cv, scoring=scorer).mean())
 
     def get_mean_results():
         pass
