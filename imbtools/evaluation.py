@@ -42,7 +42,7 @@ class BinaryExperiment:
         self.classifiers_names_ = [classifier.__class__.__name__ for classifier in self.classifiers]
         self.oversampling_methods_names_ = [oversampling_method.__class__.__name__ for oversampling_method in self.oversampling_methods]
         self.metrics_names_ = [metric.__name__ for metric in self.metrics]
-        self.datasets_names_ = datasets.keys()
+        self.datasets_names_ = self.datasets.keys()
         
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
