@@ -1,6 +1,9 @@
 import pandas as pd
 from os import listdir
 from re import match, sub
+from sklearn.model_selection import StratifiedKFold
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score
 
 
 class BinaryExperiment:
@@ -41,7 +44,7 @@ class BinaryExperiment:
         self.metrics_names_ = [metric.__name__ for metric in self.metrics]
         self.datasets_names_ = datasets.keys()
         
-    def run():
+    def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
