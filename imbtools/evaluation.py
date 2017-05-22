@@ -1,3 +1,10 @@
+"""
+This module contains classes to compare and evaluate 
+the performance of various oversampling algorithms.
+"""
+
+# Author: Georgios Douzas <gdouzas@icloud.com>
+
 import pandas as pd
 from os import listdir, chdir
 from re import match, sub
@@ -7,6 +14,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score, f1_score
 from imblearn.metrics import geometric_mean_score
 from sklearn.metrics import make_scorer
+from scipy.stats import friedmanchisquare
 
 
 def count_elements(elements):
@@ -21,6 +29,13 @@ def count_elements(elements):
             elements_map[element] = 1
             elements_modified.append(element)
     return elements_modified
+
+def extract_pvalue(dataframe):
+    """Extracts p-values applying the Friedman test to measurements."""
+    measurements = []
+    for col in dataframe.columns[2:]:
+        measurements.append(dataframe[col])
+    return friedmanchisquare(*measurements).pvalue
 
 
 class BinaryExperiment:
@@ -109,5 +124,11 @@ class BinaryExperiment:
         mean_results_wide.columns.rename(None, inplace=True)
 
         # Calculate mean ranking for each classifier/metric across datasets
-        ranking_columns = mean_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)
-        self.mean_ranking_results_ = round(pd.concat([mean_results_wide[['Classifier', "Metric"]], ranking_columns], axis=1).groupby(['Classifier', 'Metric']).mean(), 2)
+        ranking_results = pd.concat([mean_results_wide[['Classifier', "Metric"]], mean_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)], axis=1)    
+        self.mean_ranking_results_ = round(ranking_results.groupby(['Classifier', 'Metric']).mean(), 2)
+
+        # Calculate Friedman test p-values
+        if len(self.oversampling_methods) > 2:
+            self.friedman_test_results_ = ranking_results.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'}).set_index(['Classifier', 'Metric'])
+        else:
+            self.friedman_test_results_ = 'Friedman test is not applied. More than two oversampling methods are needed.'
