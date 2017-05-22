@@ -56,22 +56,23 @@ class BinaryExperiment:
                 dataset_name = sub(".csv", "", csv_file)
                 self.datasets[dataset_name] = (X, y)
         self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
-        self.cv_scores_ = []
         self.classifiers_names_ = count_elements([classifier.__class__.__name__ for classifier in self.classifiers])
-        self.oversampling_methods_names_ = count_elements([oversampling_method.__class__.__name__ for oversampling_method in self.oversampling_methods])
-        self.metrics_names_ = [metric.__name__ for metric in self.metrics]
+        self.oversampling_methods_names_ = count_elements([oversampling_method.__class__.__name__ if oversampling_method is not None else 'None' for oversampling_method in self.oversampling_methods])
+        self.metrics_names_ = [sub('_', ' ', metric.__name__) for metric in self.metrics]
         self.datasets_names_ = self.datasets.keys()
         
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
+        results = pd.DataFrame(columns=['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score'])
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state)
             for clf_ind, clf in enumerate(self.classifiers):
                 clf.set_params(random_state=random_state)
                 for oversampling_method_ind, oversampling_method in enumerate(self.oversampling_methods):
-                    oversampling_method.set_params(random_state=random_state)
+                    if oversampling_method is not None:
+                        oversampling_method.set_params(random_state=random_state)
                     for scorer_ind, scorer in enumerate(self.scorers_):
                         for dataset_ind, (X, y) in enumerate(self.datasets.values()):
                             if oversampling_method is not None:
@@ -83,16 +84,13 @@ class BinaryExperiment:
                             cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer).mean()
                             msg = 'Experiment: {}\nClassifier: {}\nOversampling method: {}\nMetric: {}\nDataset: {}\nCV score: {}\n\n'
                             print(msg.format(experiment_ind + 1, clf_name, om_name, metric_name, dataset_name, cv_score))
-                            self.cv_scores_.append(cv_score)
-
-    def get_mean_results():
-        pass
-
-    def get_std_results():
-        pass
-
-    def get_ranking_results():
-        pass
-
-    def get_friedman_test_results():
-        pass
+                            result = pd.DataFrame([[dataset_name, clf_name, om_name, metric_name, cv_score]], columns=results.columns)
+                            results = results.append(result, ignore_index=True)
+        grouped_results = results.groupby(list(results.columns[:-1]))
+        self.mean_results_ = grouped_results.mean().reset_index()
+        self.std_results_ = grouped_results.std().reset_index()
+        mean_results_wide = self.mean_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampling method'], values='CV score')
+        mean_results_wide.columns.rename(None, inplace=True)
+        mean_results_wide = mean_results_wide.reset_index()
+        ranking_columns = mean_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)
+        self.mean_ranking_results_ = round(pd.concat([mean_results_wide[['Classifier', "Metric"]], ranking_columns], axis=1).groupby(['Classifier', 'Metric']).mean(), 2)
