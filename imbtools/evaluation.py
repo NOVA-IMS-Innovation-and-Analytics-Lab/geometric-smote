@@ -92,7 +92,7 @@ class BinaryExperiment:
         # Populate results dataframe
         results = pd.DataFrame(columns=['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score'])
         for experiment_ind, random_state in enumerate(self.random_states_):
-            cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state)
+            cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
             for clf_ind, clf in enumerate(self.classifiers):
                 clf.set_params(random_state=random_state)
                 for oversampling_method_ind, oversampling_method in enumerate(self.oversampling_methods):
