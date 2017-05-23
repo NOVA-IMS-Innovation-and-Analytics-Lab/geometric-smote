@@ -31,7 +31,7 @@ def count_elements(elements):
     return elements_modified
 
 def extract_pvalue(dataframe):
-    """Extracts p-values applying the Friedman test to measurements."""
+    """Extracts p-value applying the Friedman test to measurements."""
     measurements = []
     for col in dataframe.columns[2:]:
         measurements.append(dataframe[col])
