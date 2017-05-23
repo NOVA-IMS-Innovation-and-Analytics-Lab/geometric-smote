@@ -62,7 +62,7 @@ class BinaryExperiment:
         """Private method that initializes the experiment's parameters."""
 
         # Convert metrics to scorers
-        self.scorers_ = [make_scorer(metric) for metric in self.metrics]
+        self.scorers_ = [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]
 
         # Read csv files and save them to a dictionary
         if isinstance(self.datasets, str):
