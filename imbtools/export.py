@@ -1,3 +1,5 @@
+import docx
+
 def export_table(df, docx_path):
     doc = docx.Document(docx_path)
     table = doc.add_table(df.shape[0]+1, df.shape[1])
