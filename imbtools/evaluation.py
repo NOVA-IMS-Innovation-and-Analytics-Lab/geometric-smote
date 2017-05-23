@@ -8,12 +8,13 @@ the performance of various oversampling algorithms.
 import pandas as pd
 from os import listdir, chdir
 from re import match, sub
-from sklearn.model_selection import StratifiedKFold
-from imblearn.pipeline import make_pipeline
+from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score, f1_score
-from imblearn.metrics import geometric_mean_score
 from sklearn.metrics import make_scorer
+from sklearn.base import clone
+from imblearn.pipeline import make_pipeline
+from imblearn.metrics import geometric_mean_score
 from scipy.stats import friedmanchisquare
 
 
@@ -37,26 +38,34 @@ def extract_pvalue(dataframe):
         measurements.append(dataframe[col])
     return friedmanchisquare(*measurements).pvalue
 
+def optimize_hyperparameters(X, y, clf, param_grid, cv):
+    """Returns the parameters with the highest auc."""
+    clfs = GridSearchCV(estimator=clone(clf), param_grid=param_grid, scoring='roc_auc', cv=cv, refit=False)
+    clfs.fit(X, y)
+    return clfs.best_params_
+
 
 class BinaryExperiment:
     """Class for comparison of oversampling algorithms performance 
     on imbalanced binary classification problems."""
 
     def __init__(self, 
-        oversampling_methods, 
-        classifiers,
         datasets,
+        classifiers,
+        oversampling_methods, 
         metrics=[roc_auc_score, f1_score, geometric_mean_score],
         n_splits=3, 
         experiment_repetitions=5, 
-        random_state=None):
-        self.oversampling_methods = oversampling_methods
-        self.classifiers = classifiers
-        self.metrics = metrics
+        random_state=None, 
+        param_grids=None):
         self.datasets = datasets
+        self.classifiers = classifiers
+        self.oversampling_methods = oversampling_methods
+        self.metrics = metrics
         self.n_splits = n_splits
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
+        self.param_grids = param_grids
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
@@ -83,7 +92,13 @@ class BinaryExperiment:
         self.classifiers_ = dict(zip(count_elements([classifier.__class__.__name__ for classifier in self.classifiers]), self.classifiers))
         self.oversampling_methods_ = dict(zip(count_elements([oversampling_method.__class__.__name__ if oversampling_method is not None else 'None' for oversampling_method in self.oversampling_methods]), self.oversampling_methods))
         self.metrics_ = dict(zip([sub('_', ' ', metric.__name__) for metric in self.metrics], self.metrics))
-        
+        if isinstance(self.param_grids, list) and len(self.param_grids) == len(self.classifiers):
+            self.param_grids_ = dict(zip(self.classifiers_.keys(), self.param_grids))
+        elif self.param_grids is None:
+            self.param_grids_ = dict(zip(self.classifiers_.keys(), [None] * len(self.classifiers)))
+        else:
+            raise ValueError("The parameter param_grid should be a list of hyperparameters grids with length equal to the number of classifiers.")
+            
         # Converts metrics to scores
         self.scorers_ = dict(zip(self.metrics_.keys(), [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]))
 
@@ -110,7 +125,11 @@ class BinaryExperiment:
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
             for dataset_name, (X, y) in self.datasets_.items():
                 for classifier_name, clf in self.classifiers_.items():
-                    clf.set_params(random_state=random_state)
+                    if self.param_grids_[classifier_name] is not None:
+                        optimal_parameters = optimize_hyperparameters(X, y, clf, self.param_grids_[classifier_name], cv)
+                    else:
+                        optimal_parameters = {}
+                    clf.set_params(random_state=random_state, **optimal_parameters)
                     for oversampling_method_name, oversampling_method in self.oversampling_methods_.items():
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
