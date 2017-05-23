@@ -74,6 +74,10 @@ class BinaryExperiment:
                 X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
                 dataset_name = sub(".csv", "", csv_file)
                 self.datasets[dataset_name] = (X, y)
+
+        # If a list of (X,y) data is given, append names to each one of them
+        if isinstance(self.datasets, list):
+            self.datasets = {("dataset_" + str(ind + 1)):dataset for ind, dataset in enumerate(self.datasets)}
         
         # Create random states for experiments
         self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
@@ -83,11 +87,22 @@ class BinaryExperiment:
         self.oversampling_methods_names_ = count_elements([oversampling_method.__class__.__name__ if oversampling_method is not None else 'None' for oversampling_method in self.oversampling_methods])
         self.metrics_names_ = [sub('_', ' ', metric.__name__) for metric in self.metrics]
         self.datasets_names_ = self.datasets.keys()
+
+    def _summarize_datasets(self):
+        """Creates a summary of the datasets."""
+        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalanced Ratio"]
+        self.datasets_summary_ = pd.DataFrame({}, columns=summary_columns)
+        for dataset_name, (X, y) in self.datasets.items():
+            n_instances = ((y == 0).sum(), (y == 1).sum())
+            dataset_summary = pd.DataFrame([[dataset_name, X.shape[1], y.size, n_instances[1], n_instances[0], round(n_instances[0] / n_instances[1], 2)]], columns=self.datasets_summary_.columns)
+            self.datasets_summary_ = self.datasets_summary_.append(dataset_summary, ignore_index=True)
+        self.datasets_summary_[self.datasets_summary_.columns[1:-1]] = self.datasets_summary_[self.datasets_summary_.columns[1:-1]].astype(int)
         
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
+        self._summarize_datasets()
         
         # Populate results dataframe
         results = pd.DataFrame(columns=['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score'])
@@ -99,13 +114,12 @@ class BinaryExperiment:
                     if oversampling_method is not None:
                         oversampling_method.set_params(random_state=random_state)
                     for scorer_ind, scorer in enumerate(self.scorers_):
-                        for dataset_ind, (X, y) in enumerate(self.datasets.values()):
+                        for dataset_name, (X, y) in self.datasets.items():
                             if oversampling_method is not None:
                                 clf = make_pipeline(oversampling_method, clf)
                             clf_name = self.classifiers_names_[clf_ind]
                             om_name = self.oversampling_methods_names_[oversampling_method_ind]
                             metric_name = self.metrics_names_[scorer_ind]
-                            dataset_name = list(self.datasets_names_)[dataset_ind]
                             cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer).mean()
                             msg = 'Experiment: {}\nClassifier: {}\nOversampling method: {}\nMetric: {}\nDataset: {}\nCV score: {}\n\n'
                             print(msg.format(experiment_ind + 1, clf_name, om_name, metric_name, dataset_name, cv_score))
@@ -116,15 +130,15 @@ class BinaryExperiment:
         grouped_results = results.groupby(list(results.columns[:-1]))
 
         # Calculate mean and std results
-        self.mean_results_ = grouped_results.mean().reset_index().rename(columns={'CV score': 'Mean CV score'})
-        self.std_results_ = grouped_results.std().reset_index().rename(columns={'CV score': 'Std CV score'})
+        self.mean_cv_results_ = grouped_results.mean().reset_index().rename(columns={'CV score': 'Mean CV score'})
+        self.std_cv_results_ = grouped_results.std().reset_index().rename(columns={'CV score': 'Std CV score'})
         
         # Transform mean results to wide format
-        mean_results_wide = self.mean_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampling method'], values='Mean CV score').reset_index()
-        mean_results_wide.columns.rename(None, inplace=True)
+        mean_cv_results_wide = self.mean_cv_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampling method'], values='Mean CV score').reset_index()
+        mean_cv_results_wide.columns.rename(None, inplace=True)
 
         # Calculate mean ranking for each classifier/metric across datasets
-        ranking_results = pd.concat([mean_results_wide[['Classifier', "Metric"]], mean_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)], axis=1)    
+        ranking_results = pd.concat([mean_cv_results_wide[['Classifier', "Metric"]], mean_cv_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)], axis=1)    
         self.mean_ranking_results_ = round(ranking_results.groupby(['Classifier', 'Metric']).mean(), 2)
 
         # Calculate Friedman test p-values
