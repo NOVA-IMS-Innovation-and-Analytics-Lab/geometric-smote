@@ -104,22 +104,24 @@ class BinaryExperiment:
         self._summarize_datasets()
         
         # Populate results dataframe
-        results = pd.DataFrame(columns=['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score'])
+        results_columns = ['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score']
+        results = pd.DataFrame(columns=results_columns)
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
-            for classifier_name, clf in self.classifiers_.items():
-                clf.set_params(random_state=random_state)
-                for dataset_name, (X, y) in self.datasets_.items():
+            for dataset_name, (X, y) in self.datasets_.items():
+                for classifier_name, clf in self.classifiers_.items():
+                    clf.set_params(random_state=random_state)
                     for oversampling_method_name, oversampling_method in self.oversampling_methods_.items():
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
                             clf = make_pipeline(oversampling_method, clf)
                         for metric_name, scorer in self.scorers_.items():
                             cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer).mean()
-                            msg = 'Experiment: {}\nClassifier: {}\nOversampling method: {}\nMetric: {}\nDataset: {}\nCV score: {}\n\n'
+                            msg = 'Experiment: {}\n' + ': {}\n'.join(results_columns) + ': {}\n\n'
+                            result_list = [dataset_name, classifier_name, oversampling_method_name, metric_name, cv_score]
                             if logging_results:
-                                print(msg.format(experiment_ind + 1, classifier_name, oversampling_method_name, metric_name, dataset_name, cv_score))
-                            result = pd.DataFrame([[dataset_name, classifier_name, oversampling_method_name, metric_name, cv_score]], columns=results.columns)
+                                print(msg.format(experiment_ind + 1, *result_list))
+                            result = pd.DataFrame([result_list], columns=results_columns)
                             results = results.append(result, ignore_index=True)
         
         # Group results dataframe by dataset, classifier and metric
