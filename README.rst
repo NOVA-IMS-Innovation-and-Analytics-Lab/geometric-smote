@@ -14,4 +14,6 @@ Installation
 
 .. code:: shell
 
+    git clone https://github.com/gdouzas/imbalanced-tools.git
+    cd imbalanced-tools
     python3 setup.py install
