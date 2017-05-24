@@ -47,7 +47,33 @@ def optimize_hyperparameters(X, y, clf, param_grid, cv):
 
 class BinaryExperiment:
     """Class for comparison of oversampling algorithms performance 
-    on imbalanced binary classification problems."""
+    on imbalanced binary classification problems.
+    
+    Parameters
+    ----------
+    datasets : str or list of (X, y) tuples or dictionary of dataset-name:(X,y) pairs
+        The string is a path to the directory which contains the imbalanced data in 
+        csv format. The list of (X, y) pairs is a list of tuples of input data and 
+        target values, The dictionary extends the list by adding the datasets names 
+        as a key.
+    classifiers : list of classifiers
+        A list of classifiers.
+    oversampling_methods : list of oversampling_methods
+        A list of oversampling methods.
+    metrics : list of metrics, (default=[roc_auc_score, f1_score, geometric_mean_score])
+        A list of classification metrics.
+    n_splits : int, (default=3)
+        The number of cross validation stages.
+    experiment_repetitions : int, (default=)5
+        The number of experiment repetitions.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+    param_grids : list, optional (default=None)
+        A list of hyperparameters grids for each classfier.
+    """
 
     def __init__(self, 
         datasets,
@@ -84,6 +110,10 @@ class BinaryExperiment:
         # If a list of (X,y) data is given, append names to each one of them
         if isinstance(self.datasets, list):
             self.datasets_ = {("dataset_" + str(ind + 1)):dataset for ind, dataset in enumerate(self.datasets)}
+
+        # If a dict of dataset-name:(X,y) pairs is given, copy to a new attribute
+        if isinstance(self.datasets, dict):
+            self.datasets_ = self.datasets
         
         # Create random states for experiments
         self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
