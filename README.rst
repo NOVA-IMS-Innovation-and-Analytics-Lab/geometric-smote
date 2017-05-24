@@ -1,5 +1,5 @@
-Generative Adversarial Networks
-===============================
+imbalanced-tools
+================
 
 A collection of tools for the imbalanced learning problem. It includes classes to simplify the comparison and evaluation of oversampling algorithms, functions to export the results and various ovarsampling algorithms which are not included in imbalanced-learn. 
 
