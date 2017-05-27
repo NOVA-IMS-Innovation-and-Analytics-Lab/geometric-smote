@@ -16,6 +16,7 @@ from sklearn.base import clone
 from imblearn.pipeline import make_pipeline
 from imblearn.metrics import geometric_mean_score
 from scipy.stats import friedmanchisquare
+from progressbar import ProgressBar
 
 
 def count_elements(elements):
@@ -134,7 +135,7 @@ class BinaryExperiment:
 
     def _summarize_datasets(self):
         """Creates a summary of the datasets."""
-        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalanced Ratio"]
+        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalance Ratio"]
         self.datasets_summary_ = pd.DataFrame({}, columns=summary_columns)
         for dataset_name, (X, y) in self.datasets_.items():
             n_instances = ((y == 0).sum(), (y == 1).sum())
@@ -147,7 +148,9 @@ class BinaryExperiment:
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
         self._summarize_datasets()
-        
+        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.metrics_))
+        iterations = 0
+
         # Populate results dataframe
         results_columns = ['Dataset', 'Classifier', 'Oversampling method', 'Metric', 'CV score']
         results = pd.DataFrame(columns=results_columns)
@@ -172,6 +175,8 @@ class BinaryExperiment:
                                 print(msg.format(experiment_ind + 1, *result_list))
                             result = pd.DataFrame([result_list], columns=results_columns)
                             results = results.append(result, ignore_index=True)
+                            iterations += 1
+                            bar.update(iterations)
         
         # Group results dataframe by dataset, classifier and metric
         grouped_results = results.groupby(list(results.columns[:-1]))
