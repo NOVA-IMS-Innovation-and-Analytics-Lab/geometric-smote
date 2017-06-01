@@ -7,8 +7,10 @@ an oversampling algorithm.
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
+import numpy as np
 from imblearn.base import BaseBinarySampler
 from ganetwork import CGAN, OPTIMIZER
+from sklearn.utils import check_random_state
 
 
 class CGANOversampler(BaseBinarySampler):
@@ -58,6 +60,21 @@ class CGANOversampler(BaseBinarySampler):
                     self.generator_bias_initilization_choice)
         cgan.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
         return self
+
+    def _sample(self, X, y):
+
+        random_state = check_random_state(self.random_state)
+
+        if self.ratio == 'auto':
+            num_samples = self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_]
+        else:
+            num_samples = int(self.ratio * self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_])
+
+        X_resampled = np.concatenate([X, cgan.generate_samples(num_samples, self.min_c_, random_state)], axis=0)
+        y_resampled = np.concatenate([y, [self.min_c_] * len(X_new)], axis=0)
+
+        return X_resampled, y_resampled
+
 
 
     
