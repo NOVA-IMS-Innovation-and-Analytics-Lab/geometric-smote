@@ -77,14 +77,14 @@ class BinaryExperiment:
     """
 
     def __init__(self, 
-        datasets,
-        classifiers,
-        oversampling_methods, 
-        metrics=[roc_auc_score, f1_score, geometric_mean_score],
-        n_splits=3, 
-        experiment_repetitions=5, 
-        random_state=None, 
-        param_grids=None):
+                 datasets,
+                 classifiers,
+                 oversampling_methods, 
+                 metrics=[roc_auc_score, f1_score, geometric_mean_score],
+                 n_splits=3, 
+                 experiment_repetitions=5, 
+                 random_state=None, 
+                 param_grids=None):
         self.datasets = datasets
         self.classifiers = classifiers
         self.oversampling_methods = oversampling_methods
