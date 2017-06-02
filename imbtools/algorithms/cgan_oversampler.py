@@ -94,6 +94,20 @@ class CGANOversampler(BaseBinarySampler):
         self.discriminator_steps = discriminator_steps
     
     def fit(self, X, y):
+        """Fits CGAN model and finds the classes statistics.
+        
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+        y : ndarray, shape (n_samples, )
+            Corresponding label for each sample in X.
+        
+        Returns
+        -------
+        self : object,
+            Return self.
+        """
         super().fit(X, y)
         self.cgan_ = CGAN(self.n_Z_features,
                     self.discriminator_hidden_layers,
@@ -106,6 +120,22 @@ class CGANOversampler(BaseBinarySampler):
         return self
 
     def _sample(self, X, y):
+        """Resample the dataset.
+        
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+        y : ndarray, shape (n_samples, )
+            Corresponding label for each sample in X.
+        
+        Returns
+        -------
+        X_resampled : ndarray, shape (n_samples_new, n_features)
+            The array containing the resampled data.
+        y_resampled : ndarray, shape (n_samples_new)
+            The corresponding label of `X_resampled`
+        """
         random_state = check_random_state(self.random_state)
         if self.ratio == 'auto':
             num_samples = self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_]
