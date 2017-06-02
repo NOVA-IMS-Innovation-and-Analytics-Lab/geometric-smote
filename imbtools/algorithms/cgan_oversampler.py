@@ -49,7 +49,7 @@ class CGANOversampler(BaseBinarySampler):
     
     def fit(self, X, y):
         super().fit(X, y)
-        cgan = CGAN(self.n_Z_features,
+        self.cgan_ = CGAN(self.n_Z_features,
                     self.discriminator_hidden_layers,
                     self.generator_hidden_layers,
                     self.discriminator_optimizer,
@@ -58,20 +58,18 @@ class CGANOversampler(BaseBinarySampler):
                     self.generator_optimizer,
                     self.generator_weights_initilization_choice,
                     self.generator_bias_initilization_choice)
-        cgan.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
+        self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
         return self
 
     def _sample(self, X, y):
-
         random_state = check_random_state(self.random_state)
-
         if self.ratio == 'auto':
             num_samples = self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_]
         else:
             num_samples = int(self.ratio * self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_])
 
-        X_resampled = np.concatenate([X, cgan.generate_samples(num_samples, self.min_c_, random_state)], axis=0)
-        y_resampled = np.concatenate([y, [self.min_c_] * len(X_new)], axis=0)
+        X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, self.min_c_, random_state)], axis=0)
+        y_resampled = np.concatenate([y, [self.min_c_] * num_samples], axis=0)
 
         return X_resampled, y_resampled
 
