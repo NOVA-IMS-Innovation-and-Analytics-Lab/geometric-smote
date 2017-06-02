@@ -51,7 +51,7 @@ class CGANOversampler(BaseBinarySampler):
     batch_size : int
         The minibatch size.
     discriminator_steps : int
-        The discriminator update followed by a single generator update.
+        The discriminator update steps followed by a single generator update.
 
     Attributes
     ----------
