@@ -16,7 +16,57 @@ from sklearn.utils import check_random_state
 class CGANOversampler(BaseBinarySampler):
     """Class to perform oversampling using a 
     Conditional Generative Adversarial Network as 
-    an oversampling algorithm."""
+    an oversampling algorithm.
+
+    Parameters
+    ----------
+    ratio : str or float, optional (default='auto')
+        If 'auto', the ratio will be defined automatically to balance
+        the dataset. Otherwise, the ratio is defined as the number
+        of samples in the minority class over the the number of samples
+        in the majority class.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random.
+    n_Z_features : int
+        Number of features of the Z noise space.
+    discriminator_hidden_layers : list of (int, activation function) tuples
+        Each tuple represents the number of neurons and the activation 
+        function of the discriminator's corresponding hidden layer.
+    generator_hidden_layers : list of (int, activation function) tuples
+        Each tuple represents the number of neurons and the activation 
+        function of the generators's corresponding hidden layer.
+    discriminator_optimizer : TensorFlow optimizer, default AdamOptimizer
+        The optimizer for the discriminator.
+    generator_optimizer : TensorFlow optimizer, default AdamOptimizer
+        The optimizer for the generator.
+    discriminator_initializer : list of strings or TensorFlow tensor, default ['xavier', 'zeros']
+        The initialization type of the discriminator's parameters.
+    generator_initializer : list of strings or TensorFlow tensor, default ['xavier', 'zeros']
+        The initialization type of the generator's parameters.
+    nb_epoch : int
+        Number of epochs for the CGAN training
+    batch_size : int
+        The minibatch size.
+    discriminator_steps : int
+        The discriminator update followed by a single generator update.
+
+    Attributes
+    ----------
+    min_c_ : str or int
+        The identifier of the minority class.
+    max_c_ : str or int
+        The identifier of the majority class.
+    stats_c_ : dict of str/int : int
+        A dictionary in which the number of occurences of each class is
+        reported.
+    X_shape_ : tuple of int
+        Shape of the data `X` during fitting.
+    cgan_ : CGAN object
+        A CGAN instance containing information about the discriminator and generator.
+    """
 
     def __init__(self,
                  ratio='auto',
@@ -25,11 +75,9 @@ class CGANOversampler(BaseBinarySampler):
                  discriminator_hidden_layers=None, 
                  generator_hidden_layers=None, 
                  discriminator_optimizer=OPTIMIZER,  
-                 discriminator_weights_initilization_choice='xavier',
-                 discriminator_bias_initilization_choice='zeros',
+                 discriminator_initializer=['xavier', 'zeros'],
                  generator_optimizer=OPTIMIZER, 
-                 generator_weights_initilization_choice='xavier',
-                 generator_bias_initilization_choice='zeros', 
+                 generator_initializer=['xavier', 'zeros'],
                  nb_epoch=None, 
                  batch_size=None, 
                  discriminator_steps=1):
@@ -38,11 +86,9 @@ class CGANOversampler(BaseBinarySampler):
         self.discriminator_hidden_layers = discriminator_hidden_layers
         self.generator_hidden_layers = generator_hidden_layers
         self.discriminator_optimizer = discriminator_optimizer
-        self.discriminator_weights_initilization_choice = discriminator_weights_initilization_choice
-        self.discriminator_bias_initilization_choice = discriminator_bias_initilization_choice
+        self.discriminator_initializer = discriminator_initializer
         self.generator_optimizer = generator_optimizer
-        self.generator_weights_initilization_choice = generator_weights_initilization_choice
-        self.generator_bias_initilization_choice = generator_bias_initilization_choice
+        self.generator_initializer = generator_initializer
         self.nb_epoch = nb_epoch
         self.batch_size = batch_size
         self.discriminator_steps = discriminator_steps
@@ -53,11 +99,9 @@ class CGANOversampler(BaseBinarySampler):
                     self.discriminator_hidden_layers,
                     self.generator_hidden_layers,
                     self.discriminator_optimizer,
-                    self.discriminator_weights_initilization_choice,
-                    self.discriminator_bias_initilization_choice,
+                    self.discriminator_initializer,
                     self.generator_optimizer,
-                    self.generator_weights_initilization_choice,
-                    self.generator_bias_initilization_choice)
+                    self.generator_initializer)
         self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
         return self
 
