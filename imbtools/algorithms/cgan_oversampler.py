@@ -65,7 +65,7 @@ class CGANOversampler(BaseBinarySampler):
     X_shape_ : tuple of int
         Shape of the data `X` during fitting.
     cgan_ : CGAN object
-        A CGAN instance containing information about the discriminator and generator.
+        A CGAN instance containing the discriminator and generator.
     """
 
     def __init__(self,
