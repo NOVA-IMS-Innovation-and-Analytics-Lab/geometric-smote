@@ -86,7 +86,8 @@ class BinaryExperiment:
                  n_splits=3, 
                  experiment_repetitions=5, 
                  random_state=None, 
-                 param_grids=None):
+                 param_grids=None,
+                 n_jobs=1):
         self.datasets = datasets
         self.classifiers = classifiers
         self.oversampling_methods = oversampling_methods
