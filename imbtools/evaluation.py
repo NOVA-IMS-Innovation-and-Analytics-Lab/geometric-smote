@@ -65,7 +65,7 @@ class BinaryExperiment:
         A list of classification metrics.
     n_splits : int, (default=3)
         The number of cross validation stages.
-    experiment_repetitions : int, (default=)5
+    experiment_repetitions : int, (default=5)
         The number of experiment repetitions.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -74,6 +74,8 @@ class BinaryExperiment:
         by `np.random`.
     param_grids : list, optional (default=None)
         A list of hyperparameters grids for each classfier.
+    n_jobs : int, (default=1)
+        The number of CPUs to use to do the computation. -1 means ‘all CPUs’.
     """
 
     def __init__(self, 
@@ -93,6 +95,7 @@ class BinaryExperiment:
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
         self.param_grids = param_grids
+        self.n_jobs = n_jobs
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
@@ -168,7 +171,7 @@ class BinaryExperiment:
                             oversampling_method.set_params(random_state=random_state)
                             clf = make_pipeline(oversampling_method, clf)
                         for metric_name, scorer in self.scorers_.items():
-                            cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer).mean()
+                            cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer, n_jobs=self.n_jobs).mean()
                             msg = 'Experiment: {}\n' + ': {}\n'.join(results_columns) + ': {}\n\n'
                             result_list = [dataset_name, classifier_name, oversampling_method_name, metric_name, cv_score]
                             if logging_results:
