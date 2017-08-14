@@ -116,7 +116,7 @@ class CGANOversampler(BaseBinarySampler):
                     self.discriminator_initializer,
                     self.generator_optimizer,
                     self.generator_initializer)
-        self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
+        self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps, logging_options=None)
         return self
 
     def _sample(self, X, y):
