@@ -121,7 +121,11 @@ class BinaryExperiment:
             self.datasets_ = self.datasets
         
         # Create random states for experiments
-        self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
+        if self.random_state is not None:
+            self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state != 0 else range(self.experiment_repetitions)
+        else:
+            self.random_states_ = [None] * self.experiment_repetitions
+
         
         # Extract names for experiments parameters
         self.classifiers_ = dict(zip(count_elements([classifier.__class__.__name__ for classifier in self.classifiers]), self.classifiers))
@@ -166,7 +170,10 @@ class BinaryExperiment:
                         optimal_parameters = optimize_hyperparameters(X, y, clf, self.param_grids_[classifier_name], cv)
                     else:
                         optimal_parameters = {}
-                    clf.set_params(random_state=random_state, **optimal_parameters)
+                    if 'random_state' in clf.get_params().keys():
+                        clf.set_params(random_state=random_state, **optimal_parameters)
+                    else:
+                        clf.set_params(**optimal_parameters)
                     for oversampling_method_name, oversampling_method in self.oversampling_methods_.items():
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
