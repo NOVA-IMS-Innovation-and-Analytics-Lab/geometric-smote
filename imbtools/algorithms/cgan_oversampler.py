@@ -8,12 +8,12 @@ an oversampling algorithm.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 import numpy as np
-from imblearn.base import BaseBinarySampler
+from imblearn.over_sampling.base import BaseOverSampler
 from ganetwork import CGAN, OPTIMIZER
 from sklearn.utils import check_random_state
 
 
-class CGANOversampler(BaseBinarySampler):
+class CGANOversampler(BaseOverSampler):
     """Class to perform oversampling using a 
     Conditional Generative Adversarial Network as 
     an oversampling algorithm.
@@ -137,13 +137,9 @@ class CGANOversampler(BaseBinarySampler):
             The corresponding label of `X_resampled`
         """
         random_state = check_random_state(self.random_state)
-        if self.ratio == 'auto':
-            num_samples = self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_]
-        else:
-            num_samples = int(self.ratio * self.stats_c_[self.maj_c_] - self.stats_c_[self.min_c_])
-
-        X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, self.min_c_, random_state)], axis=0)
-        y_resampled = np.concatenate([y, [self.min_c_] * num_samples], axis=0)
+        for class_sample, num_samples in self.ratio_.items():
+            X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, class_sample, random_state)], axis=0)
+            y_resampled = np.concatenate([y, [class_sample] * num_samples], axis=0)
 
         return X_resampled, y_resampled
 
