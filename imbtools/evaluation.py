@@ -13,10 +13,13 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score, f1_score
 from sklearn.metrics import make_scorer
 from sklearn.base import clone
-from imblearn.pipeline import make_pipeline
+from sklearn.externals.joblib import Memory
+from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
 from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
+from tempfile import mkdtemp
+from shutil import rmtree
 
 
 def count_elements(elements):
@@ -165,6 +168,8 @@ class BinaryExperiment:
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
             for dataset_name, (X, y) in self.datasets_.items():
+                cachedir = mkdtemp()
+                memory = Memory(cachedir=cachedir, verbose=0)
                 for classifier_name, clf in self.classifiers_.items():
                     if self.param_grids_[classifier_name] is not None:
                         optimal_parameters = optimize_hyperparameters(X, y, clf, self.param_grids_[classifier_name], cv)
@@ -177,7 +182,7 @@ class BinaryExperiment:
                     for oversampling_method_name, oversampling_method in self.oversampling_methods_.items():
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
-                            clf = make_pipeline(oversampling_method, clf)
+                            clf = Pipeline([(oversampling_method_name, oversampling_method), (classifier_name, clf)], memory=memory)
                         for metric_name, scorer in self.scorers_.items():
                             cv_score = cross_val_score(clf, X, y, cv=cv, scoring=scorer, n_jobs=self.n_jobs).mean()
                             msg = 'Experiment: {}\n' + ': {}\n'.join(results_columns) + ': {}\n\n'
@@ -188,7 +193,8 @@ class BinaryExperiment:
                             results = results.append(result, ignore_index=True)
                             iterations += 1
                             bar.update(iterations)
-        
+                rmtree(cachedir)
+
         # Group results dataframe by dataset, classifier and metric
         grouped_results = results.groupby(list(results.columns[:-1]))
 
