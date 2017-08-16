@@ -90,7 +90,8 @@ class BinaryExperiment:
                  experiment_repetitions=5, 
                  random_state=None, 
                  param_grids=None,
-                 n_jobs=1):
+                 n_jobs=1,
+                 cache_tasks=True):
         self.datasets = datasets
         self.classifiers = classifiers
         self.oversampling_methods = oversampling_methods
@@ -100,6 +101,7 @@ class BinaryExperiment:
         self.random_state = random_state
         self.param_grids = param_grids
         self.n_jobs = n_jobs
+        self.cache_tasks = cache_tasks
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
@@ -168,8 +170,11 @@ class BinaryExperiment:
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
             for dataset_name, (X, y) in self.datasets_.items():
-                cachedir = mkdtemp()
-                memory = Memory(cachedir=cachedir, verbose=0)
+                if self.cache_tasks:
+                    cachedir = mkdtemp()
+                    memory = Memory(cachedir=cachedir, verbose=0)
+                else:
+                    memory = None
                 for classifier_name, clf in self.classifiers_.items():
                     if self.param_grids_[classifier_name] is not None:
                         optimal_parameters = optimize_hyperparameters(X, y, clf, self.param_grids_[classifier_name], cv)
