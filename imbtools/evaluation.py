@@ -7,6 +7,7 @@ the performance of various oversampling algorithms.
 
 import pandas as pd
 from os import listdir, chdir
+from os.path import join
 from re import match, sub
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_val_score
@@ -108,11 +109,10 @@ class BinaryExperiment:
 
         # Read csv files and save them to a dictionary
         if isinstance(self.datasets, str):
-            chdir(self.datasets)
             self.datasets_ = {}
-            csv_files = [csv_file for csv_file in listdir() if match('^.+\.csv$', csv_file)]
+            csv_files = [csv_file for csv_file in listdir(self.datasets) if match('^.+\.csv$', csv_file)]
             for csv_file in csv_files:
-                dataset = pd.read_csv(csv_file)
+                dataset = pd.read_csv(join(self.datasets,csv_file))
                 X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
                 dataset_name = sub(".csv", "", csv_file)
                 self.datasets_[dataset_name] = (X, y)
