@@ -126,12 +126,9 @@ class BinaryExperiment:
             self.datasets_ = self.datasets
         
         # Create random states for experiments
-        if self.random_state is not None:
-            self.random_states_ = [self.random_state * index for index in range(self.experiment_repetitions)] if self.random_state != 0 else range(self.experiment_repetitions)
-        else:
-            self.random_states_ = [None] * self.experiment_repetitions
+        get_seed = lambda s,i: (s - i) if (s - i) >= 0 else (s + i) # subtract experiment index from random seed for each experiment
+        self.random_states_ = [get_seed(self.random_state, index) for index in range(self.experiment_repetitions)] if self.random_state is not None else [None] * self.experiment_repetitions
 
-        
         # Extract names for experiments parameters
         self.classifiers_ = dict(zip(count_elements([classifier.__class__.__name__ for classifier in self.classifiers]), self.classifiers))
         self.oversampling_methods_ = dict(zip(count_elements([oversampling_method.__class__.__name__ if oversampling_method is not None else 'None' for oversampling_method in self.oversampling_methods]), self.oversampling_methods))
