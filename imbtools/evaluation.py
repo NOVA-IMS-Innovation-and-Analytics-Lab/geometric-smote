@@ -91,8 +91,7 @@ class BinaryExperiment:
                  experiment_repetitions=5, 
                  random_state=None, 
                  param_grids=None,
-                 n_jobs=1,
-                 cache_tasks=True):
+                 n_jobs=1):
         self.datasets = datasets
         self.classifiers = classifiers
         self.oversampling_methods = oversampling_methods
@@ -102,7 +101,6 @@ class BinaryExperiment:
         self.random_state = random_state
         self.param_grids = param_grids
         self.n_jobs = n_jobs
-        self.cache_tasks = cache_tasks
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
