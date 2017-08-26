@@ -149,7 +149,7 @@ class BinaryExperiment:
             self.datasets_summary_ = self.datasets_summary_.append(dataset_summary, ignore_index=True)
         self.datasets_summary_[self.datasets_summary_.columns[1:-1]] = self.datasets_summary_[self.datasets_summary_.columns[1:-1]].astype(int)
         
-    def run(self, logging_results=True):
+    def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
@@ -179,10 +179,7 @@ class BinaryExperiment:
                         cv_output = cross_validate(clf, X, y, cv=cv, scoring=self.scorers_, n_jobs=self.n_jobs)
                         for metric_name, scorer in self.scorers_.items():
                             cv_score = cv_output["test_" + metric_name].mean()
-                            msg = 'Experiment: {}\n' + ': {}\n'.join(results_columns) + ': {}\n\n'
                             result_list = [dataset_name, classifier_name, oversampling_method_name, metric_name, cv_score]
-                            if logging_results:
-                                print(msg.format(experiment_ind + 1, *result_list))
                             result = pd.DataFrame([result_list], columns=results_columns)
                             results = results.append(result, ignore_index=True)
                             iterations += 1
