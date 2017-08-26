@@ -14,13 +14,10 @@ from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import roc_auc_score, f1_score
 from sklearn.metrics import make_scorer
 from sklearn.base import clone
-from sklearn.externals.joblib import Memory
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
 from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
-from tempfile import mkdtemp
-from shutil import rmtree
 
 
 def count_elements(elements):
