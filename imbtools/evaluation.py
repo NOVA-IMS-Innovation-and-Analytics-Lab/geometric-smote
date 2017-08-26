@@ -14,6 +14,7 @@ from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import roc_auc_score, f1_score
 from sklearn.metrics import make_scorer
 from sklearn.base import clone
+from sklearn.utils import check_random_state
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
 from scipy.stats import friedmanchisquare
@@ -121,11 +122,8 @@ class BinaryExperiment:
             self.datasets_ = self.datasets
         
         # Create random states for experiments
-        generate_seed = lambda random_state, index: (random_state - index) if (random_state - index) >= 0 else (random_state + index)
-        if self.random_state is not None:
-            self.random_states_ = [generate_seed(self.random_state, index) for index in range(self.experiment_repetitions)]
-        else:
-            self.random_states_ = [None] * self.experiment_repetitions
+        random_state = check_random_state(self.random_state)
+        self.random_states_ = [random_state.randint(0, 2 ** 32 - 1) for ind in range(self.experiment_repetitions)]
 
         # Extract names for experiments parameters
         self.classifiers_ = dict(zip(count_elements([classifier.__class__.__name__ for classifier in self.classifiers]), self.classifiers))
