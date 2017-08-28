@@ -7,10 +7,7 @@ the performance of various oversampling algorithms.
 
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
-from sklearn.model_selection import cross_val_score, cross_validate
-from sklearn.metrics import roc_auc_score, f1_score
-from sklearn.metrics import make_scorer
-from sklearn.base import clone
+from sklearn.model_selection import cross_validate
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
 from .utils import check_datasets, check_random_states
@@ -88,7 +85,7 @@ class BinaryExperiment:
                  datasets,
                  classifiers,
                  oversampling_methods, 
-                 metrics=[roc_auc_score, f1_score, geometric_mean_score],
+                 scoring=['roc_auc', 'f1'],
                  n_splits=3, 
                  experiment_repetitions=5, 
                  random_state=None, 
@@ -97,7 +94,7 @@ class BinaryExperiment:
         self.datasets = datasets
         self.classifiers = classifiers
         self.oversampling_methods = oversampling_methods
-        self.metrics = metrics
+        self.scoring = scoring
         self.n_splits = n_splits
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
@@ -111,9 +108,7 @@ class BinaryExperiment:
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
         self.classifiers_ = self.classifiers
         self.oversampling_methods_ = self.oversampling_methods
-        self.metrics_ = dict(zip([sub('_', ' ', metric.__name__) for metric in self.metrics], self.metrics))
-        self.scorers_ = dict(zip(self.metrics_.keys(), [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]))
-        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.metrics_))
+        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.scoring))
         iterations = 0
 
         # Populate results dataframe
@@ -129,10 +124,10 @@ class BinaryExperiment:
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
                             clf = Pipeline([(oversampling_method_name, oversampling_method), (classifier_name, clf)])
-                        cv_output = cross_validate(clf, X, y, cv=cv, scoring=self.scorers_, n_jobs=self.n_jobs)
-                        for metric_name, scorer in self.scorers_.items():
-                            cv_score = cv_output["test_" + metric_name].mean()
-                            result_list = [dataset_name, classifier_name, oversampling_method_name, metric_name, cv_score]
+                        cv_output = cross_validate(clf, X, y, cv=cv, scoring=self.scoring, n_jobs=self.n_jobs)
+                        for scorer in self.scoring:
+                            cv_score = cv_output["test_" + scorer].mean()
+                            result_list = [dataset_name, classifier_name, oversampling_method_name, scorer, cv_score]
                             result = pd.DataFrame([result_list], columns=results_columns)
                             results = results.append(result, ignore_index=True)
                             iterations += 1
