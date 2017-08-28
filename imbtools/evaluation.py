@@ -99,11 +99,11 @@ class BinaryExperiment:
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
-        self.datasets_ = check_datasets(self.datasets)
+        datasets = check_datasets(self.datasets)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
         self.classifiers_ = self.classifiers
         self.oversampling_methods_ = self.oversampling_methods
-        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.scoring))
+        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.scoring))
         iterations = 0
 
         # Populate results dataframe
@@ -111,7 +111,7 @@ class BinaryExperiment:
         results = pd.DataFrame(columns=results_columns)
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
-            for dataset_name, (X, y) in self.datasets_.items():
+            for dataset_name, (X, y) in datasets.items():
                 for classifier_name, clf, _ in self.classifiers_:
                     if 'random_state' in clf.get_params().keys():
                         clf.set_params(random_state=random_state)
