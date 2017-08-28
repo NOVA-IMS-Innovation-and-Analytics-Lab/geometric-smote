@@ -51,12 +51,6 @@ def extract_pvalue(dataframe):
         measurements.append(dataframe[col])
     return friedmanchisquare(*measurements).pvalue
 
-def optimize_hyperparameters(X, y, clf, param_grid, cv):
-    """Returns the parameters with the highest auc."""
-    clfs = GridSearchCV(estimator=clone(clf), param_grid=param_grid, scoring='roc_auc', cv=cv, refit=False)
-    clfs.fit(X, y)
-    return clfs.best_params_
-
 
 class BinaryExperiment:
     """Class for comparison of oversampling algorithms performance 
