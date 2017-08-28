@@ -1,5 +1,13 @@
+from itertools import product
 from sklearn.utils import check_X_y, check_random_state
 
+
+def _flatten_parameters_list(parameters_list):
+    """Flattens a dictionaries' list of parameters."""
+    flat_parameters = []
+    for parameters_dict in parameters_list:
+        flat_parameters += [dict(zip(parameters_dict.keys(), parameter_product)) for parameter_product in product(*parameters_dict.values())]
+    return flat_parameters
 
 def check_datasets(datasets):
     """Checks that datasets is a list of (X,y) pairs or a dictionary of dataset-name:(X,y) pairs."""
@@ -18,3 +26,9 @@ def check_datasets(datasets):
 def check_random_states(random_state, repetitions):
     """Create random states for experiments."""
     return [check_random_state(random_state).randint(0, 2 ** 32 - 1) for ind in range(repetitions)]
+
+def check_classifiers(classifiers):
+    return classifiers
+
+def check_oversamplers(oversampling_methods):
+    return oversampling_methods

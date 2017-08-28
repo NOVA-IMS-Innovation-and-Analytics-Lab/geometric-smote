@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_validate
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
-from .utils import check_datasets, check_random_states
+from .utils import check_datasets, check_random_states, check_classifiers, check_oversamplers
 from os.path import join
 from os import listdir
 from re import match, sub
@@ -61,7 +61,7 @@ class BinaryExperiment:
         as a key.
     classifiers : list of classifiers
         A list of classifiers.
-    oversampling_methods : list of oversampling_methods
+    oversamplers : list of oversamplers
         A list of oversampling methods.
     metrics : list of string scorers, (default=[᾽roc_auc᾽, ᾽f1᾽])
         A list of classification metrics.
@@ -81,7 +81,7 @@ class BinaryExperiment:
     def __init__(self, 
                  datasets,
                  classifiers,
-                 oversampling_methods, 
+                 oversamplers, 
                  scoring=['roc_auc', 'f1'],
                  n_splits=3, 
                  experiment_repetitions=5, 
@@ -89,7 +89,7 @@ class BinaryExperiment:
                  n_jobs=1):
         self.datasets = datasets
         self.classifiers = classifiers
-        self.oversampling_methods = oversampling_methods
+        self.oversamplers = oversamplers
         self.scoring = scoring
         self.n_splits = n_splits
         self.experiment_repetitions = experiment_repetitions
@@ -101,9 +101,9 @@ class BinaryExperiment:
         scores for each classifier, oversampling method, datasets and metric."""
         datasets = check_datasets(self.datasets)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
-        self.classifiers_ = self.classifiers
-        self.oversampling_methods_ = self.oversampling_methods
-        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.scoring))
+        self.classifiers_ = check_classifiers(self.classifiers)
+        self.oversamplers_ = check_oversamplers(self.oversamplers)
+        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_) * len(self.scoring))
         iterations = 0
 
         # Populate results dataframe
@@ -115,7 +115,7 @@ class BinaryExperiment:
                 for classifier_name, clf, _ in self.classifiers_:
                     if 'random_state' in clf.get_params().keys():
                         clf.set_params(random_state=random_state)
-                    for oversampling_method_name, oversampling_method, _ in self.oversampling_methods_:
+                    for oversampling_method_name, oversampling_method, _ in self.oversamplers_:
                         if oversampling_method is not None:
                             oversampling_method.set_params(random_state=random_state)
                             clf = Pipeline([(oversampling_method_name, oversampling_method), (classifier_name, clf)])
@@ -147,7 +147,7 @@ class BinaryExperiment:
         self.mean_ranking_results_ = round(ranking_results.groupby(['Classifier', 'Metric']).mean(), 2)
 
         # Calculate Friedman test p-values
-        if len(self.oversampling_methods) > 2:
+        if len(self.oversamplers) > 2:
             self.friedman_test_results_ = ranking_results.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'}).set_index(['Classifier', 'Metric'])
         else:
             self.friedman_test_results_ = 'Friedman test is not applied. More than two oversampling methods are needed.'
