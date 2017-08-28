@@ -11,10 +11,9 @@ from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import roc_auc_score, f1_score
 from sklearn.metrics import make_scorer
 from sklearn.base import clone
-from sklearn.utils import check_random_state
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
-from .utils import check_datasets
+from .utils import check_datasets, check_random_states
 from os.path import join
 from os import listdir
 from re import match, sub
@@ -116,10 +115,8 @@ class BinaryExperiment:
         """Private method that initializes the experiment's parameters."""
         
         self.datasets_ = check_datasets(self.datasets)
-
-        # Create random states for experiments
-        random_state = check_random_state(self.random_state)
-        self.random_states_ = [random_state.randint(0, 2 ** 32 - 1) for ind in range(self.experiment_repetitions)]
+        self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
+        
 
         # Extract names for experiments parameters
         self.classifiers_ = dict(zip(count_elements([classifier.__class__.__name__ for classifier in self.classifiers]), self.classifiers))
