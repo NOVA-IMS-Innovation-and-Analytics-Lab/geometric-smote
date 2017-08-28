@@ -32,6 +32,18 @@ def read_csv_dir(filepath):
         datasets[dataset_name] = (X, y)
     return datasets
 
+def summarize_datasets(datasets):
+        """Creates a summary of the datasets."""
+        datasets = check_datasets(datasets)
+        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalance Ratio"]
+        datasets_summary = pd.DataFrame({}, columns=summary_columns)
+        for dataset_name, (X, y) in datasets.items():
+            n_instances = ((y == 0).sum(), (y == 1).sum())
+            dataset_summary = pd.DataFrame([[dataset_name, X.shape[1], y.size, n_instances[1], n_instances[0], round(n_instances[0] / n_instances[1], 2)]], columns=datasets_summary.columns)
+            datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
+        datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
+        return datasets_summary
+
 def count_elements(elements):
     """Returns a list with modified elements by a count index."""
     elements_map = {}
@@ -131,22 +143,11 @@ class BinaryExperiment:
             
         # Converts metrics to scores
         self.scorers_ = dict(zip(self.metrics_.keys(), [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]))
-
-    def _summarize_datasets(self):
-        """Creates a summary of the datasets."""
-        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalance Ratio"]
-        self.datasets_summary_ = pd.DataFrame({}, columns=summary_columns)
-        for dataset_name, (X, y) in self.datasets_.items():
-            n_instances = ((y == 0).sum(), (y == 1).sum())
-            dataset_summary = pd.DataFrame([[dataset_name, X.shape[1], y.size, n_instances[1], n_instances[0], round(n_instances[0] / n_instances[1], 2)]], columns=self.datasets_summary_.columns)
-            self.datasets_summary_ = self.datasets_summary_.append(dataset_summary, ignore_index=True)
-        self.datasets_summary_[self.datasets_summary_.columns[1:-1]] = self.datasets_summary_[self.datasets_summary_.columns[1:-1]].astype(int)
         
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
         self._initialize_parameters()
-        self._summarize_datasets()
         bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.metrics_))
         iterations = 0
 
