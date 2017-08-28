@@ -44,19 +44,6 @@ def summarize_datasets(datasets):
         datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
         return datasets_summary
 
-def count_elements(elements):
-    """Returns a list with modified elements by a count index."""
-    elements_map = {}
-    elements_modified = []
-    for element in elements:
-        if element in elements_map.keys():
-            elements_map[element] += 1
-            elements_modified.append(element + str(elements_map[element]))
-        else:
-            elements_map[element] = 1
-            elements_modified.append(element)
-    return elements_modified
-
 def extract_pvalue(dataframe):
     """Extracts p-value applying the Friedman test to measurements."""
     measurements = []
