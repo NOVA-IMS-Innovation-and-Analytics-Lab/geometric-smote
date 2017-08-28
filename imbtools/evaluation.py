@@ -103,27 +103,16 @@ class BinaryExperiment:
         self.random_state = random_state
         self.param_grids = param_grids
         self.n_jobs = n_jobs
-
-    def _initialize_parameters(self):
-        """Private method that initializes the experiment's parameters."""
-        
-        self.datasets_ = check_datasets(self.datasets)
-        self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
-        
-
-        # Extract names for experiments parameters
-        self.classifiers_ = self.classifiers
-        self.oversampling_methods_ = self.oversampling_methods
-        self.metrics_ = dict(zip([sub('_', ' ', metric.__name__) for metric in self.metrics], self.metrics))
-        
-            
-        # Converts metrics to scores
-        self.scorers_ = dict(zip(self.metrics_.keys(), [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]))
-        
+    
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
-        self._initialize_parameters()
+        self.datasets_ = check_datasets(self.datasets)
+        self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
+        self.classifiers_ = self.classifiers
+        self.oversampling_methods_ = self.oversampling_methods
+        self.metrics_ = dict(zip([sub('_', ' ', metric.__name__) for metric in self.metrics], self.metrics))
+        self.scorers_ = dict(zip(self.metrics_.keys(), [make_scorer(metric) if metric is not roc_auc_score else make_scorer(metric, needs_threshold=True) for metric in self.metrics]))
         bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(self.datasets_) * len(self.classifiers_) * len(self.oversampling_methods_) * len(self.metrics_))
         iterations = 0
 
