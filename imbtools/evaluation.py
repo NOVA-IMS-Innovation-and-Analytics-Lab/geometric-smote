@@ -55,16 +55,15 @@ class BinaryExperiment:
     
     Parameters
     ----------
-    datasets : str or list of (X, y) tuples or dictionary of dataset-name:(X,y) pairs
-        The string is a path to the directory which contains the imbalanced data in 
-        csv format. The list of (X, y) pairs is a list of tuples of input data and 
+    datasets : list of (X, y) tuples or dictionary of dataset-name:(X,y) pairs
+        The list of (X, y) pairs is a list of tuples of input data and 
         target values, The dictionary extends the list by adding the datasets names 
         as a key.
     classifiers : list of classifiers
         A list of classifiers.
     oversampling_methods : list of oversampling_methods
         A list of oversampling methods.
-    metrics : list of metrics, (default=[roc_auc_score, f1_score, geometric_mean_score])
+    metrics : list of string scorers, (default=[᾽roc_auc᾽, ᾽f1᾽])
         A list of classification metrics.
     n_splits : int, (default=3)
         The number of cross validation stages.
@@ -75,8 +74,6 @@ class BinaryExperiment:
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-    param_grids : list, optional (default=None)
-        A list of hyperparameters grids for each classfier.
     n_jobs : int, (default=1)
         The number of CPUs to use to do the computation. -1 means ‘all CPUs’.
     """
@@ -88,8 +85,7 @@ class BinaryExperiment:
                  scoring=['roc_auc', 'f1'],
                  n_splits=3, 
                  experiment_repetitions=5, 
-                 random_state=None, 
-                 param_grids=None,
+                 random_state=None,
                  n_jobs=1):
         self.datasets = datasets
         self.classifiers = classifiers
@@ -98,7 +94,6 @@ class BinaryExperiment:
         self.n_splits = n_splits
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
-        self.param_grids = param_grids
         self.n_jobs = n_jobs
     
     def run(self):
