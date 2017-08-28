@@ -6,9 +6,6 @@ the performance of various oversampling algorithms.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 import pandas as pd
-from os import listdir, chdir
-from os.path import join
-from re import match, sub
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_val_score, cross_validate
 from sklearn.metrics import roc_auc_score, f1_score
@@ -17,9 +14,24 @@ from sklearn.base import clone
 from sklearn.utils import check_random_state
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
+from .utils import check_datasets
+from os.path import join
+from os import listdir
+from re import match, sub
 from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
 
+
+def read_csv_dir(filepath):
+    "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
+    datasets = {}
+    csv_files = [csv_file for csv_file in listdir(filepath) if match('^.+\.csv$', csv_file)]
+    for csv_file in csv_files:
+        dataset = pd.read_csv(join(filepath,csv_file))
+        X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
+        dataset_name = sub(".csv", "", csv_file)
+        datasets[dataset_name] = (X, y)
+    return datasets
 
 def count_elements(elements):
     """Returns a list with modified elements by a count index."""
@@ -102,25 +114,9 @@ class BinaryExperiment:
 
     def _initialize_parameters(self):
         """Private method that initializes the experiment's parameters."""
-
-        # Read csv files and save them to a dictionary
-        if isinstance(self.datasets, str):
-            self.datasets_ = {}
-            csv_files = [csv_file for csv_file in listdir(self.datasets) if match('^.+\.csv$', csv_file)]
-            for csv_file in csv_files:
-                dataset = pd.read_csv(join(self.datasets,csv_file))
-                X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
-                dataset_name = sub(".csv", "", csv_file)
-                self.datasets_[dataset_name] = (X, y)
-
-        # If a list of (X,y) data is given, append names to each one of them
-        if isinstance(self.datasets, list):
-            self.datasets_ = {("dataset_" + str(ind + 1)):dataset for ind, dataset in enumerate(self.datasets)}
-
-        # If a dict of dataset-name:(X,y) pairs is given, copy to a new attribute
-        if isinstance(self.datasets, dict):
-            self.datasets_ = self.datasets
         
+        self.datasets_ = check_datasets(self.datasets)
+
         # Create random states for experiments
         random_state = check_random_state(self.random_state)
         self.random_states_ = [random_state.randint(0, 2 ** 32 - 1) for ind in range(self.experiment_repetitions)]
