@@ -10,7 +10,7 @@ from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_validate
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
-from .utils import check_datasets, check_random_states, check_classifiers, check_oversamplers
+from .utils import check_datasets, check_random_states, check_models
 from os.path import join
 from os import listdir
 from re import match, sub
@@ -101,9 +101,9 @@ class BinaryExperiment:
         scores for each classifier, oversampling method, datasets and metric."""
         datasets = check_datasets(self.datasets)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
-        self.classifiers_ = check_classifiers(self.classifiers)
-        self.oversamplers_ = check_oversamplers(self.oversamplers)
-        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_) * len(self.scoring))
+        self.classifiers_ = check_models(self.classifiers, "classifier")
+        self.oversamplers_ = check_models(self.oversamplers, "oversampler")
+        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
         iterations = 0
 
         # Populate results dataframe
@@ -112,21 +112,22 @@ class BinaryExperiment:
         for experiment_ind, random_state in enumerate(self.random_states_):
             cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
             for dataset_name, (X, y) in datasets.items():
-                for classifier_name, clf, _ in self.classifiers_:
+                for clf_name, clf, in self.classifiers_:
                     if 'random_state' in clf.get_params().keys():
                         clf.set_params(random_state=random_state)
-                    for oversampling_method_name, oversampling_method, _ in self.oversamplers_:
-                        if oversampling_method is not None:
-                            oversampling_method.set_params(random_state=random_state)
-                            clf = Pipeline([(oversampling_method_name, oversampling_method), (classifier_name, clf)])
+                    for oversampler_name, oversampler in self.oversamplers_:
+                        if oversampler is not None:
+                            oversampler.set_params(random_state=random_state)
+                            clf = Pipeline([(oversampler_name, oversampler), (clf_name, clf)])
                         cv_output = cross_validate(clf, X, y, cv=cv, scoring=self.scoring, n_jobs=self.n_jobs)
+                        iterations += 1
+                        bar.update(iterations)
                         for scorer in self.scoring:
                             cv_score = cv_output["test_" + scorer].mean()
-                            result_list = [dataset_name, classifier_name, oversampling_method_name, scorer, cv_score]
+                            result_list = [dataset_name, clf_name, oversampler_name, scorer, cv_score]
                             result = pd.DataFrame([result_list], columns=results_columns)
                             results = results.append(result, ignore_index=True)
-                            iterations += 1
-                            bar.update(iterations)
+                            
 
         # Group results dataframe by dataset, classifier and metric
         grouped_results = results.groupby(list(results.columns[:-1]))
