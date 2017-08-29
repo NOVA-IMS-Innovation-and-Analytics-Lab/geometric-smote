@@ -20,7 +20,7 @@ def check_datasets(datasets):
         else:
             raise ValueError("The datasets' names should be unique strings.")
     except:
-        raise ValueError("The datasets should be a list of (X,y) tuples or a list of (dataset name:(X,y)) pairs.")
+        raise ValueError("The datasets should be a list (dataset name:(X,y)) pairs.")
 
 def check_random_states(random_state, repetitions):
     """Creates random states for experiments."""
