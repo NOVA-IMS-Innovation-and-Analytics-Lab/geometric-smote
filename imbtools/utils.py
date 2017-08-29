@@ -28,7 +28,7 @@ def check_random_states(random_state, repetitions):
     return [check_random_state(random_state).randint(0, 2 ** 32 - 1) for ind in range(repetitions)]
 
 def check_models(models, model_type):
-    """Creates """
+    """Creates individual classifiers and oversamplers from parameters grid."""
     try:
         flat_models = []
         for model_name, model, *param_grid in models:
