@@ -6,10 +6,12 @@ the performance of various oversampling algorithms.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 from sklearn.model_selection import cross_validate
 from imblearn.pipeline import Pipeline
 from imblearn.metrics import geometric_mean_score
+from itertools import product
 from .utils import check_datasets, check_random_states, check_models
 from os.path import join
 from os import listdir
@@ -41,12 +43,83 @@ def summarize_datasets(datasets):
         datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
         return datasets_summary
 
-def extract_pvalue(dataframe):
-    """Extracts p-value applying the Friedman test to measurements."""
-    measurements = []
-    for col in dataframe.columns[2:]:
-        measurements.append(dataframe[col])
-    return friedmanchisquare(*measurements).pvalue
+def calculate_stats(experiment):
+    """Calculates mean and standard deviation across experiments for every 
+    combination of datasets, classifiers, oversamplers and metrics."""
+    grouped_results = experiment.results_.groupby(experiment.results_.columns[:-1].tolist(), as_index = False)
+    stats = grouped_results.agg({'CV score': [np.mean, np.std]})
+    stats.columns = experiment.results_.columns.tolist()[:-1] + ['Mean CV score', 'Std CV score']
+    return stats
+
+def calculate_optimal_stats(experiment):
+    """Calculates the highest mean and standard deviation for every 
+    combination of classfiers and oversamplers across different 
+    hyperparameters' configurations."""
+    clfs_names = [clf_name for clf_name, *_ in experiment.classifiers]
+    expanded_clfs_names = [clf_name for clf_name, _ in experiment.classifiers_]
+    
+    oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
+    expanded_oversamplers_names = [oversampler_name for oversampler_name, _ in experiment.oversamplers_]
+    
+    stats = calculate_stats(experiment)
+    optimal_stats = pd.DataFrame(columns=stats.columns)
+    
+    for clf_name, oversampler_name, dataset_name in product(clfs_names, oversamplers_names, experiment.datasets_names_):
+        matched_clfs_names = [exp_clf_name for exp_clf_name in expanded_clfs_names if match(clf_name, exp_clf_name)]
+        matched_oversamplers_names = [exp_oversampler_name for exp_oversampler_name in expanded_oversamplers_names if match(oversampler_name, exp_oversampler_name)]
+        
+        is_matched_clfs = np.isin(stats['Classifier'], matched_clfs_names)
+        is_matched_oversamplers = np.isin(stats['Oversampler'], matched_oversamplers_names)
+        is_matched_dataset = (stats['Dataset'] == dataset_name)
+        
+        matched_stats = stats[is_matched_clfs & is_matched_oversamplers & is_matched_dataset]
+        optimal_matched_stats = matched_stats.groupby('Metric', as_index = False).agg({'Mean CV score': [max, lambda col: matched_stats['Std CV score'][np.argmax(col)]]})
+        optimal_matched_stats.columns = stats.columns[-3:]
+        optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
+        optimal_matched_stats = pd.concat([optimal_matched_names, optimal_matched_stats], axis=1)
+        optimal_stats = optimal_stats.append(optimal_matched_stats, ignore_index=True)
+
+    return optimal_stats
+
+def calculate_optimal_stats_wide(experiment):
+    """Calculates in wide format the highest mean and standard 
+    deviation for every combination of classfiers and oversamplers 
+    across different hyperparameters' configurations."""
+    optimal_stats = calculate_optimal_stats(experiment)
+    
+    optimal_mean_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Mean CV score').reset_index()
+    optimal_mean_wide.columns.rename(None, inplace=True)
+    
+    optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Std CV score').reset_index()
+    optimal_std_wide.columns.rename(None, inplace=True)
+    
+    oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
+    optimal_stats_wide = pd.DataFrame(columns=oversamplers_names)
+    
+    for oversampler_name in oversamplers_names:
+        optimal_stats_wide[oversampler_name] = list(zip(optimal_mean_wide[oversampler_name], optimal_std_wide[oversampler_name]))
+    
+    return pd.concat([optimal_mean_wide[['Dataset', 'Classifier', 'Metric']], optimal_stats_wide], axis=1)
+
+def calculate_ranking(experiment):
+    """Calculates the ranking of oversamplers."""
+    optimal_stats_wide = calculate_optimal_stats_wide(experiment)
+    ranking = optimal_stats_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)
+    return pd.concat([optimal_stats_wide.iloc[:, :3], ranking], axis=1)
+
+def calculate_mean_ranking(experiment):
+    """Calculates the ranking of oversamplers."""
+    ranking = calculate_ranking(experiment)
+    return ranking.groupby(['Classifier', 'Metric'], as_index=False).mean()
+
+def calculate_friedman_test(experiment):
+    """Calculates the friedman test across datasets for every 
+    combination of classifiers and metrics."""
+    if len(experiment.oversamplers_) < 3:
+        raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
+    ranking = calculate_ranking(experiment)
+    extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
+    return ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
 
 
 class BinaryExperiment:
@@ -104,7 +177,7 @@ class BinaryExperiment:
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
         self.classifiers_ = check_models(self.classifiers, "classifier")
         self.oversamplers_ = check_models(self.oversamplers, "oversampler")
-        bar = ProgressBar(redirect_stdout=True, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
+        bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
         iterations = 0
 
         # Populate results dataframe
@@ -128,29 +201,5 @@ class BinaryExperiment:
                             result_list = [dataset_name, clf_name, oversampler_name, scorer, cv_score]
                             result = pd.DataFrame([result_list], columns=results_columns)
                             self.results_ = self.results_.append(result, ignore_index=True)
-                            
-        # Group results dataframe by dataset, classifier and metric
-        grouped_results = self.results_.groupby(list(self.results_.columns[:-1]))
-
-        # Calculate mean and std results
-        self.mean_cv_results_ = grouped_results.mean().reset_index().rename(columns={'CV score': 'Mean CV score'})
-        if self.experiment_repetitions > 1:
-            self.std_cv_results_ = grouped_results.std().reset_index().rename(columns={'CV score': 'Std CV score'})
-        else:
-            self.std_cv_results_ = "Standard deviation is not calculated. More than one experiment repetition is needed."
-        
-        # Transform mean results to wide format
-        mean_cv_results_wide = self.mean_cv_results_.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Mean CV score').reset_index()
-        mean_cv_results_wide.columns.rename(None, inplace=True)
-
-        # Calculate mean ranking for each classifier/metric across datasets
-        ranking_results = pd.concat([mean_cv_results_wide[['Classifier', "Metric"]], mean_cv_results_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)], axis=1)    
-        self.mean_ranking_results_ = round(ranking_results.groupby(['Classifier', 'Metric']).mean(), 2)
-
-        # Calculate Friedman test p-values
-        if len(self.oversamplers) > 2:
-            self.friedman_test_results_ = ranking_results.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'}).set_index(['Classifier', 'Metric'])
-        else:
-            self.friedman_test_results_ = 'Friedman test is not applied. More than two oversampling methods are needed.'
         
         del self.datasets
