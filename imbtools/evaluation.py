@@ -229,10 +229,11 @@ class BinaryExperiment:
                             result_list = [dataset_name, clf_name, oversampler_name, scorer, cv_score]
                             result = pd.DataFrame([result_list], columns=results_columns)
                             self.results_ = self.results_.append(result, ignore_index=True)
-        
-        # Delete datasets attribute
-        del self.datasets
 
-    def save(self, filename):
+    def save(self, filename, pickle_datasets=False):
         """Pickles the experiment object."""
+        if not pickle_datasets:
+            if hasattr(self, 'datasets'):
+                del self.datasets
+            self.run = lambda : None
         dump(self, open(filename, 'wb'))
