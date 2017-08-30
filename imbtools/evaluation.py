@@ -55,15 +55,20 @@ def calculate_optimal_stats(experiment):
     """Calculates the highest mean and standard deviation for every 
     combination of classfiers and oversamplers across different 
     hyperparameters' configurations."""
+    
+    # Classifiers names
     clfs_names = [clf_name for clf_name, *_ in experiment.classifiers]
     expanded_clfs_names = [clf_name for clf_name, _ in experiment.classifiers_]
     
+    # Oversamplers names
     oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
     expanded_oversamplers_names = [oversampler_name for oversampler_name, _ in experiment.oversamplers_]
     
+    # Calculate stats table
     stats = calculate_stats(experiment)
     optimal_stats = pd.DataFrame(columns=stats.columns)
     
+    # Populate optimal stats table
     for clf_name, oversampler_name, dataset_name in product(clfs_names, oversamplers_names, experiment.datasets_names_):
         matched_clfs_names = [exp_clf_name for exp_clf_name in expanded_clfs_names if match(clf_name, exp_clf_name)]
         matched_oversamplers_names = [exp_oversampler_name for exp_oversampler_name in expanded_oversamplers_names if match(oversampler_name, exp_oversampler_name)]
@@ -78,7 +83,6 @@ def calculate_optimal_stats(experiment):
         optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
         optimal_matched_stats = pd.concat([optimal_matched_names, optimal_matched_stats], axis=1)
         optimal_stats = optimal_stats.append(optimal_matched_stats, ignore_index=True)
-
     return optimal_stats
 
 def calculate_optimal_stats_wide(experiment):
@@ -87,18 +91,19 @@ def calculate_optimal_stats_wide(experiment):
     across different hyperparameters' configurations."""
     optimal_stats = calculate_optimal_stats(experiment)
     
+    # Calculate wide format of mean cv
     optimal_mean_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Mean CV score').reset_index()
     optimal_mean_wide.columns.rename(None, inplace=True)
     
+    # Calculate wide format of std cv
     optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Std CV score').reset_index()
     optimal_std_wide.columns.rename(None, inplace=True)
     
+    # Polpulate wide format of optimal stats
     oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
     optimal_stats_wide = pd.DataFrame(columns=oversamplers_names)
-    
     for oversampler_name in oversamplers_names:
         optimal_stats_wide[oversampler_name] = list(zip(optimal_mean_wide[oversampler_name], optimal_std_wide[oversampler_name]))
-    
     return pd.concat([optimal_mean_wide[['Dataset', 'Classifier', 'Metric']], optimal_stats_wide], axis=1)
 
 def calculate_ranking(experiment):
@@ -172,11 +177,15 @@ class BinaryExperiment:
     def run(self):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
+        
+        # Initialize experiment parameters
         datasets = check_datasets(self.datasets)
         self.datasets_names_ = [dataset_name for dataset_name, _ in datasets]
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
         self.classifiers_ = check_models(self.classifiers, "classifier")
         self.oversamplers_ = check_models(self.oversamplers, "oversampler")
+        
+        # Initialize progress bar
         bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
         iterations = 0
 
@@ -202,4 +211,5 @@ class BinaryExperiment:
                             result = pd.DataFrame([result_list], columns=results_columns)
                             self.results_ = self.results_.append(result, ignore_index=True)
         
+        # Delete datasets attribute
         del self.datasets
