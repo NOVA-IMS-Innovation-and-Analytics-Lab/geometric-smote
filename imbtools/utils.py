@@ -1,6 +1,13 @@
+"""
+This module contains various checks.
+"""
+
+# Author: Georgios Douzas <gdouzas@icloud.com>
+
 from itertools import product
 from sklearn.utils import check_X_y, check_random_state
 from sklearn.base import clone
+
 
 def _flatten_parameters_list(parameters_list):
     """Flattens a dictionaries' list of parameters."""
