@@ -18,6 +18,7 @@ from os import listdir
 from re import match, sub
 from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
+from pickle import dump, load
 from .metrics import SCORERS
 
 
@@ -135,6 +136,13 @@ def calculate_friedman_test(experiment):
     extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
     return ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
 
+def load_experiment(filename):
+    """Loads a saved experiment object."""
+    loaded_obj = load(open(filename, 'rb'))
+    if not isinstance(loaded_obj, BinaryExperiment):
+        raise TypeError("File {} is not a BinaryExperiment instance.")
+    return loaded_obj
+
 
 class BinaryExperiment:
     """Class for comparison of oversampling algorithms performance 
@@ -222,3 +230,7 @@ class BinaryExperiment:
         
         # Delete datasets attribute
         del self.datasets
+
+    def save(self, filename):
+        """Pickles the experiment object."""
+        dump(self, open(filename, 'wb'))
