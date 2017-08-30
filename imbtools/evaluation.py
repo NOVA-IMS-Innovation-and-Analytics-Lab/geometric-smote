@@ -20,6 +20,7 @@ from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
 from pickle import dump, load
 from .metrics import SCORERS
+from warnings import filterwarnings
 
 
 def read_csv_dir(dirpath):
@@ -191,9 +192,10 @@ class BinaryExperiment:
         self.random_state = random_state
         self.n_jobs = n_jobs
     
-    def run(self):
+    def run(self, hide_warnings=True):
         """Runs the experimental procedure and calculates the cross validation 
         scores for each classifier, oversampling method, datasets and metric."""
+        filterwarnings('ignore') if hide_warnings else filterwarnings('default')
         
         # Initialize experiment parameters
         datasets = check_datasets(self.datasets)
