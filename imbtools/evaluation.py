@@ -21,12 +21,12 @@ from progressbar import ProgressBar
 from .metrics import SCORERS
 
 
-def read_csv_dir(filepath):
+def read_csv_dir(dirpath):
     "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
     datasets = []
-    csv_files = [csv_file for csv_file in listdir(filepath) if match('^.+\.csv$', csv_file)]
+    csv_files = [csv_file for csv_file in listdir(dirpath) if match('^.+\.csv$', csv_file)]
     for csv_file in csv_files:
-        dataset = pd.read_csv(join(filepath,csv_file))
+        dataset = pd.read_csv(join(dirpath,csv_file))
         X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
         dataset_name = sub(".csv", "", csv_file)
         datasets.append( (dataset_name, (X, y)) )
