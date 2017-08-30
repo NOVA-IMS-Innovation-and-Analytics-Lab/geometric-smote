@@ -18,6 +18,7 @@ from os import listdir
 from re import match, sub
 from scipy.stats import friedmanchisquare
 from progressbar import ProgressBar
+from .metrics import SCORERS
 
 
 def read_csv_dir(filepath):
@@ -43,12 +44,18 @@ def summarize_datasets(datasets):
         datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
         return datasets_summary
 
-def calculate_stats(experiment):
-    """Calculates mean and standard deviation across experiments for every 
-    combination of datasets, classifiers, oversamplers and metrics."""
+def _calculate_stats(experiment):
+    """Calculates stats for positive and negative scorers."""
     grouped_results = experiment.results_.groupby(experiment.results_.columns[:-1].tolist(), as_index = False)
     stats = grouped_results.agg({'CV score': [np.mean, np.std]})
     stats.columns = experiment.results_.columns.tolist()[:-1] + ['Mean CV score', 'Std CV score']
+    return stats
+
+def calculate_stats(experiment):
+    """Calculates mean and standard deviation across experiments for every 
+    combination of datasets, classifiers, oversamplers and metrics."""
+    stats = _calculate_stats(experiment)
+    stats['Mean CV score'] = np.abs(stats['Mean CV score'])
     return stats
 
 def calculate_optimal_stats(experiment):
@@ -65,11 +72,11 @@ def calculate_optimal_stats(experiment):
     expanded_oversamplers_names = [oversampler_name for oversampler_name, _ in experiment.oversamplers_]
     
     # Calculate stats table
-    stats = calculate_stats(experiment)
+    stats = _calculate_stats(experiment)
     optimal_stats = pd.DataFrame(columns=stats.columns)
     
     # Populate optimal stats table
-    for clf_name, oversampler_name, dataset_name in product(clfs_names, oversamplers_names, experiment.datasets_names_):
+    for dataset_name, clf_name, oversampler_name in product(experiment.datasets_names_, clfs_names, oversamplers_names):
         matched_clfs_names = [exp_clf_name for exp_clf_name in expanded_clfs_names if match(clf_name, exp_clf_name)]
         matched_oversamplers_names = [exp_oversampler_name for exp_oversampler_name in expanded_oversamplers_names if match(oversampler_name, exp_oversampler_name)]
         
@@ -83,6 +90,8 @@ def calculate_optimal_stats(experiment):
         optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
         optimal_matched_stats = pd.concat([optimal_matched_names, optimal_matched_stats], axis=1)
         optimal_stats = optimal_stats.append(optimal_matched_stats, ignore_index=True)
+
+    optimal_stats['Mean CV score'] = np.abs(optimal_stats['Mean CV score'])
     return optimal_stats
 
 def calculate_optimal_stats_wide(experiment):
