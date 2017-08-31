@@ -45,6 +45,6 @@ def check_models(models, model_type):
                 flat_parameters = _flatten_parameters_list(param_grid[0])
                 for ind, parameters in enumerate(flat_parameters):
                     flat_models += [(model_name + str(ind + 1), clone(model).set_params(**parameters))]
-    except: 
+    except:
         raise ValueError("The {model_type}s should be a list of ({model_type} name, {model_type}) pairs or ({model_type} name, {model_type}, parameters grid) triplets.".format(model_type=model_type))
     return flat_models

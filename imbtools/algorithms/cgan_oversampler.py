@@ -1,7 +1,7 @@
 
 """
-This module contains the implementation of the 
-Conditional Generative Adversarial Network as 
+This module contains the implementation of the
+Conditional Generative Adversarial Network as
 an oversampling algorithm.
 """
 
@@ -14,8 +14,8 @@ from sklearn.utils import check_random_state
 
 
 class CGANOversampler(BaseOverSampler):
-    """Class to perform oversampling using a 
-    Conditional Generative Adversarial Network as 
+    """Class to perform oversampling using a
+    Conditional Generative Adversarial Network as
     an oversampling algorithm.
 
     Parameters
@@ -33,10 +33,10 @@ class CGANOversampler(BaseOverSampler):
     n_Z_features : int
         Number of features of the Z noise space.
     discriminator_hidden_layers : list of (int, activation function) tuples
-        Each tuple represents the number of neurons and the activation 
+        Each tuple represents the number of neurons and the activation
         function of the discriminator's corresponding hidden layer.
     generator_hidden_layers : list of (int, activation function) tuples
-        Each tuple represents the number of neurons and the activation 
+        Each tuple represents the number of neurons and the activation
         function of the generators's corresponding hidden layer.
     discriminator_optimizer : TensorFlow optimizer, default AdamOptimizer
         The optimizer for the discriminator.
@@ -71,15 +71,15 @@ class CGANOversampler(BaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
-                 n_Z_features=None, 
-                 discriminator_hidden_layers=None, 
-                 generator_hidden_layers=None, 
-                 discriminator_optimizer=OPTIMIZER,  
+                 n_Z_features=None,
+                 discriminator_hidden_layers=None,
+                 generator_hidden_layers=None,
+                 discriminator_optimizer=OPTIMIZER,
                  discriminator_initializer=['xavier', 'zeros'],
-                 generator_optimizer=OPTIMIZER, 
+                 generator_optimizer=OPTIMIZER,
                  generator_initializer=['xavier', 'zeros'],
-                 nb_epoch=None, 
-                 batch_size=None, 
+                 nb_epoch=None,
+                 batch_size=None,
                  discriminator_steps=1):
         super().__init__(ratio=ratio, random_state=random_state)
         self.n_Z_features = n_Z_features
@@ -92,17 +92,17 @@ class CGANOversampler(BaseOverSampler):
         self.nb_epoch = nb_epoch
         self.batch_size = batch_size
         self.discriminator_steps = discriminator_steps
-    
+
     def fit(self, X, y):
         """Fits CGAN model and finds the classes statistics.
-        
+
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
             Matrix containing the data which have to be sampled.
         y : ndarray, shape (n_samples, )
             Corresponding label for each sample in X.
-        
+
         Returns
         -------
         self : object,
@@ -110,25 +110,25 @@ class CGANOversampler(BaseOverSampler):
         """
         super().fit(X, y)
         self.cgan_ = CGAN(self.n_Z_features,
-                    self.discriminator_hidden_layers,
-                    self.generator_hidden_layers,
-                    self.discriminator_optimizer,
-                    self.discriminator_initializer,
-                    self.generator_optimizer,
-                    self.generator_initializer)
+                          self.discriminator_hidden_layers,
+                          self.generator_hidden_layers,
+                          self.discriminator_optimizer,
+                          self.discriminator_initializer,
+                          self.generator_optimizer,
+                          self.generator_initializer)
         self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps, logging_options=None)
         return self
 
     def _sample(self, X, y):
         """Resample the dataset.
-        
+
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
             Matrix containing the data which have to be sampled.
         y : ndarray, shape (n_samples, )
             Corresponding label for each sample in X.
-        
+
         Returns
         -------
         X_resampled : ndarray, shape (n_samples_new, n_features)
@@ -142,9 +142,4 @@ class CGANOversampler(BaseOverSampler):
             y_resampled = np.concatenate([y, [class_sample] * num_samples], axis=0)
 
         return X_resampled, y_resampled
-
-
-
-    
-        
-        
+     
