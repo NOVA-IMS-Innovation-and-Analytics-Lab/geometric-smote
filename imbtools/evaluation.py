@@ -79,7 +79,7 @@ def calculate_optimal_stats(experiment):
     # Classifiers names
     clfs_names = [clf_name for clf_name, *_ in experiment.classifiers]
     expanded_clfs_names = [clf_name for clf_name, _ in experiment.classifiers_]
-     
+
     # Oversamplers names
     oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
     expanded_oversamplers_names = [oversampler_name for oversampler_name, _ in experiment.oversamplers_]
@@ -223,7 +223,7 @@ class BinaryExperiment:
         self.oversamplers_ = check_models(self.oversamplers, "oversampler")
 
         # Initialize progress bar
-        bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
+        progress_bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.classifiers_) * len(self.oversamplers_))
         iterations = 0
 
         # Populate results dataframe
@@ -241,7 +241,7 @@ class BinaryExperiment:
                             clf = Pipeline([(oversampler_name, oversampler), (clf_name, clf)])
                         cv_output = cross_validate(clf, X, y, cv=cv, scoring=self.scoring, n_jobs=self.n_jobs)
                         iterations += 1
-                        bar.update(iterations)
+                        progress_bar.update(iterations)
                         for scorer in self.scoring:
                             cv_score = cv_output["test_" + scorer].mean()
                             result_list = [dataset_name, clf_name, oversampler_name, scorer, cv_score]
