@@ -198,6 +198,7 @@ class BinaryExperiment:
         filterwarnings('ignore') if hide_warnings else filterwarnings('default')
         
         # Initialize experiment parameters
+        if not hasattr(self, 'datasets'): return
         datasets = check_datasets(self.datasets)
         self.datasets_names_ = [dataset_name for dataset_name, _ in datasets]
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
@@ -234,6 +235,5 @@ class BinaryExperiment:
         """Pickles the experiment object."""
         if not pickle_datasets:
             if hasattr(self, 'datasets'):
-                del self.datasets
-            self.run = lambda : None
+                delattr(self, 'datasets')
         dump(self, open(filename, 'wb'))
