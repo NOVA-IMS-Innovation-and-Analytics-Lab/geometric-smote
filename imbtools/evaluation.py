@@ -35,16 +35,16 @@ def read_csv_dir(dirpath):
     return datasets
 
 def summarize_datasets(datasets):
-        """Creates a summary of the datasets."""
-        datasets = check_datasets(datasets)
-        summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalance Ratio"]
-        datasets_summary = pd.DataFrame({}, columns=summary_columns)
-        for dataset_name, (X, y) in datasets:
-            n_instances = ((y == 0).sum(), (y == 1).sum())
-            dataset_summary = pd.DataFrame([[dataset_name, X.shape[1], y.size, n_instances[1], n_instances[0], round(n_instances[0] / n_instances[1], 2)]], columns=datasets_summary.columns)
-            datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
-        datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
-        return datasets_summary
+    """Creates a summary of the datasets."""
+    datasets = check_datasets(datasets)
+    summary_columns = ["Dataset name", "# of features", "# of instances", "# of minority instances", "# of majority instances", "Imbalance Ratio"]
+    datasets_summary = pd.DataFrame({}, columns=summary_columns)
+    for dataset_name, (X, y) in datasets:
+        n_instances = ((y == 0).sum(), (y == 1).sum())
+        dataset_summary = pd.DataFrame([[dataset_name, X.shape[1], y.size, n_instances[1], n_instances[0], round(n_instances[0] / n_instances[1], 2)]], columns=datasets_summary.columns)
+        datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
+    datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
+    return datasets_summary
 
 def _calculate_stats(experiment):
     """Calculates stats for positive and negative scorers."""
