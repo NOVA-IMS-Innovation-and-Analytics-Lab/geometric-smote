@@ -32,7 +32,7 @@ def check_datasets(datasets):
 def check_random_states(random_state, repetitions):
     """Creates random states for experiments."""
     random_state = check_random_state(random_state)
-    return [random_state.randint(0, 2 ** 32 - 1) for ind in range(repetitions)]
+    return [random_state.randint(0, 2 ** 32 - 1, dtype='uint32') for ind in range(repetitions)]
 
 def check_models(models, model_type):
     """Creates individual classifiers and oversamplers from parameters grid."""
