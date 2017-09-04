@@ -189,7 +189,7 @@ class BinaryExperiment:
                  datasets,
                  classifiers,
                  oversamplers,
-                 scoring=['roc_auc', 'f1'],
+                 scoring=['roc_auc', 'f1', 'geometric_mean_score'],
                  n_splits=3,
                  experiment_repetitions=5,
                  random_state=None,
