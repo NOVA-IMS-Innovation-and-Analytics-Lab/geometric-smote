@@ -162,15 +162,14 @@ class BinaryExperiment:
 
     Parameters
     ----------
-    datasets : list of (X, y) tuples or dictionary of dataset-name:(X,y) pairs
-        The list of (X, y) pairs is a list of tuples of input data and
-        target values, The dictionary extends the list by adding the datasets names
-        as a key.
+    datasets : list of (dataset name, (X, y)) tuples
+        The dataset name is a string and (X, y) are tuples of input data and
+        target values.
     classifiers : list of classifiers
         A list of classifiers.
     oversamplers : list of oversamplers
         A list of oversampling methods.
-    metrics : list of string scorers, (default=[᾽roc_auc᾽, ᾽f1᾽])
+    metrics : list of string scorers, (default=[᾽roc_auc᾽, ᾽f1᾽, 'geometric_mean_score'])
         A list of classification metrics.
     n_splits : int, (default=3)
         The number of cross validation stages.
