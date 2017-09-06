@@ -11,16 +11,15 @@ from os.path import join
 from os import listdir
 from re import match, sub
 from pickle import dump, load
-from .utils import check_datasets, check_random_states, check_models
-from imblearn.pipeline import Pipeline
-from imblearn.metrics import geometric_mean_score
-from scipy.stats import friedmanchisquare
-from progressbar import ProgressBar
-from .metrics import SCORERS
-from sklearn.model_selection import StratifiedKFold, GridSearchCV
-from sklearn.model_selection import cross_validate
 import numpy as np
 import pandas as pd
+from imblearn.pipeline import Pipeline
+from scipy.stats import friedmanchisquare
+from progressbar import ProgressBar
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import cross_validate
+from .utils import check_datasets, check_random_states, check_models
+from .metrics import SCORERS
 
 
 def read_csv_dir(dirpath):
