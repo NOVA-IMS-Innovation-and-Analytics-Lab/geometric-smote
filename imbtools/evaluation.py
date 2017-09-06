@@ -107,7 +107,7 @@ def calculate_optimal_stats(experiment):
     optimal_stats['Mean CV score'] = np.abs(optimal_stats['Mean CV score'])
     return optimal_stats
 
-def calculate_optimal_stats_wide(experiment):
+def calculate_optimal_stats_wide(experiment, append_std=True):
     """Calculates in wide format the highest mean and standard
     deviation for every combination of classfiers and oversamplers
     across different hyperparameters' configurations."""
@@ -118,20 +118,22 @@ def calculate_optimal_stats_wide(experiment):
     optimal_mean_wide.columns.rename(None, inplace=True)
 
     # Calculate wide format of std cv
-    optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Std CV score').reset_index()
-    optimal_std_wide.columns.rename(None, inplace=True)
+    if append_std:
+        optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Std CV score').reset_index()
+        optimal_std_wide.columns.rename(None, inplace=True)
 
-    # Polpulate wide format of optimal stats
+    # Populate wide format of optimal stats
     oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
-    optimal_stats_wide = pd.DataFrame(columns=oversamplers_names)
-    for oversampler_name in oversamplers_names:
-        optimal_stats_wide[oversampler_name] = list(zip(optimal_mean_wide[oversampler_name], optimal_std_wide[oversampler_name]))
-    return pd.concat([optimal_mean_wide[['Dataset', 'Classifier', 'Metric']], optimal_stats_wide], axis=1)
+    optimal_stats_wide = optimal_mean_wide
+    if append_std:
+        for oversampler_name in oversamplers_names:
+            optimal_stats_wide[oversampler_name] = list(zip(optimal_stats_wide[oversampler_name], optimal_std_wide[oversampler_name]))
+    return optimal_stats_wide
 
 def calculate_ranking(experiment):
     """Calculates the ranking of oversamplers."""
-    optimal_stats_wide = calculate_optimal_stats_wide(experiment)
-    ranking = optimal_stats_wide.apply(lambda row: len(row[3:]) - row[3:].argsort().argsort(), axis=1)
+    optimal_stats_wide = calculate_optimal_stats_wide(experiment, append_std=False)
+    ranking = optimal_stats_wide.apply(lambda row: len(row[3:]) - (SCORERS[row[2]]._sign * row[3:]).argsort().argsort(), axis=1)
     return pd.concat([optimal_stats_wide.iloc[:, :3], ranking], axis=1)
 
 def calculate_mean_ranking(experiment):
