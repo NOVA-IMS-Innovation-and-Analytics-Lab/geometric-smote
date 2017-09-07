@@ -129,10 +129,21 @@ def calculate_optimal_stats_wide(experiment, append_std=True):
             optimal_stats_wide[oversampler_name] = list(zip(optimal_stats_wide[oversampler_name], optimal_std_wide[oversampler_name]))
     return optimal_stats_wide
 
+def _return_row_ranking(row, sign):
+    """Returns the ranking of mean cv scores for
+    a row of an array. In case of tie, each value
+    is replaced with its group average."""
+    ranking = (sign * row).argsort().argsort().astype(float)
+    groups = np.unique(row, return_inverse=True)[1]
+    for group_label in np.unique(groups):
+        indices = (groups == group_label)
+        ranking[indices] = ranking[indices].mean()
+    return ranking.size - ranking
+
 def calculate_ranking(experiment):
     """Calculates the ranking of oversamplers."""
     optimal_stats_wide = calculate_optimal_stats_wide(experiment, append_std=False)
-    ranking = optimal_stats_wide.apply(lambda row: len(row[3:]) - (SCORERS[row[2]]._sign * row[3:]).argsort().argsort(), axis=1)
+    ranking = optimal_stats_wide.apply(lambda row: _return_row_ranking(row[3:], SCORERS[row[2]]._sign), axis=1)
     return pd.concat([optimal_stats_wide.iloc[:, :3], ranking], axis=1)
 
 def calculate_mean_ranking(experiment):
@@ -140,14 +151,16 @@ def calculate_mean_ranking(experiment):
     ranking = calculate_ranking(experiment)
     return ranking.groupby(['Classifier', 'Metric'], as_index=False).mean()
 
-def calculate_friedman_test(experiment):
+def calculate_friedman_test(experiment, alpha=0.05):
     """Calculates the friedman test across datasets for every
     combination of classifiers and metrics."""
     if len(experiment.oversamplers_) < 3:
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
     ranking = calculate_ranking(experiment)
     extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
-    return ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
+    friedman_test_results = ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
+    friedman_test_results['Significance'] =  friedman_test_results['p-value'] < alpha
+    return friedman_test_results
 
 def load_experiment(filename):
     """Loads a saved experiment object."""
