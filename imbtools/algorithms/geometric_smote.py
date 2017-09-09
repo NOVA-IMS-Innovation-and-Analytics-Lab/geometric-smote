@@ -14,7 +14,7 @@ from sklearn.utils import check_random_state, safe_indexing
 from scipy import sparse
 from ..utils import check_random_states
 
-GEOMETRIC_SMOTE_KIND = ('regular', 'majority')
+GEOMETRIC_SMOTE_KIND = ('regular', 'majority', 'minority')
 
 
 def _make_geometric_sample(center, radius, random_state=None):
@@ -23,6 +23,46 @@ def _make_geometric_sample(center, radius, random_state=None):
     on_sphere = normal_samples / norm(normal_samples)
     in_ball = (random_state.uniform(size=1) ** (1 / center.size)) * on_sphere
     return center + radius * in_ball
+
+def _make_geometric_samples(X, class_label, radii, n_samples, random_state):
+    """A support function that returns artificial samples constructed in a
+    geometric region defined by nearest neighbours.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Points from which the points will be created.
+
+    class_label : str or int
+        The minority target value, just so the function can return the
+        target values for the synthetic variables with correct length in
+        a clear format.
+
+    radii: ndarray, shape (n_samples_all, k_nearest_neighbours)
+        The radii of nearest neighbours of each sample in X_nn.
+
+    n_samples : int
+        The number of samples to generate.
+
+    Returns
+    -------
+    X_new : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
+        Synthetically generated samples.
+
+    y_new : ndarray, shape (n_samples_new,)
+        Target values for synthetic samples.
+    """
+    random_states = check_random_states(random_state, n_samples)
+    samples_indices = random_state.randint(low=0, high=len(radii.flatten()), size=n_samples)
+    rows = np.floor_divide(samples_indices, radii.shape[1])
+    cols = np.mod(samples_indices, radii.shape[1])
+
+    X_new = np.zeros((n_samples, X.shape[1]))
+    for row_ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
+        X_new[row_ind] = _make_geometric_sample(X[row], radii[row, col], random_state)
+    y_new = np.array([class_label] * len(samples_indices))
+
+    return X_new, y_new
 
 class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
@@ -57,7 +97,7 @@ class GeometricSMOTE(BaseOverSampler):
 
     kind : str, optional (default='regular')
         The type of Geometric SMOTE algorithm with the following options:
-        ``'regular'``, ``'majority'``.
+        ``'regular'``, ``'majority'``, ``'minority'``.
 
     k_neighbors : int or object, optional (default=5)
         If ``int``, number of nearest neighbours to use when synthetic
@@ -89,61 +129,16 @@ class GeometricSMOTE(BaseOverSampler):
             error_msg = 'Unknown kind for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
             raise ValueError(error_msg.format(GEOMETRIC_SMOTE_KIND, self.kind))
 
-        self.nn_k_ = check_neighbors_object('k_neighbors', self.k_neighbors, additional_neighbor=1)
-        self.nn_majority_ = check_neighbors_object('nn_majority', 1)
-        self.nn_k_.set_params(n_jobs=self.n_jobs)
-        self.nn_majority_.set_params(n_jobs=self.n_jobs)
+        if self.kind in ('minority', 'regular'):
+            self.nn_minority_ = check_neighbors_object('k_neighbors', self.k_neighbors, additional_neighbor=1)
+            self.nn_minority_.set_params(n_jobs=self.n_jobs)
 
-    def _make_geometric_samples(self, X, class_label, nns_data, nns, n_samples):
-        """A support function that returns artificial samples constructed in a
-        geometric region defined by nearest neighbours.
+        if self.kind in ('majority', 'regular'):
+            self.nn_majority_ = check_neighbors_object('nn_majority', nn_object=1)
+            self.nn_majority_.set_params(n_jobs=self.n_jobs)
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Points from which the points will be created.
-
-        class_label : str or int
-            The minority target value, just so the function can return the
-            target values for the synthetic variables with correct length in
-            a clear format.
-
-        nns_data : ndarray, shape (n_samples_all, n_features)
-            Data set carrying all the neighbours to be used.
-
-        nns: ndarray, shape (n_samples_all, k_nearest_neighbours)
-            The nearest neighbours of each sample in nn_data.
-
-        n_samples : int
-            The number of samples to generate.
-
-        Returns
-        -------
-        X_new : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
-            Synthetically generated samples.
-
-        y_new : ndarray, shape (n_samples_new,)
-            Target values for synthetic samples.
-        """
-        random_state = check_random_state(self.random_state)
-        samples_indices = random_state.randint(low=0, high=len(X), size=n_samples)
-        random_states = check_random_states(random_state, len(X))
-
-        radii = nns[0][samples_indices]
-
-        X_new = np.zeros((n_samples, X.shape[1]))
-        for row_ind, (center, radius, random_state) in enumerate(zip(X[samples_indices], radii, random_states)):
-            X_new[row_ind] = _make_geometric_sample(center, radius, random_state)
-        y_new = np.array([class_label] * len(samples_indices))
-
-        return X_new, y_new
-
-    def _sample_regular(self, X, y):
-        pass
-
-    def _sample_majority(self, X, y):
-        """Resample the dataset using the Geometric SMOTE algorithm and only the
-        majority class instances to calculate the geometric radius.
+    def _sample(self, X, y):
+        """Resample the dataset using the Geometric SMOTE algorithm.
 
         Parameters
         ----------
@@ -161,6 +156,8 @@ class GeometricSMOTE(BaseOverSampler):
         y_resampled : ndarray, shape (n_samples_new,)
             The corresponding label of `X_resampled`
         """
+
+        self._validate_estimator()
 
         X_resampled = X.copy()
         y_resampled = y.copy()
@@ -173,39 +170,26 @@ class GeometricSMOTE(BaseOverSampler):
             X_positive = safe_indexing(X, np.flatnonzero(y == class_label))
             X_negative = safe_indexing(X, np.flatnonzero(y != class_label))
 
-            self.nn_majority_.fit(X_negative)
-            nns_majority = self.nn_majority_.kneighbors(X_positive)
+            if self.kind in ('minority', 'regular'):
+                self.nn_minority_.fit(X_positive)
+                radii_minority = self.nn_minority_.kneighbors(X_positive)[0]
+                random_state = check_random_state(self.random_state)
+                X_new, y_new = _make_geometric_samples(X_positive, class_label, radii_minority, n_samples, random_state)
 
-            X_new, y_new = self._make_geometric_samples(X_positive, class_label, X_negative, nns_majority, n_samples)
+            if self.kind in ('majority', 'regular'):
+                self.nn_majority_.fit(X_negative)
+                radii_majority = self.nn_majority_.kneighbors(X_positive)[0]
+                random_state = check_random_state(self.random_state)
+                X_new, y_new = _make_geometric_samples(X_positive, class_label, radii_majority, n_samples, random_state)
 
             if sparse.issparse(X_new):
                 X_resampled = sparse.vstack([X_resampled, X_new])
             else:
                 X_resampled = np.vstack((X_resampled, X_new))
+            
             y_resampled = np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
 
-    def _sample(self, X, y):
-        """Resample the dataset.
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-        y : array-like, shape (n_samples,)
-            Corresponding label for each sample in X.
-        Returns
-        -------
-        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
-            The array containing the resampled data.
-        y_resampled : ndarray, shape (n_samples_new,)
-            The corresponding label of `X_resampled`
-        """
-        self._validate_estimator()
-
-        if self.kind == 'regular':
-            return self._sample_regular(X, y)
-        elif self.kind == 'majority':
-            return self._sample_majority(X, y)
 
     
