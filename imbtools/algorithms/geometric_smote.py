@@ -17,7 +17,8 @@ from ..utils import check_random_states
 GEOMETRIC_SMOTE_KIND = ('regular', 'majority', 'minority')
 
 
-def _make_geometric_sample(center, radius, random_state=None):
+def _make_geometric_sample(center, surface_point, random_state=None):
+    radius = norm(center - surface_point)
     random_state = check_random_state(random_state)
     normal_samples = random_state.normal(size=center.size)
     on_sphere = normal_samples / norm(normal_samples)
@@ -103,27 +104,34 @@ class GeometricSMOTE(BaseOverSampler):
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
         if self.kind in ('minority', 'regular'):
             self.nns_pos_.fit(X_pos)
-            radii_pos = self.nns_pos_.kneighbors(X_pos)[0][:, 1:]
-            samples_indices = random_state.randint(low=0, high=len(radii_pos.flatten()), size=n_samples)
-            rows = np.floor_divide(samples_indices, radii_pos.shape[1])
-            cols = np.mod(samples_indices, radii_pos.shape[1])
+            points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
+            samples_indices = random_state.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
+            rows = np.floor_divide(samples_indices, points_pos.shape[1])
+            cols = np.mod(samples_indices, points_pos.shape[1])
         if self.kind in ('majority', 'regular'):
             X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
             self.nn_neg_.fit(X_neg)
-            radii_neg = self.nn_neg_.kneighbors(X_pos)[0]
+            points_neg = self.nn_neg_.kneighbors(X_pos)[1]
             if self.kind == 'majority':
-                samples_indices = random_state.randint(low=0, high=len(radii_neg.flatten()), size=n_samples)
-                rows = np.floor_divide(samples_indices, radii_neg.shape[1])
-                cols = np.mod(samples_indices, radii_neg.shape[1])
+                samples_indices = random_state.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
+                rows = np.floor_divide(samples_indices, points_neg.shape[1])
+                cols = np.mod(samples_indices, points_neg.shape[1])
         X_new = np.zeros((n_samples, X.shape[1]))
         for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
             if self.kind == 'minority':
-                radius = radii_pos[row, col]
+                center = X_pos[row]
+                surface_point = X_pos[points_pos[row, col]]
             elif self.kind == 'majority':
-                radius = radii_neg[row, col]
+                center = X_pos[row]
+                surface_point = X_neg[points_neg[row, col]]
             else:
-                radius = min(radii_neg[row, 0], radii_pos[row, col])
-            X_new[ind] = _make_geometric_sample(X_pos[row], radius, random_state)
+                center = X_pos[row]
+                surface_point_pos = X_pos[points_pos[row, col]]
+                surface_point_neg = X_neg[points_neg[row, 0]]
+                radius_pos = norm(center - surface_point_pos)
+                radius_neg = norm(center - surface_point_neg)
+                surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
+            X_new[ind] = _make_geometric_sample(center, surface_point, random_state)
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
