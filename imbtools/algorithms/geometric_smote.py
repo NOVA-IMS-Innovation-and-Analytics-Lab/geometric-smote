@@ -21,9 +21,9 @@ def _make_geometric_sample(center, surface_point, random_state=None):
     radius = norm(center - surface_point)
     random_state = check_random_state(random_state)
     normal_samples = random_state.normal(size=center.size)
-    on_sphere = normal_samples / norm(normal_samples)
-    in_ball = (random_state.uniform(size=1) ** (1 / center.size)) * on_sphere
-    return center + radius * in_ball
+    on_unit_sphere = normal_samples / norm(normal_samples)
+    in_unit_ball = (random_state.uniform(size=1) ** (1 / center.size)) * on_unit_sphere
+    return center + radius * in_unit_ball
 
 class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
