@@ -17,13 +17,29 @@ from ..utils import check_random_states
 GEOMETRIC_SMOTE_KIND = ('regular', 'majority', 'minority')
 
 
-def _make_geometric_sample(center, surface_point, random_state=None):
+def _make_geometric_sample(center, surface_point, deformation_factor=0, distribution_factor=0, random_state=None):
+    if np.array_equal(center, surface_point):
+        return center
     radius = norm(center - surface_point)
     random_state = check_random_state(random_state)
     normal_samples = random_state.normal(size=center.size)
-    on_unit_sphere = normal_samples / norm(normal_samples)
-    in_unit_ball = (random_state.uniform(size=1) ** (1 / center.size)) * on_unit_sphere
-    return center + radius * in_unit_ball
+    point_on_unit_sphere = normal_samples / norm(normal_samples)
+    point = (random_state.uniform(size=1) ** (1 / center.size)) * point_on_unit_sphere
+
+    parallel_unit_vector = (surface_point - center) / norm(surface_point - center)
+
+    close_to_opposite_boundary = distribution_factor > 0 and np.dot(point, parallel_unit_vector) < distribution_factor - 1
+    close_to_boundary = distribution_factor < 0 and np.dot(point, parallel_unit_vector) > distribution_factor + 1
+    if close_to_opposite_boundary or close_to_boundary:
+        point -= 2 * np.dot(point, parallel_unit_vector) * parallel_unit_vector
+
+    parallel_point_position = np.dot(point, parallel_unit_vector) * parallel_unit_vector
+    perpendicular_point_position = point - parallel_point_position
+    point = parallel_point_position + (1 - deformation_factor) * perpendicular_point_position
+
+    point = center + radius * point
+
+    return point
 
 class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
@@ -53,8 +69,11 @@ class GeometricSMOTE(BaseOverSampler):
         number generator; If ``None``, the random number generator is the
         ``RandomState`` instance used by ``np.random``.
 
-    geometry_factor : float, optional (default=1.0)
+    deformation_factor : float, optional (default=1.0)
         The type of geometry. The values should be in the [0.0, 1.0] range.
+
+    distribution_factor : float, optional (default=1.0)
+        The type of distribution. The values should be in the [-1.0, 1.0] range.
 
     kind : str, optional (default='regular')
         The type of Geometric SMOTE algorithm with the following options:
@@ -73,12 +92,14 @@ class GeometricSMOTE(BaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
-                 geometry_factor=1.0,
+                 deformation_factor=.0,
+                 distribution_factor=.0,
                  kind='regular',
                  k_neighbors=5,
                  n_jobs=1):
         super().__init__(ratio=ratio, random_state=random_state)
-        self.geometry_factor = geometry_factor
+        self.deformation_factor = deformation_factor
+        self.distribution_factor = distribution_factor
         self.kind = kind
         self.k_neighbors = k_neighbors
         self.n_jobs = n_jobs
@@ -131,7 +152,7 @@ class GeometricSMOTE(BaseOverSampler):
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
-            X_new[ind] = _make_geometric_sample(center, surface_point, random_state)
+            X_new[ind] = _make_geometric_sample(center, surface_point, self.deformation_factor, self.distribution_factor, random_state)
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
