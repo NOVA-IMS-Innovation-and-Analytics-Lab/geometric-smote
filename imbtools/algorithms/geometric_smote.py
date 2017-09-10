@@ -24,94 +24,6 @@ def _make_geometric_sample(center, radius, random_state=None):
     in_ball = (random_state.uniform(size=1) ** (1 / center.size)) * on_sphere
     return center + radius * in_ball
 
-def _make_geometric_samples(X, y, pos_class_label, n_samples, random_state, kind='regular', k_neighbors=5, n_jobs=1):
-    """A support function that returns artificial samples constructed in a
-    geometric region defined by nearest neighbours.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Points from which the points will be created.
-
-    pos_class_label : str or int
-        The positive class target value, just so the function can return the
-        target values for the synthetic variables with correct length in
-        a clear format.
-
-    n_samples : int
-        The number of samples to generate.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, ``random_state`` is the seed used by the random number
-        generator; If ``RandomState`` instance, random_state is the random
-        number generator; If ``None``, the random number generator is the
-        ``RandomState`` instance used by ``np.random``.
-    
-    kind : str, optional (default='regular')
-        The type of Geometric SMOTE algorithm with the following options:
-        ``'regular'``, ``'majority'``, ``'minority'``.
-
-    Returns
-    -------
-    X_new : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
-        Synthetically generated samples.
-
-    y_new : ndarray, shape (n_samples_new,)
-        Target values for synthetic samples.
-    """
-
-    random_state = check_random_state(random_state)
-    random_states = check_random_states(random_state, n_samples)
-    X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
-
-    if kind == 'minority':
-        nns_pos = check_neighbors_object('nns_positive', nn_object=k_neighbors, additional_neighbor=1)
-        nns_pos.set_params(n_jobs=n_jobs)
-        nns_pos.fit(X_pos)
-        radii_pos = nns_pos.kneighbors(X_pos)[0][:, 1:]
-        samples_indices = random_state.randint(low=0, high=len(radii_pos.flatten()), size=n_samples)
-        rows = np.floor_divide(samples_indices, radii_pos.shape[1])
-        cols = np.mod(samples_indices, radii_pos.shape[1])
-        X_new = np.zeros((n_samples, X.shape[1]))
-        for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
-            X_new[ind] = _make_geometric_sample(X_pos[row], radii_pos[row, col], random_state)
-        y_new = np.array([pos_class_label] * len(samples_indices))
-        return X_new, y_new
-
-    if kind == 'majority':
-        X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
-        nn_neg = check_neighbors_object('nn_negative', nn_object=1)
-        nn_neg.set_params(n_jobs=n_jobs)
-        nn_neg.fit(X_neg)
-        radii_neg = nn_neg.kneighbors(X_pos)[0]
-        samples_indices = random_state.randint(low=0, high=len(radii_neg.flatten()), size=n_samples)
-        rows = np.floor_divide(samples_indices, radii_neg.shape[1])
-        X_new = np.zeros((n_samples, X.shape[1]))
-        for ind, (row, random_state) in enumerate(zip(rows, random_states)):
-            X_new[ind] = _make_geometric_sample(X_pos[row], radii_neg[row, 0], random_state)
-        y_new = np.array([pos_class_label] * len(samples_indices))
-        return X_new, y_new
-
-    if kind == 'regular':
-        X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
-        nns_pos = check_neighbors_object('nns_positive', nn_object=k_neighbors, additional_neighbor=1)
-        nns_pos.set_params(n_jobs=n_jobs)
-        nns_pos.fit(X_pos)
-        radii_pos = nns_pos.kneighbors(X_pos)[0][:, 1:]
-        nn_neg = check_neighbors_object('nn_negative', nn_object=1)
-        nn_neg.set_params(n_jobs=n_jobs)
-        nn_neg.fit(X_neg)
-        radii_neg = nn_neg.kneighbors(X_pos)[0]
-        samples_indices = random_state.randint(low=0, high=len(radii_pos.flatten()), size=n_samples)
-        rows = np.floor_divide(samples_indices, radii_pos.shape[1])
-        cols = np.mod(samples_indices, radii_pos.shape[1])
-        X_new = np.zeros((n_samples, X.shape[1]))
-        for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
-            radius = min(radii_neg[row, 0], radii_pos[row, col])
-            X_new[ind] = _make_geometric_sample(X_pos[row], radius, random_state)
-        y_new = np.array([pos_class_label] * len(samples_indices))
-        return X_new, y_new
-
 class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
@@ -177,13 +89,43 @@ class GeometricSMOTE(BaseOverSampler):
             error_msg = 'Unknown kind for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
             raise ValueError(error_msg.format(GEOMETRIC_SMOTE_KIND, self.kind))
 
-        #if self.kind in ('minority', 'regular'):
-        #    self.nns_min_ = check_neighbors_object('nns_minority', self.k_neighbors, additional_neighbor=1)
-        #    self.nns_min_.set_params(n_jobs=self.n_jobs)
+        if self.kind in ('minority', 'regular'):
+            self.nns_pos_ = check_neighbors_object('nns_positive', self.k_neighbors, additional_neighbor=1)
+            self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
-        #if self.kind in ('majority', 'regular'):
-        #    self.nns_maj_ = check_neighbors_object('nns_majority', nn_object=1)
-        #    self.nns_maj_.set_params(n_jobs=self.n_jobs)
+        if self.kind in ('majority', 'regular'):
+            self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
+            self.nn_neg_.set_params(n_jobs=self.n_jobs)
+
+    def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
+        random_state = check_random_state(self.random_state)
+        random_states = check_random_states(self.random_state, n_samples)
+        X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
+        if self.kind in ('minority', 'regular'):
+            self.nns_pos_.fit(X_pos)
+            radii_pos = self.nns_pos_.kneighbors(X_pos)[0][:, 1:]
+            samples_indices = random_state.randint(low=0, high=len(radii_pos.flatten()), size=n_samples)
+            rows = np.floor_divide(samples_indices, radii_pos.shape[1])
+            cols = np.mod(samples_indices, radii_pos.shape[1])
+        if self.kind in ('majority', 'regular'):
+            X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
+            self.nn_neg_.fit(X_neg)
+            radii_neg = self.nn_neg_.kneighbors(X_pos)[0]
+            if self.kind == 'majority':
+                samples_indices = random_state.randint(low=0, high=len(radii_neg.flatten()), size=n_samples)
+                rows = np.floor_divide(samples_indices, radii_neg.shape[1])
+                cols = np.mod(samples_indices, radii_neg.shape[1])
+        X_new = np.zeros((n_samples, X.shape[1]))
+        for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
+            if self.kind == 'minority':
+                radius = radii_pos[row, col]
+            elif self.kind == 'majority':
+                radius = radii_neg[row, col]
+            else:
+                radius = min(radii_neg[row, 0], radii_pos[row, col])
+            X_new[ind] = _make_geometric_sample(X_pos[row], radius, random_state)
+        y_new = np.array([pos_class_label] * len(samples_indices))
+        return X_new, y_new
 
     def _sample(self, X, y):
         """Resample the dataset using the Geometric SMOTE algorithm.
@@ -215,7 +157,7 @@ class GeometricSMOTE(BaseOverSampler):
             if n_samples == 0:
                 continue
 
-            X_new, y_new = _make_geometric_samples(X, y, class_label, n_samples, self.random_state, self.kind, self.k_neighbors, self.n_jobs)
+            X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
             if sparse.issparse(X_new):
                 X_resampled = sparse.vstack([X_resampled, X_new])
