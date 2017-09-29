@@ -14,13 +14,13 @@ from sklearn.utils import check_random_state, safe_indexing
 from scipy import sparse
 from ..utils import check_random_states
 
-GEOMETRIC_SMOTE_STRATEGY = ('combined', 'majority', 'minority')
+SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
 
 def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformation_factor=.0, random_state=None):
-    """Returns a generated point based on a center point ,a surface_point 
+    """Returns a generated point based on a center point ,a surface_point
     and three geometric transformations."""
-    
+
     # Generate a point inside the unit hyper-sphere
     if np.array_equal(center, surface_point):
         return center
@@ -114,9 +114,9 @@ class GeometricSMOTE(BaseOverSampler):
     def _validate_estimator(self):
         """Create the necessary objects for Geometric SMOTE."""
 
-        if self.selection_strategy not in GEOMETRIC_SMOTE_STRATEGY:
+        if self.selection_strategy not in SELECTION_STRATEGY:
             error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
-            raise ValueError(error_msg.format(GEOMETRIC_SMOTE_STRATEGY, self.selection_strategy))
+            raise ValueError(error_msg.format(SELECTION_STRATEGY, self.selection_strategy))
 
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object('nns_positive', self.k_neighbors, additional_neighbor=1)
