@@ -14,10 +14,14 @@ from sklearn.utils import check_random_state, safe_indexing
 from scipy import sparse
 from ..utils import check_random_states
 
-GEOMETRIC_SMOTE_KIND = ('regular', 'majority', 'minority')
+GEOMETRIC_SMOTE_STRATEGY = ('combined', 'majority', 'minority')
 
 
 def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformation_factor=.0, random_state=None):
+    """Returns a generated point based on a center point ,a surface_point 
+    and three geometric transformations."""
+    
+    # Generate a point inside the unit hyper-sphere
     if np.array_equal(center, surface_point):
         return center
     radius = norm(center - surface_point)
@@ -28,15 +32,18 @@ def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformat
 
     parallel_unit_vector = (surface_point - center) / norm(surface_point - center)
 
+    # Truncation
     close_to_opposite_boundary = truncation_factor > 0 and np.dot(point, parallel_unit_vector) < truncation_factor - 1
     close_to_boundary = truncation_factor < 0 and np.dot(point, parallel_unit_vector) > truncation_factor + 1
     if close_to_opposite_boundary or close_to_boundary:
         point -= 2 * np.dot(point, parallel_unit_vector) * parallel_unit_vector
 
+    # Deformation
     parallel_point_position = np.dot(point, parallel_unit_vector) * parallel_unit_vector
     perpendicular_point_position = point - parallel_point_position
     point = parallel_point_position + (1 - deformation_factor) * perpendicular_point_position
 
+    # Translation
     point = center + radius * point
 
     return point
@@ -75,9 +82,9 @@ class GeometricSMOTE(BaseOverSampler):
     deformation_factor : float, optional (default=1.0)
         The type of geometry. The values should be in the [0.0, 1.0] range.
 
-    kind : str, optional (default='regular')
+    selection_strategy : str, optional (default='combined')
         The type of Geometric SMOTE algorithm with the following options:
-        ``'regular'``, ``'majority'``, ``'minority'``.
+        ``'combined'``, ``'majority'``, ``'minority'``.
 
     k_neighbors : int or object, optional (default=5)
         If ``int``, number of nearest neighbours to use when synthetic
@@ -94,55 +101,56 @@ class GeometricSMOTE(BaseOverSampler):
                  random_state=None,
                  truncation_factor=.0,
                  deformation_factor=.0,
-                 kind='regular',
+                 selection_strategy='combined',
                  k_neighbors=5,
                  n_jobs=1):
         super().__init__(ratio=ratio, random_state=random_state)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
-        self.kind = kind
+        self.selection_strategy = selection_strategy
         self.k_neighbors = k_neighbors
         self.n_jobs = n_jobs
 
     def _validate_estimator(self):
         """Create the necessary objects for Geometric SMOTE."""
 
-        if self.kind not in GEOMETRIC_SMOTE_KIND:
-            error_msg = 'Unknown kind for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
-            raise ValueError(error_msg.format(GEOMETRIC_SMOTE_KIND, self.kind))
+        if self.selection_strategy not in GEOMETRIC_SMOTE_STRATEGY:
+            error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
+            raise ValueError(error_msg.format(GEOMETRIC_SMOTE_STRATEGY, self.selection_strategy))
 
-        if self.kind in ('minority', 'regular'):
+        if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object('nns_positive', self.k_neighbors, additional_neighbor=1)
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
-        if self.kind in ('majority', 'regular'):
+        if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
+        """Generate synthetic samples based on the selection strategy."""
         random_state = check_random_state(self.random_state)
         random_states = check_random_states(self.random_state, n_samples)
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
-        if self.kind in ('minority', 'regular'):
+        if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
             samples_indices = random_state.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
-        if self.kind in ('majority', 'regular'):
+        if self.selection_strategy in ('majority', 'combined'):
             X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
             self.nn_neg_.fit(X_neg)
             points_neg = self.nn_neg_.kneighbors(X_pos)[1]
-            if self.kind == 'majority':
+            if self.selection_strategy == 'majority':
                 samples_indices = random_state.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
         X_new = np.zeros((n_samples, X.shape[1]))
         for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
-            if self.kind == 'minority':
+            if self.selection_strategy == 'minority':
                 center = X_pos[row]
                 surface_point = X_pos[points_pos[row, col]]
-            elif self.kind == 'majority':
+            elif self.selection_strategy == 'majority':
                 center = X_pos[row]
                 surface_point = X_neg[points_neg[row, col]]
             else:
