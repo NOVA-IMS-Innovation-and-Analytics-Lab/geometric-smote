@@ -17,7 +17,7 @@ from ..utils import check_random_states
 GEOMETRIC_SMOTE_KIND = ('regular', 'majority', 'minority')
 
 
-def _make_geometric_sample(center, surface_point, deformation_factor=0, distribution_factor=0, random_state=None):
+def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformation_factor=.0, random_state=None):
     if np.array_equal(center, surface_point):
         return center
     radius = norm(center - surface_point)
@@ -28,8 +28,8 @@ def _make_geometric_sample(center, surface_point, deformation_factor=0, distribu
 
     parallel_unit_vector = (surface_point - center) / norm(surface_point - center)
 
-    close_to_opposite_boundary = distribution_factor > 0 and np.dot(point, parallel_unit_vector) < distribution_factor - 1
-    close_to_boundary = distribution_factor < 0 and np.dot(point, parallel_unit_vector) > distribution_factor + 1
+    close_to_opposite_boundary = truncation_factor > 0 and np.dot(point, parallel_unit_vector) < truncation_factor - 1
+    close_to_boundary = truncation_factor < 0 and np.dot(point, parallel_unit_vector) > truncation_factor + 1
     if close_to_opposite_boundary or close_to_boundary:
         point -= 2 * np.dot(point, parallel_unit_vector) * parallel_unit_vector
 
@@ -69,11 +69,11 @@ class GeometricSMOTE(BaseOverSampler):
         number generator; If ``None``, the random number generator is the
         ``RandomState`` instance used by ``np.random``.
 
+    truncation_factor : float, optional (default=1.0)
+        The type of truncation. The values should be in the [-1.0, 1.0] range.
+
     deformation_factor : float, optional (default=1.0)
         The type of geometry. The values should be in the [0.0, 1.0] range.
-
-    distribution_factor : float, optional (default=1.0)
-        The type of distribution. The values should be in the [-1.0, 1.0] range.
 
     kind : str, optional (default='regular')
         The type of Geometric SMOTE algorithm with the following options:
@@ -92,14 +92,14 @@ class GeometricSMOTE(BaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
+                 truncation_factor=.0,
                  deformation_factor=.0,
-                 distribution_factor=.0,
                  kind='regular',
                  k_neighbors=5,
                  n_jobs=1):
         super().__init__(ratio=ratio, random_state=random_state)
+        self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
-        self.distribution_factor = distribution_factor
         self.kind = kind
         self.k_neighbors = k_neighbors
         self.n_jobs = n_jobs
@@ -152,7 +152,7 @@ class GeometricSMOTE(BaseOverSampler):
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
-            X_new[ind] = _make_geometric_sample(center, surface_point, self.deformation_factor, self.distribution_factor, random_state)
+            X_new[ind] = _make_geometric_sample(center, surface_point, self.truncation_factor, self.deformation_factor, random_state)
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
