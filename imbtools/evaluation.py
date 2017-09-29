@@ -70,9 +70,9 @@ def calculate_stats(experiment):
     stats['Mean CV score'] = np.abs(stats['Mean CV score'])
     return stats
 
-def calculate_optimal_stats(experiment):
+def calculate_optimal_stats(experiment, return_optimal_model=False):
     """Calculates the highest mean and standard deviation for every
-    combination of classfiers and oversamplers across different
+    combination of classifiers and oversamplers across different
     hyperparameters' configurations."""
 
     # Classifiers names
@@ -82,6 +82,9 @@ def calculate_optimal_stats(experiment):
     # Oversamplers names
     oversamplers_names = [oversampler_name for oversampler_name, *_ in experiment.oversamplers]
     expanded_oversamplers_names = [oversampler_name for oversampler_name, _ in experiment.oversamplers_]
+
+    # Oversamplers
+    oversamplers = [(oversampler_name, oversampler) for oversampler_name, oversampler, *_ in experiment.oversamplers]
 
     # Calculate stats table
     stats = _calculate_stats(experiment)
@@ -98,8 +101,22 @@ def calculate_optimal_stats(experiment):
 
         matched_stats = stats[is_matched_clfs & is_matched_oversamplers & is_matched_dataset]
         optimal_matched_stats = matched_stats.groupby('Metric', as_index=False).agg({'Mean CV score': [max, lambda col: matched_stats['Std CV score'][np.argmax(col)]]})
+        
+        if not return_optimal_model:
+            optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
+        else:
+            optimal_matched_names = matched_stats.groupby('Metric').agg({'Mean CV score': {'Classifier': lambda col: matched_stats['Classifier'][np.argmax(col)],
+                                                                                        'Oversampler': lambda col: matched_stats['Oversampler'][np.argmax(col)]}})
+            optimal_matched_names.columns = optimal_matched_names.columns.get_level_values(1)
+            optimal_matched_names['Dataset'] = dataset_name
+            optimal_matched_names['Classifier'] = optimal_matched_names['Classifier'].apply(lambda exp_clf_name: (clf_name, dict(experiment.classifiers_)[exp_clf_name].get_params()))
+            if dict(oversamplers)[oversampler_name] is None:
+                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(lambda exp_oversampler_name: (oversampler_name, None))
+            else:
+                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(lambda exp_oversampler_name: (oversampler_name, dict(experiment.oversamplers_)[exp_oversampler_name].get_params()))
+            optimal_matched_names = optimal_matched_names.reset_index()[stats.columns[:-3]]
+        
         optimal_matched_stats.columns = stats.columns[-3:]
-        optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
         optimal_matched_stats = pd.concat([optimal_matched_names, optimal_matched_stats], axis=1)
         optimal_stats = optimal_stats.append(optimal_matched_stats, ignore_index=True)
 
