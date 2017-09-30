@@ -76,10 +76,10 @@ class GeometricSMOTE(BaseOverSampler):
         number generator; If ``None``, the random number generator is the
         ``RandomState`` instance used by ``np.random``.
 
-    truncation_factor : float, optional (default=1.0)
+    truncation_factor : float, optional (default=0.0)
         The type of truncation. The values should be in the [-1.0, 1.0] range.
 
-    deformation_factor : float, optional (default=1.0)
+    deformation_factor : float, optional (default=0.0)
         The type of geometry. The values should be in the [0.0, 1.0] range.
 
     selection_strategy : str, optional (default='combined')

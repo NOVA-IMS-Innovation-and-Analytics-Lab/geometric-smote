@@ -260,7 +260,10 @@ class BinaryExperiment:
         results_columns = ['Dataset', 'Classifier', 'Oversampler', 'Metric', 'CV score']
         self.results_ = pd.DataFrame(columns=results_columns)
         for random_state in self.random_states_:
-            cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
+            if isinstance(self.n_splits, StratifiedKFold):
+                cv = StratifiedKFold(n_splits=self.n_splits, random_state=random_state, shuffle=True)
+            else:
+                cv = self.n_splits
             for dataset_name, (X, y) in datasets:
                 for clf_name, clf, in self.classifiers_:
                     if 'random_state' in clf.get_params().keys():
