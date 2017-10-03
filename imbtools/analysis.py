@@ -5,20 +5,16 @@ the performance of various oversampling algorithms.
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
-from warnings import filterwarnings
 from itertools import product
 from os.path import join
 from os import listdir
 from re import match, sub
-from pickle import dump, load
+from pickle import load
 import numpy as np
 import pandas as pd
-from imblearn.pipeline import Pipeline
 from scipy.stats import friedmanchisquare
-from progressbar import ProgressBar
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_validate
-from .utils import check_datasets, check_random_states, check_models
+from .experiment import Experiment
+from .utils import check_datasets
 from .metrics import SCORERS
 
 
@@ -182,6 +178,6 @@ def calculate_friedman_test(experiment, alpha=0.05):
 def load_experiment(filename):
     """Loads a saved experiment object."""
     loaded_obj = load(open(filename, 'rb'))
-    if not isinstance(loaded_obj, BinaryExperiment):
+    if not isinstance(loaded_obj, Experiment):
         raise TypeError("File {} is not a BinaryExperiment instance.")
     return loaded_obj

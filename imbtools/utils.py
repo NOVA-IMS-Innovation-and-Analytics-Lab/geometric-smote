@@ -4,17 +4,9 @@ This module contains various checks.
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
-from itertools import product
 from sklearn.utils import check_X_y, check_random_state
-from sklearn.base import clone
+from imblearn.pipeline import Pipeline
 
-
-def _flatten_parameters_list(parameters_list):
-    """Flattens a dictionaries' list of parameters."""
-    flat_parameters = []
-    for parameters_dict in parameters_list:
-        flat_parameters += [dict(zip(parameters_dict.keys(), parameter_product)) for parameter_product in product(*parameters_dict.values())]
-    return flat_parameters
 
 def check_datasets(datasets):
     """Checks that datasets is a list of (X,y) pairs or a dictionary of dataset-name:(X,y) pairs."""
@@ -34,17 +26,26 @@ def check_random_states(random_state, repetitions):
     random_state = check_random_state(random_state)
     return [random_state.randint(0, 2 ** 32 - 1, dtype='uint32') for ind in range(repetitions)]
 
-def check_models(models, model_type):
-    """Creates individual classifiers and oversamplers from parameters grid."""
-    try:
-        flat_models = []
-        for model_name, model, *param_grid in models:
-            if param_grid == []:
-                flat_models += [(model_name, model)]
-            else:
-                flat_parameters = _flatten_parameters_list(param_grid[0])
-                for ind, parameters in enumerate(flat_parameters):
-                    flat_models += [(model_name + str(ind + 1), clone(model).set_params(**parameters))]
-    except:
-        raise ValueError("The {model_type}s should be a list of ({model_type} name, {model_type}) pairs or ({model_type} name, {model_type}, parameters grid) triplets.".format(model_type=model_type))
-    return flat_models
+def check_estimators(estimators):
+    """Parses the pipelines of transformations and estimators."""
+    return [Pipeline([(name, est) for name, est, *_ in estimator]) for estimator in estimators]
+
+def _check_param_grid(estimator):
+    grids = []
+    for est_name, _, *param_grid in estimator:
+        if param_grid != []:
+            grids.append([{(est_name + '__' + k):v for k, v in grid.items()} for grid in param_grid[0]])
+    grids_length = [len(param_grid) for param_grid in grids]
+    if len(set(grids_length)) > 1:
+        raise ValueError('The lists of parameter grids for all pipeline\'s estimators should have the same length or not be defined.')
+    param_grid = []
+    for params in zip(*grids):
+        parameters = {}
+        for par in params:
+            parameters.update(par)
+        param_grid.append(parameters)
+    return param_grid
+
+def check_param_grids(estimators):
+    """Parses the parameter grids."""
+    return [_check_param_grid(estimator) for estimator in estimators]

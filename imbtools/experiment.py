@@ -10,8 +10,8 @@ from itertools import product
 from pickle import dump
 from progressbar import ProgressBar
 from sklearn.model_selection import check_cv, GridSearchCV
-from imblearn.pipeline import Pipeline
-from .utils import check_datasets, check_random_states
+from sklearn.base import is_classifier
+from .utils import check_datasets, check_random_states, check_estimators, check_param_grids
 from .metrics import SCORERS
 
 
@@ -24,10 +24,8 @@ class Experiment:
     datasets : list of (dataset name, (X, y)) tuples
         The dataset name is a string and (X, y) are tuples of input data and
         target values.
-    estimators : list of (estimator name, estimators) tuples
-        Each estimator is a single estimator or a pipeline of transformations/estimator.
-    param_grids : list of grids
-        Each grid corresponds to the parameters of a pipeline.
+    estimators : list of (estimator name, estimator, param_grid) tuples
+        Each estimator is a single estimator or an estimator pipeline.
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
         to evaluate the predictions on the test set. For evaluating multiple 
@@ -54,7 +52,6 @@ class Experiment:
     def __init__(self,
                  datasets,
                  estimators,
-                 param_grids,
                  scoring=['roc_auc', 'f1', 'geometric_mean_score'],
                  cv=None,
                  experiment_repetitions=5,
@@ -62,7 +59,6 @@ class Experiment:
                  n_jobs=1):
         self.datasets = datasets
         self.estimators = estimators
-        self.param_grids = param_grids
         self.scoring = scoring
         self.cv = cv
         self.experiment_repetitions = experiment_repetitions
@@ -83,25 +79,25 @@ class Experiment:
         if not hasattr(self, 'datasets'):
             return
         datasets = check_datasets(self.datasets)
-        self.datasets_names_ = [dataset_name for dataset_name, _ in datasets]
-        self.param_grids_ = dict(zip([estimator_name for estimator_name, _ in self.estimators], self.param_grids))
-        self.cv_ = check_cv(self.cv)
-        self.cv_.shuffle = True
+        self.estimators_ = check_estimators(self.estimators)
+        self.param_grids_ = check_param_grids(self.estimators)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
 
         # Initialize progress bar
-        progress_bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.estimators))
+        progress_bar = ProgressBar(redirect_stdout=False, max_value=len(self.random_states_) * len(datasets) * len(self.estimators_))
         iterations = 0
 
         # Create all possible combination of experimental configurations
-        combinations = product(self.random_states_, datasets, self.estimators)
+        combinations = product(self.random_states_, datasets, zip(self.estimators_, self.param_grids_))
 
         # Run the experiment
         self.results_ = []
-        for random_state, (dataset_name, (X, y)), (estimator_name, estimator) in combinations:
-            self.cv_.random_state = random_state
-            gscv = GridSearchCV(estimator, self.param_grids_[estimator_name], self.scoring, cv=self.cv_, refit=False)
-            #gscv.fit(X, y)
+        for random_state, (dataset_name, (X, y)), (estimator, param_grid) in combinations:
+            cv = check_cv(self.cv, y, is_classifier(estimator))
+            cv.shuffle = True
+            cv.random_state = random_state
+            gscv = GridSearchCV(estimator, param_grid, self.scoring, cv=cv, refit=False)
+            gscv.fit(X, y)
             self.results_.append((dataset_name, gscv))
             iterations += 1
             progress_bar.update(iterations)
