@@ -1,6 +1,6 @@
 """
-This module contains classes to compare and evaluate
-the performance of various oversampling algorithms.
+This module contains classes to run an experiment across
+multiple datasets with various hyperparameters.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -11,8 +11,8 @@ from pickle import dump
 from progressbar import ProgressBar
 from sklearn.model_selection import check_cv, GridSearchCV
 from sklearn.base import is_classifier
+from metriclearn.classification import SCORERS
 from .utils import check_datasets, check_random_states, check_estimators, check_param_grids
-from .metrics import SCORERS
 
 
 class Experiment:

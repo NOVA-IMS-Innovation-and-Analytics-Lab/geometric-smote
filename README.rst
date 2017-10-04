@@ -1,7 +1,8 @@
-imbalanced-tools
+hyperparam-learn
 ================
 
-A collection of tools for the imbalanced learning problem. It includes classes to simplify the comparison and evaluation of oversampling algorithms, functions to export the results and various ovarsampling algorithms which are not included in imbalanced-learn. 
+Easy and efficient search for optimal hyperparameters and pipelines of estimators in scikit-learn. 
+It includes a class to simplify the creation of the hyperparameter space.
 
 Prerequisites
 =============
@@ -14,6 +15,6 @@ Installation
 
 .. code:: shell
 
-    git clone https://github.com/gdouzas/imbalanced-tools.git
-    cd imbalanced-tools
+    git clone https://github.com/gdouzas/hyperparam-learn
+    cd hyperparam-learn
     python3 setup.py install

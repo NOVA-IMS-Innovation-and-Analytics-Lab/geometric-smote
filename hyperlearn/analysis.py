@@ -1,6 +1,6 @@
 """
-This module contains classes to compare and evaluate
-the performance of various oversampling algorithms.
+This module contains functions to compare the 
+experimental results.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -14,8 +14,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
 from .experiment import Experiment
+from metriclearn.classification import SCORERS
 from .utils import check_datasets
-from .metrics import SCORERS
+
 
 
 def read_csv_dir(dirpath):

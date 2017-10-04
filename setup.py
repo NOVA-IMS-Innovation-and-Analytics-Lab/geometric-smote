@@ -1,16 +1,15 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="imbalanced-tools",
-    version="1.0.0",
+    name="hyperparam-learn",
+    version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        'docx',
+        'scipy',
         'numpy',
         'pandas',
-        'progressbar2',
-        'scipy',
-        'scikit_learn',
-        'imbalanced-learn'
+        'scikit-learn',
+        'imbalanced-learn',
+        'progressbar2'        
     ]
 )
