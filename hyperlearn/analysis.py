@@ -6,29 +6,14 @@ experimental results.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 from itertools import product
-from os.path import join
-from os import listdir
-from re import match, sub
 from pickle import load
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
-from .experiment import Experiment
 from metriclearn.classification import SCORERS
+from .experiment import Experiment
 from .utils import check_datasets
 
-
-
-def read_csv_dir(dirpath):
-    "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
-    datasets = []
-    csv_files = [csv_file for csv_file in listdir(dirpath) if match('^.+\.csv$', csv_file)]
-    for csv_file in csv_files:
-        dataset = pd.read_csv(join(dirpath, csv_file))
-        X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
-        dataset_name = sub(".csv", "", csv_file)
-        datasets.append((dataset_name, (X, y)))
-    return datasets
 
 def summarize_datasets(datasets):
     """Creates a summary of the datasets."""

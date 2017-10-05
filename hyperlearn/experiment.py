@@ -5,15 +5,30 @@ multiple datasets with various hyperparameters.
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
+from os.path import join
+from os import listdir
+from re import match, sub
 from warnings import filterwarnings
 from itertools import product
 from pickle import dump
+import pandas as pd
 from progressbar import ProgressBar
 from sklearn.model_selection import check_cv, GridSearchCV
 from sklearn.base import is_classifier
 from metriclearn.classification import SCORERS
 from .utils import check_datasets, check_random_states, check_estimators, check_param_grids
 
+
+def read_csv_dir(dirpath):
+    "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
+    datasets = []
+    csv_files = [csv_file for csv_file in listdir(dirpath) if match('^.+\.csv$', csv_file)]
+    for csv_file in csv_files:
+        dataset = pd.read_csv(join(dirpath, csv_file))
+        X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
+        dataset_name = sub(".csv", "", csv_file)
+        datasets.append((dataset_name, (X, y)))
+    return datasets
 
 class Experiment:
     """Class for comparison of a various transformations/estimators 
@@ -96,9 +111,9 @@ class Experiment:
             cv = check_cv(self.cv, y, is_classifier(estimator))
             cv.shuffle = True
             cv.random_state = random_state
-            gscv = GridSearchCV(estimator, param_grid, self.scoring, cv=cv, refit=False)
+            gscv = GridSearchCV(estimator, param_grid, self.scoring, cv=cv, refit=False, n_jobs=self.n_jobs)
             gscv.fit(X, y)
-            self.results_.append((dataset_name, gscv))
+            self.results_.append((dataset_name, '__'.join(estimator.named_steps.keys()), gscv))
             iterations += 1
             progress_bar.update(iterations)
 
