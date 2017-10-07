@@ -6,14 +6,27 @@ experimental results.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 from itertools import product
-from pickle import load
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
 from metriclearn.classification import SCORERS
-from .experiment import Experiment
+from .experiment import BaseExperiment
 from .utils import check_datasets
 
+
+def extract_results(experiment):
+    columns = ['Experiment random seed', 'Dataset', 'Pipeline', 'params'] + ['mean_test_' + scorer for scorer in experiment.scoring]
+    results = pd.DataFrame(columns=columns)
+    for dataset_name, gscv in experiment.results_:
+        cv_results = pd.DataFrame({k:v for k, v in gscv.cv_results_.items() if k in columns[3:]})
+        cv_results['Dataset'] = dataset_name
+        cv_results['Pipeline'] = [gscv.estimator] * len(cv_results)
+        cv_results['Experiment random seed'] = gscv.cv.random_state
+        results = pd.concat([results, cv_results])
+    renamed_columns = ['Parameters'] + experiment.scoring
+    results = results[columns]
+    results = results.rename(columns=dict(zip(results.columns[3:], renamed_columns)))
+    return results
 
 def summarize_datasets(datasets):
     """Creates a summary of the datasets."""
@@ -160,10 +173,3 @@ def calculate_friedman_test(experiment, alpha=0.05):
     friedman_test_results = ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
     friedman_test_results['Significance'] =  friedman_test_results['p-value'] < alpha
     return friedman_test_results
-
-def load_experiment(filename):
-    """Loads a saved experiment object."""
-    loaded_obj = load(open(filename, 'rb'))
-    if not isinstance(loaded_obj, Experiment):
-        raise TypeError("File {} is not a BinaryExperiment instance.")
-    return loaded_obj

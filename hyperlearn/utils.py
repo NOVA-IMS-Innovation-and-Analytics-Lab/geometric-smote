@@ -31,21 +31,51 @@ def check_estimators(estimators):
     return [Pipeline([(name, est) for name, est, *_ in estimator]) for estimator in estimators]
 
 def _check_param_grid(estimator):
-    grids = []
+    paramspace = _ParamSpace()
+    nums_subspaces = []
     for est_name, _, *param_grid in estimator:
-        if param_grid != []:
-            grids.append([{(est_name + '__' + k):v for k, v in grid.items()} for grid in param_grid[0]])
-    grids_length = [len(param_grid) for param_grid in grids]
-    if len(set(grids_length)) > 1:
-        raise ValueError('The lists of parameter grids for all pipeline\'s estimators should have the same length or not be defined.')
-    param_grid = []
-    for params in zip(*grids):
-        parameters = {}
-        for par in params:
-            parameters.update(par)
-        param_grid.append(parameters)
-    return param_grid
+        ps = _ParamSpace(param_grid[0] if len(param_grid) > 0 else None)
+        nums_subspaces.append(ps.num_subspaces)
+        ps.append_prefix(est_name)
+        paramspace *= ps
+    if len(set(nums_subspaces)) > 1:
+        raise ValueError('The lists of parameter grids for all pipeline\'s estimators should have the same length or missing.')
+    return paramspace.param_grid if paramspace.param_grid != [] else {}
 
 def check_param_grids(estimators):
     """Parses the parameter grids."""
     return [_check_param_grid(estimator) for estimator in estimators]
+
+class _ParamSpace:
+    """Private class for the creation and modification of 
+    a hyperspace.
+    """
+
+    def __init__(self, param_grid=None):
+        self.param_grid = param_grid if param_grid is not None else []
+    
+    def __add__(self, paramspace):
+        ps = _ParamSpace()
+        ps.param_grid = self.param_grid + paramspace.param_grid
+        return ps
+
+    def __mul__(self, paramspace):
+        ps = _ParamSpace()
+        if self.param_grid != [] and paramspace.param_grid != []:
+            for zipped_grid in zip(self.param_grid, paramspace.param_grid):
+                param_grid = {}
+                for grid in zipped_grid:
+                    param_grid.update(grid)
+                ps.param_grid.append(param_grid)
+        elif self.param_grid == []:
+            ps.param_grid = paramspace.param_grid
+        elif paramspace.param_grid == []:
+            ps.param_grid = self.param_grid
+        return ps
+
+    def append_prefix(self, est_name):
+        self.param_grid = [{(est_name + '__' + k):v for k, v in param_grid.items()} for param_grid in self.param_grid]
+        
+    @property
+    def num_subspaces(self):
+        return len(self.param_grid)
