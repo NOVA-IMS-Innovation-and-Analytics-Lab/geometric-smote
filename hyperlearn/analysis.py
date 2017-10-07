@@ -15,6 +15,8 @@ from .utils import check_datasets
 
 
 def extract_results(experiment):
+    """Extracts the results of an experiment in 
+    a pandas dataframe."""
     columns = ['Experiment random seed', 'Dataset', 'Pipeline', 'params'] + ['mean_test_' + scorer for scorer in experiment.scoring]
     results = pd.DataFrame(columns=columns)
     for dataset_name, gscv in experiment.results_:
