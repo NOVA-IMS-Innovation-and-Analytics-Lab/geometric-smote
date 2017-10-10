@@ -100,8 +100,8 @@ class ExtendedExperiment(BaseExperiment):
                  random_state=None,
                  n_jobs=1):
         super().__init__(scoring, cv, n_jobs)
-        self.estimators = estimators
         self.datasets = datasets
+        self.estimators = estimators
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
 
@@ -135,7 +135,7 @@ class ExtendedExperiment(BaseExperiment):
             cv = check_cv(self.cv, y, is_classifier(estimator))
             cv.shuffle = True
             cv.random_state = random_state
-            gscv = GridSearchCV(estimator, param_grid, self.scoring, cv=cv, refit=False, n_jobs=self.n_jobs)
+            gscv = GridSearchCV(estimator, list(param_grid) if param_grid else param_grid, self.scoring, cv=cv, refit=False, n_jobs=self.n_jobs)
             gscv.fit(X, y)
             self.results_.append((dataset_name, gscv))
             iterations += 1
@@ -186,14 +186,12 @@ class ResamplingExperiment(BaseExperiment):
                  experiment_repetitions=5,
                  random_state=None,
                  n_jobs=1):
+        super().__init__(scoring, cv, n_jobs)
         self.datasets = datasets
         self.classifiers = classifiers
         self.resamplers = resamplers
-        self.scoring = scoring
-        self.cv = cv
         self.experiment_repetitions = experiment_repetitions
         self.random_state = random_state
-        self.n_jobs = n_jobs
 
     def run(self, hide_warnings=True):
         """Runs the experimental procedure and calculates the cross validation
@@ -209,10 +207,8 @@ class ResamplingExperiment(BaseExperiment):
         if not hasattr(self, 'datasets'):
             return
         datasets = check_datasets(self.datasets)
-        estimators = [[resampler, classifier] if resampler[1] is not None else [classifier] for (resampler, classifier) in product(self.resamplers, self.classifiers)]
-        self.estimators = estimators
         self.estimators_ = check_estimators(estimators)
-        self.param_grids_ = check_param_grids(estimators, 'resampling')
+        self.param_grids_ = check_param_grids(estimators)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
 
         # Initialize progress bar

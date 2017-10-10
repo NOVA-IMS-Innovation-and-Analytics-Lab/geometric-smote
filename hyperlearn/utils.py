@@ -5,6 +5,7 @@ This module contains various checks.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
 from sklearn.utils import check_X_y, check_random_state
+from sklearn.model_selection import ParameterGrid
 from imblearn.pipeline import Pipeline
 
 
@@ -19,7 +20,7 @@ def check_datasets(datasets):
         else:
             raise ValueError("The datasets' names should be unique strings.")
     except:
-        raise ValueError("The datasets should be a list (dataset name:(X,y)) pairs.")
+        raise ValueError("The datasets should be a list of (dataset name:(X,y)) pairs.")
 
 def check_random_states(random_state, repetitions):
     """Creates random states for experiments."""
@@ -30,52 +31,31 @@ def check_estimators(estimators):
     """Parses the pipelines of transformations and estimators."""
     return [Pipeline([(name, est) for name, est, *_ in estimator]) for estimator in estimators]
 
-def _check_param_grid(estimator):
-    paramspace = _ParamSpace()
-    nums_subspaces = []
-    for est_name, _, *param_grid in estimator:
-        ps = _ParamSpace(param_grid[0] if len(param_grid) > 0 else None)
-        nums_subspaces.append(ps.num_subspaces)
-        ps.append_prefix(est_name)
-        paramspace *= ps
-    if len(set(nums_subspaces)) > 1:
-        raise ValueError('The lists of parameter grids for all pipeline\'s estimators should have the same length or missing.')
-    return paramspace.param_grid if paramspace.param_grid != [] else {}
+def _check_param_grid(estimator_tpls):
+    prefixes = [prefix for prefix, _, *_ in estimator_tpls]
+    param_grids = [param_grid[0] if param_grid else None for _, _, *param_grid in estimator_tpls]
+    remove_prefixes, remove_param_grids = [], []
+    for prefix, param_grid in zip(prefixes, param_grids):
+        if param_grid is None:
+            remove_prefixes.append(prefix)
+            remove_param_grids.append(param_grid)
+    prefixes = [prefix for prefix in prefixes if prefix not in remove_prefixes]
+    param_grids = [param_grid for param_grid in param_grids if param_grid not in remove_param_grids]
+    if not param_grids:
+        return {}
+    param_grids_length = [len(param_grid) for param_grid in param_grids]
+    if len(set(param_grids_length)) > 1:
+        raise ValueError('Parameter grids for all the estimators should have either the same length or not defined.')
+    flat_param_grid = []
+    for i in range(param_grids_length[0]):
+        param_grid = [param_grid[i] for param_grid in param_grids]
+        param_grid_dict = {}
+        for prefix, sub_param_grid in zip(prefixes, param_grid):
+            param_grid_dict.update({prefix + '__' + p:v for p, v in sub_param_grid.items()})
+        flat_param_grid.append(param_grid_dict)
+    flat_param_grid = [{p:[v] for p, v in params.items()} for params in list(ParameterGrid(flat_param_grid))]
+    return flat_param_grid
 
 def check_param_grids(estimators):
     """Parses the parameter grids."""
     return [_check_param_grid(estimator) for estimator in estimators]
-
-class _ParamSpace:
-    """Private class for the creation and modification of 
-    a hyperspace.
-    """
-
-    def __init__(self, param_grid=None):
-        self.param_grid = param_grid if param_grid is not None else []
-    
-    def __add__(self, paramspace):
-        ps = _ParamSpace()
-        ps.param_grid = self.param_grid + paramspace.param_grid
-        return ps
-
-    def __mul__(self, paramspace):
-        ps = _ParamSpace()
-        if self.param_grid != [] and paramspace.param_grid != []:
-            for zipped_grid in zip(self.param_grid, paramspace.param_grid):
-                param_grid = {}
-                for grid in zipped_grid:
-                    param_grid.update(grid)
-                ps.param_grid.append(param_grid)
-        elif self.param_grid == []:
-            ps.param_grid = paramspace.param_grid
-        elif paramspace.param_grid == []:
-            ps.param_grid = self.param_grid
-        return ps
-
-    def append_prefix(self, est_name):
-        self.param_grid = [{(est_name + '__' + k):v for k, v in param_grid.items()} for param_grid in self.param_grid]
-        
-    @property
-    def num_subspaces(self):
-        return len(self.param_grid)
