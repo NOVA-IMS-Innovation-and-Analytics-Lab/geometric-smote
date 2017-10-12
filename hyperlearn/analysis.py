@@ -14,23 +14,30 @@ from .experiment import BaseExperiment
 from .utils import check_datasets
 
 
-def extract_results(experiment):
+def _extract_results(experiment):
     """Extracts the results of an experiment in 
     a pandas dataframe."""
-    columns = ['Experiment random seed', 'Dataset', 'Pipeline', 'params'] + ['mean_test_' + scorer for scorer in experiment.scoring]
-    results = pd.DataFrame(columns=columns)
+    columns = ['mean_test_' + scorer for scorer in experiment.scoring] + ['params']
+    results = pd.DataFrame()
     for dataset_name, gscv in experiment.results_:
-        cv_results = pd.DataFrame({k:v for k, v in gscv.cv_results_.items() if k in columns[3:]})
+        cv_results = pd.DataFrame({k:v for k, v in gscv.cv_results_.items() if k in columns})
+        cv_results['Experiment random seed'] = gscv.cv.random_state
         cv_results['Dataset'] = dataset_name
         cv_results['Pipeline'] = [gscv.estimator] * len(cv_results)
-        cv_results['Experiment random seed'] = gscv.cv.random_state
-        results = pd.concat([results, cv_results])
-    renamed_columns = ['Parameters'] + experiment.scoring
-    results = results[columns]
-    results = results.rename(columns=dict(zip(results.columns[3:], renamed_columns)))
+        results = results.append(cv_results)
     return results
 
-def summarize_datasets(datasets):
+def _extract_resamplers_classifiers(experiment):
+    """Extracts the resamplers and classifiers for 
+    a resampling experiment."""
+    """Extracts the results of an experiment in 
+    a pandas dataframe."""
+    results = _extract_results(experiment)
+    estimators = pd.DataFrame([(pipeline.steps[1][0], pipeline.steps[0][0]) for pipeline in results['Pipeline'].values], columns=['Classifier', 'Resampler'])
+    estimators = pd.concat([estimators.reset_index(drop=True), results['params'].reset_index(drop=True)], axis=1).rename(columns={'params':'Parameters'}, inplace=False)
+    return estimators
+
+def summarize_imbalanced_datasets(datasets):
     """Creates a summary of the datasets."""
     datasets = check_datasets(datasets)
     summary_columns = ["Dataset name",

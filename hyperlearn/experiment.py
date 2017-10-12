@@ -207,6 +207,7 @@ class ResamplingExperiment(BaseExperiment):
         if not hasattr(self, 'datasets'):
             return
         datasets = check_datasets(self.datasets)
+        estimators = list(product(self.resamplers, self.classifiers))
         self.estimators_ = check_estimators(estimators)
         self.param_grids_ = check_param_grids(estimators)
         self.random_states_ = check_random_states(self.random_state, self.experiment_repetitions)
