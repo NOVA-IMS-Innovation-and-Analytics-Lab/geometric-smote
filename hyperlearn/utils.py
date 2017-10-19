@@ -16,7 +16,7 @@ def check_datasets(datasets):
         are_all_strings = all([isinstance(dataset_name, str) for dataset_name in datasets_names])
         are_unique = len(list(datasets_names)) == len(set(datasets_names))
         if are_all_strings and are_unique:
-            return [(dataset_name, check_X_y(*dataset)) for dataset_name, dataset in datasets]
+            return datasets
         else:
             raise ValueError("The datasets' names should be unique strings.")
     except:
