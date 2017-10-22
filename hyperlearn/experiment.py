@@ -15,7 +15,7 @@ import pandas as pd
 from progressbar import ProgressBar
 from sklearn.model_selection import check_cv, GridSearchCV
 from sklearn.base import is_classifier
-from metriclearn.classification import SCORERS
+from metriclearn import SCORERS
 from .utils import check_datasets, check_random_states, check_estimators, check_param_grids
 
 
