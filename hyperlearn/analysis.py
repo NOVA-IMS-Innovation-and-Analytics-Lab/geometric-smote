@@ -9,7 +9,7 @@ from itertools import product
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
-from metriclearn.classification import SCORERS
+from metriclearn import SCORERS
 from .experiment import BaseExperiment
 from .utils import check_datasets
 
