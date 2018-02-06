@@ -1,4 +1,3 @@
-
 """
 This module contains the implementation of the
 Conditional Generative Adversarial Network as
@@ -138,8 +137,8 @@ class CGANOversampler(BaseOverSampler):
         """
         random_state = check_random_state(self.random_state)
         for class_sample, num_samples in self.ratio_.items():
-            X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, class_sample, random_state)], axis=0)
+            X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, class_sample, random_state)],
+                                         axis=0)
             y_resampled = np.concatenate([y, [class_sample] * num_samples], axis=0)
 
         return X_resampled, y_resampled
-     

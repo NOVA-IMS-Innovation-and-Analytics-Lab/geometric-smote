@@ -5,13 +5,13 @@ Geometric SMOTE oversampler.
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 
+from scipy import sparse
 import numpy as np
 from numpy.linalg import norm
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
-from scipy import sparse
-from hyperlearn.utils import check_random_states
+from sklearn_extensions.utils import check_random_states
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
