@@ -1,0 +1,7 @@
+scipy==1.0.0
+numpy==1.13.3
+pandas==0.21.0
+scikit-learn==0.19.1
+git+git://github.com/scikit-learn-contrib/categorical-encoding@8669f5b
+git+git://github.com/scikit-learn-contrib/imbalanced-learn@14bda7c
+progressbar2==3.34.3
