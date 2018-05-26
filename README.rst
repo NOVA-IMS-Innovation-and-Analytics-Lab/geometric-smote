@@ -1,8 +1,8 @@
-hyperparam-learn
-================
+scikit-learn-extensions
+=======================
 
-Easy and efficient search for optimal hyperparameters and pipelines of estimators in scikit-learn. 
-It includes a class to simplify the creation of the hyperparameter space.
+Extensions of scikit-learn. It includes a class to simplify the search of
+model space as well as various oversamplers and evaluation metrics.
 
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python35|_
 
@@ -20,29 +20,6 @@ It includes a class to simplify the creation of the hyperparameter space.
 
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35: https://badge.fury.io/py/scikit-learn
-
-stacklearn
-==========
-
-A package for generalized model stacking. The stacklearn package implements the Super Learner, Subsemble algorithms
-as well as various experimental metalearning algorithms.
-
-imbalanced-tools
-================
-
-A collection of tools for the imbalanced learning problem. It includes classes to simplify the comparison and evaluation
-of oversampling algorithms, functions to export the results and various ovarsampling algorithms which are not included
-in imbalanced-learn.
-
-metric-learn
-============
-
-A collection of classification and regression metrics for scikit-learn.
-
-oversampling-learn
-==================
-
-Classification and regression oversamplers which are not included in imbalanced-learn.
 
 References
 ==========
@@ -70,6 +47,6 @@ Installation
 
 .. code:: shell
 
-    git clone https://github.com/gdouzas/hyperparam-learn
+    git clone https://github.com/gdouzas/scikit-learn-extensions
     cd hyperparam-learn
     python3 setup.py install

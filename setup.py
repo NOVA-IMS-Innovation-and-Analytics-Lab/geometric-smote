@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="scikit-learn-extensions",
+    name="sklearnext",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -10,6 +10,5 @@ setup(
         'pandas',
         'scikit-learn',
         'imbalanced-learn',
-        'progressbar2'        
     ]
 )
