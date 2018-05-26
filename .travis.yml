@@ -2,7 +2,7 @@ language: python
 python:
   - "3.6"
 
-script: python tests/
+script: py.test sklearnext/metrics/tests/test_metrics.py
 branches:
   only:
     - master
