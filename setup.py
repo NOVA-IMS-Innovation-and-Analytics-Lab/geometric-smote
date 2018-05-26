@@ -10,5 +10,6 @@ setup(
         'pandas',
         'scikit-learn',
         'imbalanced-learn',
+        'dask_ml'
     ]
 )
