@@ -22,4 +22,6 @@ Installation
 
     git clone https://github.com/gdouzas/scikit-learn-extensions
     cd scikit-learn-extensions
+    python3 -m venv pyenv/bin/activate
+    source pyenv
     pip install .
