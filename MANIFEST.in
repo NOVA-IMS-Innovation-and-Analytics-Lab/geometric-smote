@@ -1,5 +1,0 @@
-recursive-include doc *
-recursive-include examples *
-include LICENSE
-include README.rst
-include requirements.txt
