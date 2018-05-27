@@ -8,7 +8,13 @@ from imblearn.metrics import geometric_mean_score
 from .classification import tp_score, tn_score, fp_score, fn_score
 from .regression import weighted_mean_squared_error
 
-__all__ = ['geometric_mean_score', 'tp_score', 'tn_score', 'fp_score', 'fn_score', 'SCORERS']
+__all__ = ['geometric_mean_score',
+           'tp_score',
+           'tn_score',
+           'fp_score',
+           'fn_score',
+           'weighted_mean_squared_error',
+           'SCORERS']
 
 APPENDED_SCORERS = {
     'tp': (tp_score, ),
