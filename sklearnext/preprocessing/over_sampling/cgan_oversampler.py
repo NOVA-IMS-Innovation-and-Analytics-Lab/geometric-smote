@@ -5,7 +5,7 @@ Adversarial Network as an oversampling algorithm.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
-# Licence: MIT
+# License: BSD 3 clause
 
 import numpy as np
 from imblearn.over_sampling.base import BaseOverSampler
