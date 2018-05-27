@@ -4,7 +4,7 @@ contains the implementation of the Geometric SMOTE oversampler.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
-# Licence: MIT
+# License: BSD 3 clause
 
 from scipy import sparse
 import numpy as np
