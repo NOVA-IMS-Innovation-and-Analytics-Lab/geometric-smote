@@ -8,11 +8,11 @@ features and sample the input matrix.
 
 import warnings
 import numpy as np
-from sklearn.base import TransformerMixin
 from sklearn.utils import indices_to_mask
-from sklearn.utils.validation import check_is_fitted, check_array, check_random_state
+from sklearn.utils.validation import check_is_fitted, check_X_y, check_array, check_random_state
 from sklearn.feature_selection.univariate_selection import _BaseFilter
-from sklearn.externals.six import string_types
+from imblearn.base import SamplerMixin
+from imblearn.utils import hash_X_y
 
 
 def _generate_zero_scores(X, y):
@@ -48,14 +48,13 @@ class FeatureSelector(_BaseFilter):
         return mask
 
 
-class RowSelector(TransformerMixin):
+class RowSelector(SamplerMixin):
     """Select rows according to a defined percentage.
 
         Parameters
         ----------
-        percentage : float, optional (default=1.0)
-            The percentage of samples to keep. The values should
-            be in the [0.0, 1.0] range.
+        percentage : float, optional (default=None)
+            The ratio of samples to keep. The values should be in the [0.0, 1.0] range.
         random_state : str, int, RandomState instance or None, optional (default=None)
             If str, valid choices are 'head' or 'tail' where the first or last samples
             are used respectively. If int, ``random_state`` is the seed used by
@@ -64,8 +63,8 @@ class RowSelector(TransformerMixin):
             is the ``RandomState`` instance used by ``np.random``.
         """
 
-    def __init__(self, percentage=1.0, random_state=None):
-        self.percentage = percentage
+    def __init__(self, ratio=None, random_state=None):
+        self.ratio = ratio
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -74,59 +73,58 @@ class RowSelector(TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape [n_samples, n_features]
-            The input matrix.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        self : object,
+            Return self.
         """
-        self.X_ = check_array(X)
-        self.n_samples_ = int(self.percentage * len(X)) if self.percentage < 1.0 else None
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        if self.ratio is not None and self.ratio != 1.0:
+            self.ratio_ = self.ratio
+            self.n_samples_ = int(self.ratio_ * len(X))
+        else:
+            self.ratio_ = None
+        self.X_hash_, self.y_hash_ = hash_X_y(X, y)
         return self
 
-    def transform(self, X, y='deprecated', copy=None):
+    def _sample(self, X, y):
         """Remove samples from input matrix.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
-            The input matrix.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
+            The array containing the resampled data.
+
+        y_resampled : ndarray, shape (n_samples_new,)
+            The corresponding rows of `X_resampled`
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
-        check_is_fitted(self, 'n_samples_')
-        X = check_array(X)
-        if np.array_equal(X, self.X_) and self.n_samples_ is not None:
-            if self.random_state == 'head':
-                self.X_t_ = X[:self.n_samples_].copy()
-            elif self.random_state == 'tail':
-                self.X_t_ = X[-self.n_samples_:].copy()
-            else:
-                random_state = check_random_state(self.random_state)
-                self.X_t_ = X[random_state.randint(0, len(X), self.n_samples_)].copy()
-            return self.X_t_
-        return X
-
-    def inverse_transform(self, X):
-        """Return the initial input matrix.
-
-        Parameters
-        ----------
-        X : array-like, shape [n_samples, n_features]
-            The input matrix.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
-        """
-        if hasattr(self, "X_t_") and np.array_equal(self.X_t_, X):
-            return self.X_
+        if self.ratio_ is None:
+            return X.copy(), y.copy()
+        if self.random_state == 'head':
+            X_resampled = X[:self.n_samples_].copy()
+            y_resampled = y[:self.n_samples_].copy()
+        elif self.random_state == 'tail':
+            X_resampled = X[-self.n_samples_:].copy()
+            y_resampled = y[-self.n_samples_:].copy()
         else:
-            return X
+            indices = check_random_state(self.random_state).randint(0, len(X), self.n_samples_)
+            X_resampled = X[indices].copy()
+            y_resampled = y[indices].copy()
+        return X_resampled, y_resampled
 
 
 
