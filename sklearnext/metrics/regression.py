@@ -35,7 +35,7 @@ def weighted_mean_squared_error(y_true,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
     asymmetry_factor : float
-        Assymetry factor between underprediction and overprediction
+        Asymmetry factor between underprediction and overprediction
         in the range [0.0, 0.1].  The balanced case corresponds to the 0.5 value.
 
     Returns
