@@ -2,11 +2,10 @@
 Test the classification module.
 """
 
-import numpy as np
 from ...metrics import tp_score, tn_score, fp_score, fn_score
 
-Y_TRUE = np.array([1, 1, 0, 0, 1, 1])
-Y_PRED = np.array([1, 0, 1, 0, 1, 1])
+Y_TRUE = [1, 1, 0, 0, 1, 1]
+Y_PRED = [1, 0, 1, 0, 1, 1]
 
 
 def test_scores():
