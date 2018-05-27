@@ -8,6 +8,7 @@ setup(
         'scipy',
         'numpy',
         'pandas',
+        'matplotlib',
         'scikit-learn',
         'imbalanced-learn',
         'dask_ml'
