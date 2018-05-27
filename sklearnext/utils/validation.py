@@ -9,13 +9,13 @@ for input validation.
 from sklearn.utils import check_random_state
 
 
-def _check_param_grids(param_grids):
+def _check_param_grid(param_grid):
     """Normalize the parameter grid to use with
     parametrized estimators."""
-    normalized_param_grids = param_grids.copy()
-    est_name = list(set([param.split('__')[0] for param in param_grids.keys()]))
-    normalized_param_grids.update({'est_name': est_name})
-    return normalized_param_grids
+    normalized_param_grid = param_grid.copy()
+    est_name = list(set([param.split('__')[0] for param in param_grid.keys()]))
+    normalized_param_grid.update({'est_name': est_name})
+    return normalized_param_grid
 
 
 def check_param_grids(param_grids):
@@ -24,9 +24,9 @@ def check_param_grids(param_grids):
     if isinstance(param_grids, list):
         normalized_param_grids = []
         for param_grid in param_grids:
-            normalized_param_grids.append(_check_param_grids(param_grid))
+            normalized_param_grids.append(_check_param_grid(param_grid))
     else:
-        normalized_param_grids = _check_param_grids(param_grids)
+        normalized_param_grids = _check_param_grid(param_grids)
     return normalized_param_grids
 
 
