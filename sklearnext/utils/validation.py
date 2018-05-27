@@ -47,7 +47,7 @@ def check_datasets(datasets):
 def check_random_states(random_state, repetitions):
     """Create random states for experiments."""
     random_state = check_random_state(random_state)
-    return [random_state.randint(0, 2 ** 32 - 1, dtype='uint32') for ind in range(repetitions)]
+    return [random_state.randint(0, 2 ** 32 - 1, dtype='uint32') for _ in range(repetitions)]
 
 
 
