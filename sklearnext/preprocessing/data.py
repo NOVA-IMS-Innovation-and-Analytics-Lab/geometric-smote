@@ -38,7 +38,7 @@ class FeatureSelector(_BaseFilter):
         if self.indices is not None:
             self.indices_ = check_array(self.indices, ensure_2d=False)
         else:
-            self.indices_ = self.num_features_ // 2
+            self.indices_ = np.arange(0, self.num_features_)
         if not set(np.arange(self.num_features_)).issuperset(set(self.indices_)):
             raise ValueError("Parameter indices should be an array of any index of the features; Got %r." % self.indices)
 
