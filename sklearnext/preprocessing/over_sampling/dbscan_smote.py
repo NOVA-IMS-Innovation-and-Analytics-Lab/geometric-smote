@@ -104,16 +104,25 @@ class DBSCANSMOTE(BaseOverSampler):
 
             density_factor = average_minority_distance / (n_obs**2)
 
-            sparsity_factor = 1 / density_factor
+            # TODO reevaluate this value handling
+
+            if density_factor > 0:
+                sparsity_factor = 1 / density_factor
+            else:
+                sparsity_factor = 0
 
             sparsity_factors[cluster] = sparsity_factor
 
         sparsity_sum = sum(sparsity_factors.values())
 
         sampling_weights = {}
+        # TODO reevaluate this value handling
 
         for cluster in sparsity_factors:
-            sampling_weights[cluster] = sparsity_factors[cluster] / sparsity_sum
+            if sparsity_sum > 0:
+                sampling_weights[cluster] = sparsity_factors[cluster] / sparsity_sum
+            else:
+                sampling_weights[cluster] = 0
 
         return sampling_weights
 
