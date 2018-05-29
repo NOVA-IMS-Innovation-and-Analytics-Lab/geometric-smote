@@ -10,13 +10,16 @@ def test_random_seed(RND_SEED):
     assert RND_SEED == dbsc.random_state
 
 
-X = np.array([[1,1], [0,0], [0,1], [0, -1], [-1, 0], [1,1], [0, 0], [0, 1], [0, -1], [-1, 0], [-1, -1], [1, 1], [0, -1], [-1, 0], [-1, -1], [1, 1]])
-y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
-y_expected = ([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1])
+X = np.array([[1,1], [0,0], [0,1], [0, -1], [-1, 0], 
+        [1,1], [0, 0], [0, 1], [0, -1],[0, 0], [1, 1],[1, 1], [1, 1], [1, 1]])
+y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
+y_expected = ([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 
 @pytest.mark.parametrize("X, y, y_expected", [(X, y, y_expected)])
 def test_correct_y_shape(X, y, y_expected):
-    dbsn = DBSCANSMOTE()
+    dbsn = DBSCANSMOTE(eps = 0.2, min_samples = 2)
+    dbsn.fit(X,y)
     X_, y_ = dbsn.fit_sample(X, y)
 
+    print(dbsn.ratio_)
     assert y_.shape[0] == np.shape(y_expected)[0]
