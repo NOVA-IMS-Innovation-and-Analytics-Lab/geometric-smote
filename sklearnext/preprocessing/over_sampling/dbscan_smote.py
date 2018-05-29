@@ -1,12 +1,12 @@
 from imblearn.over_sampling.base import BaseOverSampler
-from sklearn.cluster import DBSCAN, KMeans
+from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 from scipy.spatial.distance import pdist
 from imblearn.over_sampling import SMOTE
 from warnings import filterwarnings, catch_warnings, warn
 from sklearn.exceptions import DataConversionWarning
-from math import isnan
+import math
 
 
 class DBSCANSMOTE(BaseOverSampler):
@@ -16,14 +16,25 @@ class DBSCANSMOTE(BaseOverSampler):
                  ratio="auto",
                  random_state=None,
                  normalize=True,
-                 n_clusters = 8,
+                 eps=0.5,
+                 min_samples=5,
+                 metric='euclidean',
+                 metric_params=None,
+                 algorithm='auto',
+                 leaf_size=30,
+                 p=None,
                  k_neighbors = 5,
                  n_jobs=1):
 
         super(DBSCANSMOTE, self).__init__(ratio=ratio, random_state=random_state)
         self._normalize = normalize
-        self.n_clusters = n_clusters
-
+        self.eps = eps
+        self.min_samples = min_samples
+        self.metric = metric
+        self.metric_params = metric_params
+        self.algorithm = algorithm
+        self.leaf_size = leaf_size
+        self.p = p
         self.k_neighbors = k_neighbors
         self.n_jobs = n_jobs
 
@@ -98,31 +109,23 @@ class DBSCANSMOTE(BaseOverSampler):
             # d(a,a) is not present).
             distance = pdist(cluster_X, 'euclidean')
 
-            with catch_warnings():
-                filterwarnings("ignore", category=RuntimeWarning, module="numpy")
-                average_minority_distance = np.mean(distance)
+            average_minority_distance = np.mean(distance)
 
             density_factor = average_minority_distance / (n_obs**2)
 
-            # TODO reevaluate this value handling
-
-            if density_factor > 0:
-                sparsity_factor = 1 / density_factor
+            if density_factor == 0:
+                sparsity_factor = math.exp(99)
             else:
-                sparsity_factor = 0
+                sparsity_factor = 1 / density_factor
 
             sparsity_factors[cluster] = sparsity_factor
 
         sparsity_sum = sum(sparsity_factors.values())
 
         sampling_weights = {}
-        # TODO reevaluate this value handling
 
         for cluster in sparsity_factors:
-            if sparsity_sum > 0:
-                sampling_weights[cluster] = sparsity_factors[cluster] / sparsity_sum
-            else:
-                sampling_weights[cluster] = 0
+            sampling_weights[cluster] = sparsity_factors[cluster] / sparsity_sum
 
         return sampling_weights
 
@@ -148,8 +151,8 @@ class DBSCANSMOTE(BaseOverSampler):
 
                 # In case we do not have cluster where the target class it dominant, we apply regular SMOTE
                 if not clusters_to_use and n_to_generate > 0:
-                    w = "Class %s does not have a cluster where is dominant." %(target_class)
-                    warn(w)
+                    warn("Class does not have a cluster where is dominant.")
+
                 else:
                     sampling_weights = self._calculate_sampling_weights(X, y, clusters_to_use, self.labels, target_class)
 
@@ -175,9 +178,6 @@ class DBSCANSMOTE(BaseOverSampler):
                         minority_obs = y_cluster[y_cluster == target_class]
 
                         n_new = n_to_generate * sampling_weights[cluster]
-
-                        if isnan(n_new):
-                            n_new = 0
 
                         temp_dic = {target_class: int(round(n_new) + minority_obs.size)}
 
@@ -212,4 +212,12 @@ class DBSCANSMOTE(BaseOverSampler):
         return self._cluster_class.labels_
 
     def _set_cluster(self):
-        self._cluster_class = KMeans(n_clusters= self.n_clusters)
+        self._cluster_class = DBSCAN(
+            eps=self.eps,
+            min_samples=self.min_samples,
+            metric=self.metric,
+            metric_params=self.metric_params,
+            algorithm=self.algorithm,
+            leaf_size=self.leaf_size,
+            p=self.p,
+            n_jobs=self.n_jobs)
