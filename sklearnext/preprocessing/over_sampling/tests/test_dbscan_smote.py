@@ -14,12 +14,12 @@ X = np.array([[1,1], [0,0], [0,1], [0, -1], [-1, 0],
         [1,1], [0, 0], [0, 1], [0, -1],[0, 0], [1, 1],[1, 1], [1, 1], [1, 1]])
 y = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1])
 y_expected = ([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
-
-@pytest.mark.parametrize("X, y, y_expected", [(X, y, y_expected)])
-def test_correct_y_shape(X, y, y_expected):
+ratio_expected = {0: 0, 1: 6}
+@pytest.mark.parametrize("X, y, y_expected, ratio_expected", [(X, y, y_expected, ratio_expected)])
+def test_correct_y_shape(X, y, y_expected, ratio_expected):
     dbsn = DBSCANSMOTE(eps = 0.2, min_samples = 2)
     dbsn.fit(X,y)
     X_, y_ = dbsn.fit_sample(X, y)
 
-    print(dbsn.ratio_)
     assert y_.shape[0] == np.shape(y_expected)[0]
+    assert dbsn.ratio_ == ratio_expected
