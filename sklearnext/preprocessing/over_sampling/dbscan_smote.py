@@ -23,12 +23,19 @@ class DBSCANSMOTE(BaseOverSampler):
                  algorithm='auto',
                  leaf_size=30,
                  p=None,
-                 k_neighbors = 5,
+                 k_neighbors=5,
                  n_jobs=1):
 
         super(DBSCANSMOTE, self).__init__(ratio=ratio, random_state=random_state)
         self._normalize = normalize
+
+        if eps < 0:
+            raise ValueError("eps must be non negative")
         self.eps = eps
+
+        if min_samples < 0:
+            raise ValueError("min_samples must be non negative")
+           
         self.min_samples = min_samples
         self.metric = metric
         self.metric_params = metric_params
