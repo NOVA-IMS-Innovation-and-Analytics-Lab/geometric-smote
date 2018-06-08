@@ -6,11 +6,14 @@ the parameter and model space.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-from sklearn.base import BaseEstimator, clone
+from warnings import warn
+from sklearn.base import clone
+from sklearn.metrics import r2_score, accuracy_score
+from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import _BaseComposition
-from dask_ml.model_selection import GridSearchCV
+from dask_searchcv.model_selection import GridSearchCV
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
-from ..utils.validation import check_param_grids
+from ..utils.validation import check_param_grids, check_estimators
 
 
 _DOC_TEMPLATE = """{oneliner}
@@ -253,7 +256,7 @@ GridSearchCV(cache_cv=..., cv=..., error_score=...,
 """
 
 
-class _ParametrizedEstimators(_BaseComposition, BaseEstimator):
+class _ParametrizedEstimators(_BaseComposition):
     """The functionality of a collection of estimators is provided as
     a single metaestimator. The fitted estimator is selected using a
     parameter."""
@@ -261,6 +264,56 @@ class _ParametrizedEstimators(_BaseComposition, BaseEstimator):
     def __init__(self, estimators, est_name=None):
         self.estimators = estimators
         self.est_name = est_name
+        check_estimators(estimators)
+        self._validate_names([est_name for est_name, _ in estimators])
+        _ParametrizedEstimators._estimator_type = self._return_estimator_type()
+
+    def _return_estimator_type(self):
+        _, steps = zip(*self.estimators)
+        if len(set([step._estimator_type for step in steps if hasattr(step, '_estimator_type')])) > 1:
+            warn('Estimators include both regressors and classifiers. Estimator type set to classifier.')
+            return 'classifier'
+        return steps[0]._estimator_type
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the coefficient of determination R^2 of the prediction
+        if estimator type is a regressor or the mean accuracy on the given
+        test data and labels if estimator type is a classifier.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
+        sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        if _ParametrizedEstimators._estimator_type == 'regressor':
+            score = r2_score(y, self.predict(X), sample_weight=sample_weight, multioutput='variance_weighted')
+        elif _ParametrizedEstimators._estimator_type == 'classifier':
+            score = accuracy_score(y, self.predict(X), sample_weight=sample_weight)
+        return score
 
     def set_params(self, **params):
         """Set the parameters.
@@ -274,6 +327,7 @@ class _ParametrizedEstimators(_BaseComposition, BaseEstimator):
             set or replaced by setting them to None.
         """
         super()._set_params('estimators', **params)
+        check_estimators(self.estimators)
         return self
 
     def get_params(self, deep=True):
@@ -288,15 +342,21 @@ class _ParametrizedEstimators(_BaseComposition, BaseEstimator):
 
     def fit(self, X, y, *args, **kwargs):
         """"Fit the selected estimator."""
-        self.estimator_ = clone(dict(self.estimators).get(self.est_name)).fit(X, y, *args, **kwargs)
+        if self.est_name is not None:
+            estimator = clone(dict(self.estimators).get(self.est_name))
+            self.estimator_ = estimator.fit(X, y, *args, **kwargs)
+        else:
+            raise ValueError('Attribute `est_name` is set to None. An estimator should be selected.')
         return self
 
     def predict(self, X, *args, **kwargs):
         """"Predict with the selected estimator."""
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict(X, *args, **kwargs)
 
     def predict_proba(self, X, *args, **kwargs):
         """"Predict the probability with the selected estimator."""
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(X, *args, **kwargs)
 
 
@@ -322,7 +382,7 @@ class ModelSearchCV(GridSearchCV):
         self.estimators = estimators
         self.param_grids = param_grids
         super(ModelSearchCV, self).__init__(estimator=_ParametrizedEstimators(estimators),
-                                            param_grid=check_param_grids(param_grids),
+                                            param_grid=check_param_grids(param_grids, estimators),
                                             scoring=scoring,
                                             iid=iid,
                                             refit=refit,
@@ -333,8 +393,22 @@ class ModelSearchCV(GridSearchCV):
                                             n_jobs=n_jobs,
                                             cache_cv=cache_cv)
 
+    @staticmethod
+    def _split_est_name(param_grid):
+        est_name = param_grid.pop('est_name')
+        return est_name, {'__'.join(param.split('__')[1:]):value for param, value in param_grid.items()}
+
+    def _modify_grid_search_attrs(self):
+        if hasattr(self, 'best_estimator_'):
+            self.best_estimator_ = self.best_estimator_.estimator_
+        models = []
+        for ind, param_grid in enumerate(self.cv_results_['params']):
+            est_name, self.cv_results_['params'][ind] = self._split_est_name(param_grid)
+            models.append(est_name)
+        self.cv_results_.update({'models': models})
+
     def fit(self, X, y=None, groups=None, **fit_params):
         super(ModelSearchCV, self).fit(X, y, groups, **fit_params)
-        self.best_estimator_ = self.best_estimator_.estimator_
-        self.best_params_.pop('est_name')
+        self._modify_grid_search_attrs()
         return self
+
