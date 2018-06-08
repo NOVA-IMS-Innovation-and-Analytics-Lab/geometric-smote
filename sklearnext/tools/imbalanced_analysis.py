@@ -1,6 +1,6 @@
 """
-The :mod:`sklearnext.experiment_tools.analysis` module
-contains functions to evaluate the performance of various algorithms.
+The :mod:`sklearnext.tools.imbalanced_analysis` module
+contains functions to evaluate the results of model search.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -17,6 +17,24 @@ from ..utils import check_datasets
 from ..metrics import SCORERS
 
 
+def report_model_search_results(model_search_cv, sort_results=True):
+    """Generate a basic model search report of results."""
+    columns = ['models', 'params'] + [results_param for results_param in model_search_cv.cv_results_.keys()
+                                      if 'mean_test' in results_param or results_param == 'mean_fit_time']
+    results = {results_param: values for results_param, values in model_search_cv.cv_results_.items()
+               if results_param in columns}
+    report = pd.DataFrame(results, columns=columns)
+    if sort_results is True:
+        if isinstance(model_search_cv.scoring, list):
+            scorer = [col for col in columns if col not in ['models', 'params', 'mean_fit_time']][0]
+        else:
+            scorer = 'mean_test_score'
+        report = report.sort_values(scorer).reset_index(drop=True)
+    elif isinstance(sort_results, str):
+        report = report.sort_values(sort_results, ascending=not (sort_results == 'fit_time')).reset_index(drop=True)
+    return report
+
+
 def read_csv_dir(dirpath):
     "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
     datasets = []
@@ -27,6 +45,7 @@ def read_csv_dir(dirpath):
         dataset_name = sub(".csv", "", csv_file)
         datasets.append((dataset_name, (X, y)))
     return datasets
+
 
 def summarize_datasets(datasets):
     """Creates a summary of the datasets."""
@@ -91,27 +110,35 @@ def calculate_optimal_stats(experiment, return_optimal_params=False):
     # Populate optimal stats table
     for dataset_name, clf_name, oversampler_name in product(experiment.datasets_names_, clfs_names, oversamplers_names):
         matched_clfs_names = [exp_clf_name for exp_clf_name in expanded_clfs_names if match(clf_name, exp_clf_name)]
-        matched_oversamplers_names = [exp_oversampler_name for exp_oversampler_name in expanded_oversamplers_names if match(oversampler_name, exp_oversampler_name)]
+        matched_oversamplers_names = [exp_oversampler_name for exp_oversampler_name in expanded_oversamplers_names if
+                                      match(oversampler_name, exp_oversampler_name)]
 
         is_matched_clfs = np.isin(stats['Classifier'], matched_clfs_names)
         is_matched_oversamplers = np.isin(stats['Oversampler'], matched_oversamplers_names)
         is_matched_dataset = (stats['Dataset'] == dataset_name)
 
         matched_stats = stats[is_matched_clfs & is_matched_oversamplers & is_matched_dataset]
-        optimal_matched_stats = matched_stats.groupby('Metric', as_index=False).agg({'Mean CV score': [max, lambda col: matched_stats['Std CV score'][np.argmax(col)]]})
-        
+        optimal_matched_stats = matched_stats.groupby('Metric', as_index=False).agg(
+            {'Mean CV score': [max, lambda col: matched_stats['Std CV score'][np.argmax(col)]]})
+
         if not return_optimal_params:
-            optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring), columns=stats.columns[:-3])
+            optimal_matched_names = pd.DataFrame([[dataset_name, clf_name, oversampler_name]] * len(experiment.scoring),
+                                                 columns=stats.columns[:-3])
         else:
-            optimal_matched_names = matched_stats.groupby('Metric').agg({'Mean CV score': {'Classifier': lambda col: matched_stats['Classifier'][np.argmax(col)],
-                                                                                           'Oversampler': lambda col: matched_stats['Oversampler'][np.argmax(col)]}})
+            optimal_matched_names = matched_stats.groupby('Metric').agg(
+                {'Mean CV score': {'Classifier': lambda col: matched_stats['Classifier'][np.argmax(col)],
+                                   'Oversampler': lambda col: matched_stats['Oversampler'][np.argmax(col)]}})
             optimal_matched_names.columns = optimal_matched_names.columns.get_level_values(1)
             optimal_matched_names['Dataset'] = dataset_name
-            optimal_matched_names['Classifier'] = optimal_matched_names['Classifier'].apply(lambda exp_clf_name: (clf_name, dict(experiment.classifiers_)[exp_clf_name].get_params()))
+            optimal_matched_names['Classifier'] = optimal_matched_names['Classifier'].apply(
+                lambda exp_clf_name: (clf_name, dict(experiment.classifiers_)[exp_clf_name].get_params()))
             if dict(oversamplers)[oversampler_name] is None:
-                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(lambda exp_oversampler_name: (oversampler_name, None))
+                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(
+                    lambda exp_oversampler_name: (oversampler_name, None))
             else:
-                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(lambda exp_oversampler_name: (oversampler_name, dict(experiment.oversamplers_)[exp_oversampler_name].get_params()))
+                optimal_matched_names['Oversampler'] = optimal_matched_names['Oversampler'].apply(
+                    lambda exp_oversampler_name: (
+                    oversampler_name, dict(experiment.oversamplers_)[exp_oversampler_name].get_params()))
             optimal_matched_names = optimal_matched_names.reset_index()[stats.columns[:-3]]
 
         optimal_matched_stats.columns = stats.columns[-3:]
@@ -129,12 +156,14 @@ def calculate_optimal_stats_wide(experiment, append_std=True):
     optimal_stats = calculate_optimal_stats(experiment)
 
     # Calculate wide format of mean cv
-    optimal_mean_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Mean CV score').reset_index()
+    optimal_mean_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'],
+                                                  values='Mean CV score').reset_index()
     optimal_mean_wide.columns.rename(None, inplace=True)
 
     # Calculate wide format of std cv
     if append_std:
-        optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'], values='Std CV score').reset_index()
+        optimal_std_wide = optimal_stats.pivot_table(index=['Dataset', 'Classifier', 'Metric'], columns=['Oversampler'],
+                                                     values='Std CV score').reset_index()
         optimal_std_wide.columns.rename(None, inplace=True)
 
     # Populate wide format of optimal stats
@@ -142,7 +171,8 @@ def calculate_optimal_stats_wide(experiment, append_std=True):
     optimal_stats_wide = optimal_mean_wide
     if append_std:
         for oversampler_name in oversamplers_names:
-            optimal_stats_wide[oversampler_name] = list(zip(optimal_stats_wide[oversampler_name], optimal_std_wide[oversampler_name]))
+            optimal_stats_wide[oversampler_name] = list(
+                zip(optimal_stats_wide[oversampler_name], optimal_std_wide[oversampler_name]))
     return optimal_stats_wide
 
 
@@ -178,6 +208,7 @@ def calculate_friedman_test(experiment, alpha=0.05):
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
     ranking = calculate_ranking(experiment)
     extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
-    friedman_test_results = ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(columns={0: 'p-value'})
+    friedman_test_results = ranking.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(
+        columns={0: 'p-value'})
     friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
     return friedman_test_results
