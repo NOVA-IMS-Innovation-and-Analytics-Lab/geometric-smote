@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVR
-from ..validation import _normalize_param_grid, check_param_grids, check_datasets
+from ..validation import _normalize_param_grid, check_param_grids, check_datasets, add_dataset_id
 
 X, y = make_regression()
 ESTIMATORS = [
@@ -49,6 +49,14 @@ def test_check_param_grids(param_grids, updated_param_grids, estimators):
     checked_param_grids = check_param_grids(param_grids, estimators)
     assert len(checked_param_grids) == len(updated_param_grids)
     assert all(param_grid in checked_param_grids for param_grid in updated_param_grids)
+
+
+@pytest.mark.parametrize('updated_param_grids,num_datasets', [
+    (UPDATED_PARAM_GRIDS, 5)
+])
+def test_add_dataset_id(updated_param_grids, num_datasets):
+    added_id_param_grids = add_dataset_id(updated_param_grids, num_datasets)
+    assert len(added_id_param_grids) == num_datasets * len(updated_param_grids)
 
 
 @pytest.mark.parametrize('dataset_name1,dataset_name2,data', [
