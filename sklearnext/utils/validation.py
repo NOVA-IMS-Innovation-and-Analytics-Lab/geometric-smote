@@ -6,6 +6,7 @@ for input validation.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
+from itertools import product
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 from sklearn.model_selection._search import _check_param_grid
@@ -40,6 +41,17 @@ def check_param_grids(param_grids, estimators):
     for est_name in est_names.difference(generated_est_names):
         normalized_param_grids += [{'est_name': [est_name]}]
     return normalized_param_grids
+
+
+def add_dataset_id(param_grids, num_datasets):
+    """Add the dataset ids to param_grids."""
+    products = product(param_grids, range(num_datasets))
+    added_id_param_grids = []
+    for param_grid, dataset_id in products:
+        added_id_param_grid = param_grid.copy()
+        added_id_param_grid.update({'dataset_id': [dataset_id]})
+        added_id_param_grids.append(added_id_param_grid)
+    return added_id_param_grids
 
 
 def check_datasets(datasets):
