@@ -261,9 +261,10 @@ class _ParametrizedEstimators(_BaseComposition):
     a single metaestimator. The fitted estimator is selected using a
     parameter."""
 
-    def __init__(self, estimators, est_name=None):
+    def __init__(self, estimators, est_name=None, dataset_id=None):
         self.estimators = estimators
         self.est_name = est_name
+        self.dataset_id = dataset_id
         check_estimators(estimators)
         self._validate_names([est_name for est_name, _ in estimators])
         _ParametrizedEstimators._estimator_type = self._return_estimator_type()
@@ -341,23 +342,25 @@ class _ParametrizedEstimators(_BaseComposition):
         return super()._get_params('estimators', deep=deep)
 
     def fit(self, X, y, *args, **kwargs):
-        """"Fit the selected estimator."""
-        if self.est_name is not None:
-            estimator = clone(dict(self.estimators).get(self.est_name))
-            self.estimator_ = estimator.fit(X, y, *args, **kwargs)
-        else:
+        """"Fit the selected estimator and dataset."""
+        if self.est_name is None:
             raise ValueError('Attribute `est_name` is set to None. An estimator should be selected.')
+        if not hasattr(X, 'shape') and self.dataset_id is None:
+            raise ValueError('Attribute `dataset_id` is set to None. A dataset should be selected.')
+        estimator = clone(dict(self.estimators).get(self.est_name))
+        X_fit, y_fit = (X, y) if self.dataset_id is None else (X[self.dataset_id], y[self.dataset_id])
+        self.estimator_ = estimator.fit(X_fit, y_fit, *args, **kwargs)
         return self
 
     def predict(self, X, *args, **kwargs):
         """"Predict with the selected estimator."""
         check_is_fitted(self, 'estimator_')
-        return self.estimator_.predict(X, *args, **kwargs)
+        return self.estimator_.predict(X if self.dataset_id is None else X[self.dataset_id], *args, **kwargs)
 
     def predict_proba(self, X, *args, **kwargs):
         """"Predict the probability with the selected estimator."""
         check_is_fitted(self, 'estimator_')
-        return self.estimator_.predict_proba(X, *args, **kwargs)
+        return self.estimator_.predict_proba(X if self.dataset_id is None else X[self.dataset_id], *args, **kwargs)
 
 
 class ModelSearchCV(GridSearchCV):

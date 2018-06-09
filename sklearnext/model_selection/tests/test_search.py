@@ -31,7 +31,7 @@ CLASSIFIERS_PARAM_GRIDS = {'svc__C': [0.01, 0.1, 1.0], 'svc__kernel': ['rbf', 'l
 
 
 def _generate_expected_params(estimators):
-    expected_params = {'est_name': None, 'estimators': estimators}
+    expected_params = {'est_name': None, 'dataset_id': None, 'estimators': estimators}
     for est_name, step in estimators:
         expected_params[est_name] = step
         est_params = step.get_params()
@@ -56,43 +56,47 @@ def test_parametrized_estimators_initialization(estimators):
     (REGRESSORS, {'svr': SVR(C=2.0)}),
 ])
 def test_parametrized_estimators_params_methods(estimators, updated_params):
-    """Test the get parameters methods."""
+    """Test the set and get parameters methods."""
     pe = _ParametrizedEstimators(estimators)
     pe.set_params(**updated_params)
     assert pe.get_params() == _generate_expected_params(pe.estimators)
 
 
-@pytest.mark.parametrize('estimators,est_name,X,y', [
-    (REGRESSORS, 'linr', X_reg, y_reg),
-    (REGRESSORS, 'svr', X_reg, y_reg),
-    (REGRESSORS, 'reg_pip', X_reg, y_reg),
-    (CLASSIFIERS, 'svc', X_clf, y_clf)
+@pytest.mark.parametrize('estimators,est_name,X,y,dataset_ind', [
+    (REGRESSORS, 'linr', X_reg, y_reg, None),
+    (REGRESSORS, 'svr', X_reg, y_reg, None),
+    (REGRESSORS, 'reg_pip', X_reg, y_reg, None),
+    (CLASSIFIERS, 'svc', X_clf, y_clf, None),
+    (REGRESSORS, 'linr', [X_reg, X_reg], [y_reg, y_reg], 0),
+    (REGRESSORS, 'svr', [X_reg, X_reg], [y_reg, y_reg], 1),
+    (REGRESSORS, 'reg_pip', [X_reg, X_reg], [y_reg, y_reg], 0),
+    (CLASSIFIERS, 'svc', [X_clf, X_clf], [y_clf, y_clf], 1)
 ])
-def test_parametrized_estimators_is_fitted(estimators, est_name, X, y):
-    """Test the get parameters methods."""
-    pe = _ParametrizedEstimators(estimators, est_name)
+def test_parametrized_estimators_fitting(estimators, est_name, X, y, dataset_ind):
+    """Test parametrized estimators fitting process."""
+    pe = _ParametrizedEstimators(estimators, est_name, dataset_ind)
     pe.fit(X, y)
     fitted_estimator = dict(estimators).get(est_name)
     assert isinstance(fitted_estimator, pe.estimator_.__class__)
 
 
-@pytest.mark.parametrize('estimators,X,y', [
-    (REGRESSORS, X_reg, y_reg),
-    (CLASSIFIERS, X_clf, y_clf)
+@pytest.mark.parametrize('estimators,X,y,est_name,dataset_ind', [
+    (REGRESSORS, X_reg, y_reg, None, None),
+    (REGRESSORS, [X_reg, X_reg], [y_reg, y_reg], 'linr', None),
+    (REGRESSORS, [X_reg, X_reg], [y_reg, y_reg], None, 1),
 ])
-def test__parametrized_estimators_not_fitted(estimators, X, y):
-    """Test the get parameters methods."""
+def test_parametrized_estimators_fitting_error(estimators, X, y, est_name, dataset_ind):
+    """Test parametrized estimators fitting error."""
     with pytest.raises(ValueError):
-        _ParametrizedEstimators(estimators).fit(X, y)
+        _ParametrizedEstimators(estimators, est_name, dataset_ind).fit(X, y)
 
 
 @pytest.mark.parametrize('estimators,estimator_type', [
     (REGRESSORS, 'regressor'),
-    (CLASSIFIERS, 'classifier'),
-    (REGRESSORS + CLASSIFIERS, 'classifier')
+    (CLASSIFIERS, 'classifier')
 ])
 def test_parametrized_estimators_type(estimators, estimator_type):
-    """Test the get parameters methods."""
+    """Test parametrized estimators type."""
     pe = _ParametrizedEstimators(estimators)
     assert pe._estimator_type == estimator_type
 
@@ -102,6 +106,6 @@ def test_parametrized_estimators_type(estimators, estimator_type):
     (CLASSIFIERS, CLASSIFIERS_PARAM_GRIDS, 'classifier'),
 ])
 def test_model_search_cv_type(estimators, param_grids, estimator_type):
-    """Test the get parameters methods."""
+    """Test model search cv estimator type."""
     mscv = ModelSearchCV(estimators, param_grids)
     assert mscv._estimator_type == estimator_type
