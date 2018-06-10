@@ -13,26 +13,10 @@ from re import match, sub
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
-from ..utils import check_datasets
+from sklearn.model_selection import StratifiedKFold
+from ..utils import check_datasets, check_oversamplers_classifiers
 from ..metrics import SCORERS
-
-
-def report_model_search_results(model_search_cv, sort_results=True):
-    """Generate a basic model search report of results."""
-    columns = ['models', 'params'] + [results_param for results_param in model_search_cv.cv_results_.keys()
-                                      if 'mean_test' in results_param or results_param == 'mean_fit_time']
-    results = {results_param: values for results_param, values in model_search_cv.cv_results_.items()
-               if results_param in columns}
-    report = pd.DataFrame(results, columns=columns)
-    if sort_results is True:
-        if isinstance(model_search_cv.scoring, list):
-            scorer = [col for col in columns if col not in ['models', 'params', 'mean_fit_time']][0]
-        else:
-            scorer = 'mean_test_score'
-        report = report.sort_values(scorer).reset_index(drop=True)
-    elif isinstance(sort_results, str):
-        report = report.sort_values(sort_results, ascending=not (sort_results == 'fit_time')).reset_index(drop=True)
-    return report
+from ..model_selection import ModelSearchCV
 
 
 def read_csv_dir(dirpath):
@@ -212,3 +196,30 @@ def calculate_friedman_test(experiment, alpha=0.05):
         columns={0: 'p-value'})
     friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
     return friedman_test_results
+
+
+class ImbalancedSearch(ModelSearchCV):
+
+    def __init__(self,
+                 oversamplers,
+                 classifiers,
+                 scoring=None,
+                 n_splits=3,
+                 n_runs=3,
+                 random_state=None,
+                 n_jobs=-1):
+        self.oversamplers = oversamplers
+        self.classifiers = classifiers
+        self.n_splits = n_splits
+        self.n_runs = n_runs
+        self.random_state = random_state
+        super(ImbalancedSearch, self).__init__(**check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state),
+                                               scoring=scoring,
+                                               iid=True,
+                                               refit=False,
+                                               cv=StratifiedKFold(n_splits=n_splits, shuffle=True,random_state=random_state),
+                                               error_score='raise',
+                                               return_train_score=False,
+                                               scheduler=None,
+                                               n_jobs=n_jobs,
+                                               cache_cv=True)
