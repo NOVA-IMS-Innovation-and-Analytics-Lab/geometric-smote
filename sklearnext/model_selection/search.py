@@ -9,7 +9,7 @@ the parameter and model space.
 from warnings import warn
 from sklearn.base import clone
 from sklearn.metrics import r2_score, accuracy_score
-from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_is_fitted, check_random_state
 from sklearn.utils.metaestimators import _BaseComposition
 from dask_searchcv.model_selection import GridSearchCV
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
@@ -261,10 +261,11 @@ class _ParametrizedEstimators(_BaseComposition):
     a single metaestimator. The fitted estimator is selected using a
     parameter."""
 
-    def __init__(self, estimators, est_name=None, dataset_id=None):
+    def __init__(self, estimators, est_name=None, dataset_id=None, random_state=None):
         self.estimators = estimators
         self.est_name = est_name
         self.dataset_id = dataset_id
+        self.random_state = random_state
         check_estimators(estimators)
         self._validate_names([est_name for est_name, _ in estimators])
         _ParametrizedEstimators._estimator_type = self._return_estimator_type()
@@ -348,6 +349,10 @@ class _ParametrizedEstimators(_BaseComposition):
         if not hasattr(X, 'shape') and self.dataset_id is None:
             raise ValueError('Attribute `dataset_id` is set to None. A dataset should be selected.')
         estimator = clone(dict(self.estimators).get(self.est_name))
+        params = estimator.get_params().keys()
+        random_state_params = [par for par, included in zip(params, ['random_state' in par for par in params]) if included]
+        for par in random_state_params:
+            estimator.set_params(**{par: self.random_state})
         X_fit, y_fit = (X, y) if self.dataset_id is None else (X[self.dataset_id], y[self.dataset_id])
         self.estimator_ = estimator.fit(X_fit, y_fit, *args, **kwargs)
         return self

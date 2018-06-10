@@ -31,7 +31,7 @@ CLASSIFIERS_PARAM_GRIDS = {'svc__C': [0.01, 0.1, 1.0], 'svc__kernel': ['rbf', 'l
 
 
 def _generate_expected_params(estimators):
-    expected_params = {'est_name': None, 'dataset_id': None, 'estimators': estimators}
+    expected_params = {'est_name': None, 'dataset_id': None, 'random_state': None, 'estimators': estimators}
     for est_name, step in estimators:
         expected_params[est_name] = step
         est_params = step.get_params()
