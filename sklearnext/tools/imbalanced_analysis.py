@@ -198,28 +198,20 @@ def calculate_friedman_test(experiment, alpha=0.05):
     return friedman_test_results
 
 
-class ImbalancedSearch(ModelSearchCV):
-
-    def __init__(self,
-                 oversamplers,
-                 classifiers,
-                 scoring=None,
-                 n_splits=3,
-                 n_runs=3,
-                 random_state=None,
-                 n_jobs=-1):
-        self.oversamplers = oversamplers
-        self.classifiers = classifiers
-        self.n_splits = n_splits
-        self.n_runs = n_runs
-        self.random_state = random_state
-        super(ImbalancedSearch, self).__init__(**check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state),
-                                               scoring=scoring,
-                                               iid=True,
-                                               refit=False,
-                                               cv=StratifiedKFold(n_splits=n_splits, shuffle=True,random_state=random_state),
-                                               error_score='raise',
-                                               return_train_score=False,
-                                               scheduler=None,
-                                               n_jobs=n_jobs,
-                                               cache_cv=True)
+def evaluate_imbalanced_experiment(X, y, oversamplers, classifiers, scoring=None,
+                                   n_splits=3, n_runs=3, random_state=None, n_jobs=-1):
+    n_datasets = len(X) if not hasattr(X, 'shape') else 1
+    estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state, n_datasets).values()
+    mscv = ModelSearchCV(estimators,
+                         param_grids,
+                         scoring=scoring,
+                         iid=True,
+                         refit=False,
+                         cv=StratifiedKFold(n_splits=n_splits, shuffle=True,random_state=random_state),
+                         error_score='raise',
+                         return_train_score=False,
+                         scheduler=None,
+                         n_jobs=n_jobs,
+                         cache_cv=True)
+    mscv.fit(X, y)
+    return mscv
