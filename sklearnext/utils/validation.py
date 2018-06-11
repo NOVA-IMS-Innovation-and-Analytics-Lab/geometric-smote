@@ -29,9 +29,11 @@ def check_param_grids(param_grids, estimators):
     if isinstance(param_grids, list):
         normalized_param_grids = []
         for param_grid in param_grids:
-            normalized_param_grids.append(_normalize_param_grid(param_grid))
+            normalized_param_grids.append(_normalize_param_grid(param_grid)
+                                          if 'est_name' not in param_grid.keys() else param_grid.copy())
     else:
-        normalized_param_grids = [_normalize_param_grid(param_grids)]
+        normalized_param_grids = [_normalize_param_grid(param_grids)
+                                  if 'est_name' not in param_grids.keys() else param_grids.copy()]
     est_names, _ = zip(*estimators)
     est_names = set(est_names)
     try:
@@ -44,50 +46,46 @@ def check_param_grids(param_grids, estimators):
     return normalized_param_grids
 
 
-def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state):
+def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state, n_datasets):
     """Extract estimators and parameters grids."""
 
     # Extract estimators
-    estimators_products = product([smpl[0:2] for smpl in oversamplers], [clf[0:2] for clf in classifiers])
-    estimators = [('%s_%s' % (smpl_name, clf_name), Pipeline([(smpl_name, smpl), (clf_name, clf)])) for
-                  (smpl_name, smpl), (clf_name, clf) in estimators_products]
+    estimators_products = product(
+        [smpl[0:2] for smpl in oversamplers],
+        [clf[0:2] for clf in classifiers],
+        range(n_runs),
+        range(n_datasets)
+    )
+    estimators = [('%s_%s_%s_%s' % (smpl_name, clf_name, run_id, dataset_id), Pipeline([(smpl_name, smpl), (clf_name, clf)])) for
+                  (smpl_name, smpl), (clf_name, clf), run_id, dataset_id in estimators_products]
 
     # Extract parameters grids
     oversamplers_param_grids = [{('%s__%s' % (smpl[0], par)):val for par, val in smpl[2].items()}
                                 if len(smpl) > 2 else {} for smpl in oversamplers]
     classifiers_param_grids = [{('%s__%s' % (clf[0], par)): val for par, val in clf[2].items()}
                                if len(clf) > 2 else {} for clf in classifiers]
-    param_grids_products = product(oversamplers_param_grids, classifiers_param_grids)
+    param_grids_products = product(oversamplers_param_grids, classifiers_param_grids, range(n_runs), range(n_datasets))
     param_grids = []
     est_names, _ = zip(*estimators)
-    for (oversampler_param_grid ,classifier_param_grid), est_name in zip(param_grids_products, est_names):
+    for (oversampler_param_grid , classifier_param_grid, _, dataset_id), est_name in zip(param_grids_products, est_names):
         param_grid = {}
         param_grid.update(oversampler_param_grid)
         param_grid.update(classifier_param_grid)
         param_grid = {('%s__%s' % (est_name, par)):val for par, val in param_grid.items()}
         param_grid.update({'est_name': [est_name]})
+        param_grid.update({'dataset_id': [dataset_id if n_datasets > 1 else None]})
         param_grids.append(param_grid)
 
     # Extract random states
-    random_states = check_random_states(random_state, n_runs)
-    random_states_products = product(param_grids, random_states)
+    random_states = check_random_states(random_state, len(oversamplers) * len(classifiers) * n_runs * n_datasets)
+    zipped_param_grids = zip(param_grids, random_states)
     smpl_clf_param_grids = []
-    for param_grid, random_state in random_states_products:
+    for param_grid, random_state in zipped_param_grids:
         smpl_clf_param_grid = param_grid.copy()
         smpl_clf_param_grid.update({'random_state': [random_state]})
         smpl_clf_param_grids.append(smpl_clf_param_grid)
 
     return {'estimators': estimators, 'param_grids': smpl_clf_param_grids}
-
-def add_dataset_id(param_grids, n_datasets):
-    """Add the dataset ids to param_grids."""
-    products = product(param_grids, range(n_datasets))
-    added_id_param_grids = []
-    for param_grid, dataset_id in products:
-        added_id_param_grid = param_grid.copy()
-        added_id_param_grid.update({'dataset_id': [dataset_id]})
-        added_id_param_grids.append(added_id_param_grid)
-    return added_id_param_grids
 
 
 def check_datasets(datasets):

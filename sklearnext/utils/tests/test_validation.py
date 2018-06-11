@@ -15,7 +15,6 @@ from ..validation import (
     check_param_grids,
     check_datasets,
     check_oversamplers_classifiers,
-    add_dataset_id,
     check_random_states
 )
 
@@ -37,57 +36,89 @@ UPDATED_PARAM_GRIDS = [
 ]
 OVERSAMPLERS = [
     ('random', RandomOverSampler()),
-    ('smote', SMOTE(), {'k_neighbors': [2, 3, 4], 'kind': ['regular', 'borderline1']}),
-    ('adasyn', ADASYN(), {'k_neighbors': [2, 3, 4, 5]})
+    ('smote', SMOTE(), {'k_neighbors': [2, 3, 4], 'kind': ['regular', 'borderline1']})
 ]
 CLASSIFIERS = [
-    ('lr', LogisticRegression()),
     ('svc', SVC(), {'C': [0.1, 0.5, 1.0], 'kernel': ['rbf', 'linear']})
 ]
 OVERSAMPLERS_CLASSIFIERS = [
-    ('random_lr', Pipeline([('random', RandomOverSampler()), ('lr', LogisticRegression())])),
-    ('random_svc', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
-    ('smote_lr', Pipeline([('smote', SMOTE()), ('lr', LogisticRegression())])),
-    ('smote_svc', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
-    ('adasyn_lr', Pipeline([('adasyn', RandomOverSampler()), ('lr', LogisticRegression())])),
-    ('adasyn_svc', Pipeline([('adasyn', RandomOverSampler()), ('svc', SVC())]))
+    ('random_svc_0_0', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('random_svc_0_1', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('random_svc_1_0', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('random_svc_1_1', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('smote_svc_0_0', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
+    ('smote_svc_0_1', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
+    ('smote_svc_1_0', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
+    ('smote_svc_1_1', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())]))
 ]
 OVERSAMPLERS_CLASSIFIERS_PARAM_GRIDS = [
     {
-        'est_name': ['random_lr'],
-        'random_state': None
+        'est_name': ['random_svc_0_0'],
+        'dataset_id': [0],
+        'random_state': None,
+        'random_svc_0_0__svc__C': [0.1, 0.5, 1.0],
+        'random_svc_0_0__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['random_svc'],
+        'est_name': ['random_svc_0_1'],
+        'dataset_id': [1],
         'random_state': None,
-        'random_svc__svc__C': [0.1, 0.5, 1.0],
-        'random_svc__svc__kernel': ['rbf', 'linear']
+        'random_svc_0_1__svc__C': [0.1, 0.5, 1.0],
+        'random_svc_0_1__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['smote_lr'],
+        'est_name': ['random_svc_1_0'],
+        'dataset_id': [0],
         'random_state': None,
-        'smote_lr__smote__k_neighbors': [2, 3, 4],
-        'smote_lr__smote__kind': ['regular', 'borderline1']
+        'random_svc_1_0__svc__C': [0.1, 0.5, 1.0],
+        'random_svc_1_0__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['smote_svc'],
+        'est_name': ['random_svc_1_1'],
+        'dataset_id': [1],
         'random_state': None,
-        'smote_svc__smote__k_neighbors': [2, 3, 4],
-        'smote_svc__smote__kind': ['regular', 'borderline1'],
-        'smote_svc__svc__C': [0.1, 0.5, 1.0],
-        'smote_svc__svc__kernel': ['rbf', 'linear']
+        'random_svc_1_1__svc__C': [0.1, 0.5, 1.0],
+        'random_svc_1_1__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['adasyn_lr'],
+        'est_name': ['smote_svc_0_0'],
+        'dataset_id': [0],
         'random_state': None,
-        'adasyn_lr__adasyn__k_neighbors': [2, 3, 4, 5]
+        'smote_svc_0_0__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_0_0__svc__kernel': ['rbf', 'linear'],
+        'smote_svc_0_0__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_0_0__smote__k_neighbors': [2, 3, 4],
+        'smote_svc_0_0__smote__kind': ['regular', 'borderline1']
     },
     {
-        'est_name': ['adasyn_svc'],
+        'est_name': ['smote_svc_0_1'],
+        'dataset_id': [1],
         'random_state': None,
-        'adasyn_svc__adasyn__k_neighbors': [2, 3, 4, 5],
-        'adasyn_svc__svc__C': [0.1, 0.5, 1.0],
-        'adasyn_svc__svc__kernel': ['rbf', 'linear']
+        'smote_svc_0_1__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_0_1__svc__kernel': ['rbf', 'linear'],
+        'smote_svc_0_1__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_0_1__smote__k_neighbors': [2, 3, 4],
+        'smote_svc_0_1__smote__kind': ['regular', 'borderline1']
+    },
+    {
+        'est_name': ['smote_svc_1_0'],
+        'dataset_id': [0],
+        'random_state': None,
+        'smote_svc_1_0__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_1_0__svc__kernel': ['rbf', 'linear'],
+        'smote_svc_1_0__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_1_0__smote__k_neighbors': [2, 3, 4],
+        'smote_svc_1_0__smote__kind': ['regular', 'borderline1']
+    },
+    {
+        'est_name': ['smote_svc_1_1'],
+        'dataset_id': [1],
+        'random_state': None,
+        'smote_svc_1_1__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_1_1__svc__kernel': ['rbf', 'linear'],
+        'smote_svc_1_1__svc__C': [0.1, 0.5, 1.0],
+        'smote_svc_1_1__smote__k_neighbors': [2, 3, 4],
+        'smote_svc_1_1__smote__kind': ['regular', 'borderline1']
     }
 ]
 
@@ -115,23 +146,22 @@ def test_check_param_grids(param_grids, updated_param_grids, estimators):
     assert all(param_grid in checked_param_grids for param_grid in updated_param_grids)
 
 
-@pytest.mark.parametrize('oversamplers,classifiers,n_runs,random_state,estimators,param_grids', [
-    (OVERSAMPLERS, CLASSIFIERS, 2, 1, OVERSAMPLERS_CLASSIFIERS, OVERSAMPLERS_CLASSIFIERS_PARAM_GRIDS),
-    (OVERSAMPLERS, CLASSIFIERS, 5, 10, OVERSAMPLERS_CLASSIFIERS, OVERSAMPLERS_CLASSIFIERS_PARAM_GRIDS)
+@pytest.mark.parametrize('oversamplers,classifiers,n_runs,random_state,n_datasets,estimators,param_grids', [
+    (OVERSAMPLERS, CLASSIFIERS, 2, 1, 2, OVERSAMPLERS_CLASSIFIERS, OVERSAMPLERS_CLASSIFIERS_PARAM_GRIDS)
 ])
-def test_check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state, estimators, param_grids):
+def test_check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state, n_datasets, estimators, param_grids):
 
     generated_estimators, generated_param_grids = check_oversamplers_classifiers(
-        oversamplers, classifiers, n_runs, random_state).values()
+        oversamplers, classifiers, n_runs, random_state, n_datasets).values()
+
     generated_est_names, generated_estimators = zip(*generated_estimators)
     generated_params = [est.get_params(False).keys() for est in generated_estimators]
     est_names, estimators = zip(*estimators)
     params = [est.get_params(False).keys() for est in estimators]
 
-    param_grids = np.repeat(param_grids, n_runs).tolist()
-    random_states = check_random_states(random_state, n_runs)
+    random_states = check_random_states(random_state, len(oversamplers) * len(classifiers) * n_runs * n_datasets)
     final_param_grids = []
-    for param_grid, random_state in zip(param_grids, random_states * len(oversamplers) * len(classifiers)):
+    for param_grid, random_state in zip(param_grids, random_states):
         param_grid = param_grid.copy()
         param_grid.update({'random_state': random_state})
         final_param_grids.append(param_grid)
@@ -139,14 +169,6 @@ def test_check_oversamplers_classifiers(oversamplers, classifiers, n_runs, rando
     assert generated_est_names == est_names
     assert [set(list(pars)) for pars in generated_params] == [set(list(pars)) for pars in params]
     assert generated_param_grids == final_param_grids
-
-@pytest.mark.parametrize('updated_param_grids,n_datasets', [
-    (UPDATED_PARAM_GRIDS, 5),
-    (UPDATED_PARAM_GRIDS[0:2], 3)
-])
-def test_add_dataset_id(updated_param_grids, n_datasets):
-    added_id_param_grids = add_dataset_id(updated_param_grids, n_datasets)
-    assert len(added_id_param_grids) == n_datasets * len(updated_param_grids)
 
 
 @pytest.mark.parametrize('dataset_name1,dataset_name2,data', [
