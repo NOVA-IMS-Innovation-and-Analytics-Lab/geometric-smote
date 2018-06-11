@@ -7,9 +7,9 @@ the parameter and model space.
 # License: BSD 3 clause
 
 from warnings import warn
-from sklearn.base import clone
+from dask_searchcv.utils import copy_estimator
 from sklearn.metrics import r2_score, accuracy_score
-from sklearn.utils.validation import check_is_fitted, check_random_state
+from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import _BaseComposition
 from dask_searchcv.model_selection import GridSearchCV
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
@@ -348,7 +348,7 @@ class _ParametrizedEstimators(_BaseComposition):
             raise ValueError('Attribute `est_name` is set to None. An estimator should be selected.')
         if not hasattr(X, 'shape') and self.dataset_id is None:
             raise ValueError('Attribute `dataset_id` is set to None. A dataset should be selected.')
-        estimator = clone(dict(self.estimators).get(self.est_name))
+        estimator = copy_estimator(dict(self.estimators)[self.est_name])
         params = estimator.get_params().keys()
         random_state_params = [par for par, included in zip(params, ['random_state' in par for par in params]) if included]
         for par in random_state_params:
@@ -403,6 +403,7 @@ class ModelSearchCV(GridSearchCV):
 
     @staticmethod
     def _split_est_name(param_grid):
+        param_grid = {param:value for param, value in param_grid.items() if param not in ('random_state', 'dataset_id')}
         est_name = param_grid.pop('est_name')
         return est_name, {'__'.join(param.split('__')[1:]):value for param, value in param_grid.items()}
 
