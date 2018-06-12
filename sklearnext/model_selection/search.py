@@ -261,10 +261,9 @@ class _ParametrizedEstimators(_BaseComposition):
     a single metaestimator. The fitted estimator is selected using a
     parameter."""
 
-    def __init__(self, estimators, est_name=None, dataset_id=None, random_state=None):
+    def __init__(self, estimators, est_name=None, random_state=None):
         self.estimators = estimators
         self.est_name = est_name
-        self.dataset_id = dataset_id
         self.random_state = random_state
         check_estimators(estimators)
         self._validate_names([est_name for est_name, _ in estimators])
@@ -353,19 +352,18 @@ class _ParametrizedEstimators(_BaseComposition):
         random_state_params = [par for par, included in zip(params, ['random_state' in par for par in params]) if included]
         for par in random_state_params:
             estimator.set_params(**{par: self.random_state})
-        X_fit, y_fit = (X, y) if self.dataset_id is None else (X[self.dataset_id], y[self.dataset_id])
-        self.estimator_ = estimator.fit(X_fit, y_fit, *args, **kwargs)
+        self.estimator_ = estimator.fit(X, y, *args, **kwargs)
         return self
 
     def predict(self, X, *args, **kwargs):
         """"Predict with the selected estimator."""
         check_is_fitted(self, 'estimator_')
-        return self.estimator_.predict(X if self.dataset_id is None else X[self.dataset_id], *args, **kwargs)
+        return self.estimator_.predict(X, *args, **kwargs)
 
     def predict_proba(self, X, *args, **kwargs):
         """"Predict the probability with the selected estimator."""
         check_is_fitted(self, 'estimator_')
-        return self.estimator_.predict_proba(X if self.dataset_id is None else X[self.dataset_id], *args, **kwargs)
+        return self.estimator_.predict_proba(X, *args, **kwargs)
 
 
 class ModelSearchCV(GridSearchCV):
