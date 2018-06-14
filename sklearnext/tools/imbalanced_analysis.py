@@ -6,6 +6,7 @@ contains functions to evaluate the results of model search.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # Licence: MIT
 
+from collections import Counter
 from os.path import join
 from os import listdir
 from re import match, sub
@@ -41,7 +42,7 @@ def summarize_datasets(datasets):
                        "Imbalance Ratio"]
     datasets_summary = pd.DataFrame({}, columns=summary_columns)
     for dataset_name, (X, y) in datasets:
-        n_instances = ((y == 0).sum(), (y == 1).sum())
+        n_instances = Counter(y)
         dataset_summary = pd.DataFrame([[dataset_name,
                                          X.shape[1],
                                          y.size,
