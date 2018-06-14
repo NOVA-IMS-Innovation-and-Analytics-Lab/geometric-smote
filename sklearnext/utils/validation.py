@@ -55,7 +55,7 @@ def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_sta
         [clf[0:2] for clf in classifiers],
         range(n_runs)
     )
-    estimators = [('%s_%s_%s' % (smpl_name, clf_name, run_id), Pipeline([(smpl_name, smpl), (clf_name, clf)])) for
+    estimators = [('%s|%s_%s' % (smpl_name, clf_name, run_id), Pipeline([(smpl_name, smpl), (clf_name, clf)])) for
                   (smpl_name, smpl), (clf_name, clf), run_id in estimators_products]
 
     # Extract parameters grids
