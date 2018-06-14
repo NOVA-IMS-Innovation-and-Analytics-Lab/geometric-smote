@@ -27,12 +27,12 @@ BASIC_COLUMNS = ['models', 'params', 'mean_fit_time']
     (None, 'mean_fit_time'),
     (None, 'mean_test_score'),
     ('accuracy', None),
-    ('f1', 'mean_fit_time'),
-    ('f1', 'mean_test_score'),
-    (['accuracy', 'f1'], None),
-    (['accuracy', 'f1'], 'mean_fit_time'),
-    (['accuracy', 'f1'], 'mean_test_accuracy'),
-    (['accuracy', 'f1'], 'mean_test_f1')
+    ('recall', 'mean_fit_time'),
+    ('recall', 'mean_test_score'),
+    (['accuracy', 'recall'], None),
+    (['accuracy', 'recall'], 'mean_fit_time'),
+    (['accuracy', 'recall'], 'mean_test_accuracy'),
+    (['accuracy', 'recall'], 'mean_test_recall')
 ])
 def test_report_model_search_results(scoring, sort_results):
     """Test the output of the model search report function."""
