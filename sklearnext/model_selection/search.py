@@ -401,7 +401,7 @@ class ModelSearchCV(GridSearchCV):
 
     @staticmethod
     def _split_est_name(param_grid):
-        param_grid = {param:value for param, value in param_grid.items() if param not in ('random_state', 'dataset_id')}
+        param_grid = {param:value for param, value in param_grid.items() if param != 'random_state'}
         est_name = param_grid.pop('est_name')
         return est_name, {'__'.join(param.split('__')[1:]):value for param, value in param_grid.items()}
 
