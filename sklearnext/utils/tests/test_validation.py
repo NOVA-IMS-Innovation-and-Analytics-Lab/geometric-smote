@@ -42,41 +42,41 @@ CLASSIFIERS = [
     ('svc', SVC(), {'C': [0.1, 0.5, 1.0], 'kernel': ['rbf', 'linear']})
 ]
 OVERSAMPLERS_CLASSIFIERS = [
-    ('random_svc_0', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
-    ('random_svc_1', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
-    ('smote_svc_0', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
-    ('smote_svc_1', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())]))
+    ('random|svc_0', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('random|svc_1', Pipeline([('random', RandomOverSampler()), ('svc', SVC())])),
+    ('smote|svc_0', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())])),
+    ('smote|svc_1', Pipeline([('smote', RandomOverSampler()), ('svc', SVC())]))
 ]
 OVERSAMPLERS_CLASSIFIERS_PARAM_GRIDS = [
     {
-        'est_name': ['random_svc_0'],
+        'est_name': ['random|svc_0'],
         'random_state': None,
-        'random_svc_0__svc__C': [0.1, 0.5, 1.0],
-        'random_svc_0__svc__kernel': ['rbf', 'linear']
+        'random|svc_0__svc__C': [0.1, 0.5, 1.0],
+        'random|svc_0__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['random_svc_1'],
+        'est_name': ['random|svc_1'],
         'random_state': None,
-        'random_svc_1__svc__C': [0.1, 0.5, 1.0],
-        'random_svc_1__svc__kernel': ['rbf', 'linear']
+        'random|svc_1__svc__C': [0.1, 0.5, 1.0],
+        'random|svc_1__svc__kernel': ['rbf', 'linear']
     },
     {
-        'est_name': ['smote_svc_0'],
+        'est_name': ['smote|svc_0'],
         'random_state': None,
-        'smote_svc_0__svc__C': [0.1, 0.5, 1.0],
-        'smote_svc_0__svc__kernel': ['rbf', 'linear'],
-        'smote_svc_0__svc__C': [0.1, 0.5, 1.0],
-        'smote_svc_0__smote__k_neighbors': [2, 3, 4],
-        'smote_svc_0__smote__kind': ['regular', 'borderline1']
+        'smote|svc_0__svc__C': [0.1, 0.5, 1.0],
+        'smote|svc_0__svc__kernel': ['rbf', 'linear'],
+        'smote|svc_0__svc__C': [0.1, 0.5, 1.0],
+        'smote|svc_0__smote__k_neighbors': [2, 3, 4],
+        'smote|svc_0__smote__kind': ['regular', 'borderline1']
     },
     {
-        'est_name': ['smote_svc_1'],
+        'est_name': ['smote|svc_1'],
         'random_state': None,
-        'smote_svc_1__svc__C': [0.1, 0.5, 1.0],
-        'smote_svc_1__svc__kernel': ['rbf', 'linear'],
-        'smote_svc_1__svc__C': [0.1, 0.5, 1.0],
-        'smote_svc_1__smote__k_neighbors': [2, 3, 4],
-        'smote_svc_1__smote__kind': ['regular', 'borderline1']
+        'smote|svc_1__svc__C': [0.1, 0.5, 1.0],
+        'smote|svc_1__svc__kernel': ['rbf', 'linear'],
+        'smote|svc_1__svc__C': [0.1, 0.5, 1.0],
+        'smote|svc_1__smote__k_neighbors': [2, 3, 4],
+        'smote|svc_1__smote__kind': ['regular', 'borderline1']
     }
 
 ]
