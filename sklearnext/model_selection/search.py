@@ -345,8 +345,6 @@ class _ParametrizedEstimators(_BaseComposition):
         """"Fit the selected estimator and dataset."""
         if self.est_name is None:
             raise ValueError('Attribute `est_name` is set to None. An estimator should be selected.')
-        if not hasattr(X, 'shape') and self.dataset_id is None:
-            raise ValueError('Attribute `dataset_id` is set to None. A dataset should be selected.')
         estimator = copy_estimator(dict(self.estimators)[self.est_name])
         params = estimator.get_params().keys()
         random_state_params = [par for par, included in zip(params, ['random_state' in par for par in params]) if included]
