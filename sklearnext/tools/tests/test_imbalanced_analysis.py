@@ -24,7 +24,7 @@ CLASSIFIERS = [
 
 
 @pytest.mark.parametrize('scoring,n_runs', [
-    ('f1', 3)
+    ('accuracy', 3)
 ])
 def test_evaluate_imbalanced_experiment(scoring, n_runs):
     """Test the output of the model search report function."""
