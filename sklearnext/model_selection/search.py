@@ -6,7 +6,8 @@ the parameter and model space.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-from warnings import warn
+from warnings import warn, filterwarnings
+import re
 from dask_searchcv.utils import copy_estimator
 from sklearn.metrics import r2_score, accuracy_score
 from sklearn.utils.validation import check_is_fitted
@@ -343,14 +344,24 @@ class _ParametrizedEstimators(_BaseComposition):
 
     def fit(self, X, y, *args, **kwargs):
         """"Fit the selected estimator and dataset."""
+
+        # Copy one of the estimators
         if self.est_name is None:
             raise ValueError('Attribute `est_name` is set to None. An estimator should be selected.')
         estimator = copy_estimator(dict(self.estimators)[self.est_name])
+
+        # Fix data race
+        filterwarnings('ignore', category=DeprecationWarning, module=r'^{0}\.'.format(re.escape(__name__)))
+
+        # Set random state when exists
         params = estimator.get_params().keys()
         random_state_params = [par for par, included in zip(params, ['random_state' in par for par in params]) if included]
         for par in random_state_params:
             estimator.set_params(**{par: self.random_state})
+
+        # Fit estimator
         self.estimator_ = estimator.fit(X, y, *args, **kwargs)
+
         return self
 
     def predict(self, X, *args, **kwargs):
