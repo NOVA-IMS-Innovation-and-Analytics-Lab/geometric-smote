@@ -55,6 +55,50 @@ def summarize_datasets(datasets):
     return datasets_summary
 
 
+def _calculate_aggregated_results(results, scoring_cols, group_keys):
+    """Calculates the aggregated results across datasets
+    of binary imbalanced experiments."""
+    aggregated_results = results.copy()
+    aggregated_results.loc[:, 'models'] = aggregated_results.loc[:, 'models'].apply(lambda model: sub('_[0-9]*$', '', model).split('|'))
+    aggregated_results[['Oversampler', 'Classifier']] = pd.DataFrame(aggregated_results.models.values.tolist())
+    aggregated_results['params'] = aggregated_results.loc[:, 'params'].apply(str).drop(columns='models')
+
+    scoring_mapping = {scorer_name: [np.mean, np.std] for scorer_name in scoring_cols}
+    aggregated_results = aggregated_results.groupby(group_keys).agg(scoring_mapping)
+
+    return aggregated_results
+
+
+def _calculate_optimal_results(aggregated_results, scoring_cols, group_keys):
+    """"Calculate optimal results across hyperparameters for any combination of
+    datasets, overamplers, classifiers and metrics."""
+
+    optimal_results = aggregated_results[[(score, 'mean') for score in scoring_cols]].reset_index()
+    optimal_results.columns = optimal_results.columns.get_level_values(0)
+    agg_measures = {score: max for score in scoring_cols}
+    optimal_results = optimal_results.groupby(group_keys[:-1]).agg(agg_measures).reset_index()
+    optimal_results = optimal_results.melt(id_vars=group_keys[:-1],
+                                           value_vars=scoring_cols,
+                                           var_name='Metric',
+                                           value_name='Score')
+    return optimal_results
+
+
+def _calculate_wide_optimal_results(optimal_results, scoring, estimator_type):
+    """Calculate optimal results in wide format."""
+    wide_optimal_results = optimal_results.pivot_table(index=['Dataset', 'Classifier', 'Metric'],
+                                                       columns=['Oversampler'],
+                                                       values='Score').reset_index()
+    wide_optimal_results.columns.rename(None, inplace=True)
+    if isinstance(scoring, list):
+        wide_optimal_results['Metric'].replace('mean_test_', '', regex=True, inplace=True)
+    elif isinstance(scoring, list):
+        wide_optimal_results['Metric'] = scoring
+    else:
+        wide_optimal_results['Metric'] = 'accuracy' if estimator_type == 'classifier' else 'r2'
+    return  wide_optimal_results
+
+
 def _return_row_ranking(row, sign):
     """Returns the ranking of mean cv scores for
     a row of an array. In case of tie, each value
@@ -67,7 +111,16 @@ def _return_row_ranking(row, sign):
     return ranking.size - ranking
 
 
-def calculate_friedman_test_results(ranking_results, alpha=0.05):
+def _calculate_ranking_results(wide_optimal_results):
+    """Calculate the ranking of oversamplers for
+    any combination ofa datasets, classifiers and
+    metrics."""
+    ranking_results = wide_optimal_results.apply(lambda row: _return_row_ranking(row[3:], SCORERS[row[2]]._sign), axis=1)
+    ranking_results = pd.concat([wide_optimal_results.iloc[:, :3], ranking_results], axis=1)
+    return ranking_results
+
+
+def _calculate_friedman_test_results(ranking_results, alpha=0.05):
     """Calculates the friedman test across datasets for every
     combination of classifiers and metrics."""
     if len(ranking_results.columns) < 6:
@@ -79,7 +132,7 @@ def calculate_friedman_test_results(ranking_results, alpha=0.05):
     return friedman_test_results
 
 
-def evaluate_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
+def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
                                     n_splits=3, n_runs=3, random_state=None, n_jobs=-1):
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
     mscv = ModelSearchCV(estimators,
@@ -93,10 +146,17 @@ def evaluate_imbalanced_experiments(datasets, oversamplers, classifiers, scoring
                          scheduler=None,
                          n_jobs=n_jobs,
                          cache_cv=True)
-    if isinstance(mscv.scoring, list):
-        scoring_cols = ['mean_test_%s' % scorer for scorer in mscv.scoring]
+
+    # Define parameters
+    scoring = mscv.scoring
+    if isinstance(scoring, list):
+        scoring_cols = ['mean_test_%s' % scorer for scorer in scoring]
     else:
         scoring_cols = ['mean_test_score']
+    group_keys = ['Dataset', 'Oversampler', 'Classifier', 'params']
+    estimator_type = mscv.estimator._estimator_type
+
+    # Run experiments
     results = pd.DataFrame()
     for dataset_name, (X, y) in datasets:
         mscv.fit(X, y)
@@ -104,46 +164,13 @@ def evaluate_imbalanced_experiments(datasets, oversamplers, classifiers, scoring
         result = result.assign(Dataset=dataset_name)
         results = results.append(result)
 
-    # Aggregate results across experiments
-    results.loc[:, 'models'] = results.loc[:, 'models'].apply(lambda model: sub('_[0-9]*$', '', model).split('|'))
-    results[['Oversampler', 'Classifier']] = pd.DataFrame(results.models.values.tolist())
-    results['params'] = results.loc[:, 'params'].apply(str).drop(columns='models')
-
-    scoring_mapping = {scorer_name: [np.mean, np.std] for scorer_name in scoring_cols}
-    group_keys = ['Dataset', 'Oversampler', 'Classifier', 'params']
-    aggregated_results = results.groupby(group_keys).agg(scoring_mapping)
-
-    # Calculate optimal results across hyperparameters
-    optimal_results = aggregated_results[[(score, 'mean') for score in scoring_cols]].reset_index()
-    optimal_results.columns = optimal_results.columns.get_level_values(0)
-    agg_measures = {score:max for score in scoring_cols}
-    optimal_results = optimal_results.groupby(group_keys[:-1]).agg(agg_measures).reset_index()
-    optimal_results = optimal_results.melt(id_vars=['Dataset', 'Oversampler', 'Classifier'],
-                                           value_vars=scoring_cols,
-                                           var_name='Metric',
-                                           value_name='Score')
-
-    # Calculate optimal results across hyperparameters in wide format
-    wide_optimal_results = optimal_results.pivot_table(index=['Dataset', 'Classifier', 'Metric'],
-                                                       columns=['Oversampler'],
-                                                       values='Score').reset_index()
-    wide_optimal_results.columns.rename(None, inplace=True)
-    if isinstance(mscv.scoring, list):
-        wide_optimal_results['Metric'].replace('mean_test_', '', regex=True, inplace=True)
-    elif isinstance(mscv.scoring, list):
-        wide_optimal_results['Metric'] = mscv.scoring
-    else:
-        wide_optimal_results['Metric'] = 'accuracy' if mscv.estimator._estimator_type == 'classifier' else 'r2'
-
-    # Calculate ranking
-    ranking_results = wide_optimal_results.apply(lambda row: _return_row_ranking(row[3:], SCORERS[row[2]]._sign), axis=1)
-    ranking_results = pd.concat([wide_optimal_results.iloc[:, :3], ranking_results], axis=1)
-
-    # Calculate mean ranking
+    # Results
+    aggregated_results = _calculate_aggregated_results(results, scoring_cols, group_keys)
+    optimal_results = _calculate_optimal_results(aggregated_results, scoring_cols, group_keys)
+    wide_optimal_results = _calculate_wide_optimal_results(optimal_results, scoring, estimator_type)
+    ranking_results = _calculate_ranking_results(wide_optimal_results)
     mean_ranking_results = ranking_results.groupby(['Classifier', 'Metric'], as_index=False).mean()
-
-    # Calculate Friedman test results
-    friedman_test_results = calculate_friedman_test_results(ranking_results, alpha)
+    friedman_test_results = _calculate_friedman_test_results(ranking_results, alpha)
 
     return {'aggregated_results': aggregated_results,
             'optimal_results': optimal_results,
