@@ -31,33 +31,58 @@ def read_csv_dir(dirpath):
     return datasets
 
 
-def summarize_datasets(datasets):
-    """Creates a summary of the datasets."""
+def summarize_binary_datasets(datasets):
+    """Creates a summary of the binary class
+    imbalanced datasets."""
     datasets = check_datasets(datasets)
     summary_columns = ["Dataset name",
-                       "# of features",
-                       "# of instances",
-                       "# of minority instances",
-                       "# of majority instances",
+                       "# features",
+                       "# instances",
+                       "# minority instances",
+                       "# majority instances",
                        "Imbalance Ratio"]
     datasets_summary = pd.DataFrame({}, columns=summary_columns)
     for dataset_name, (X, y) in datasets:
-        n_instances = Counter(y)
+        n_instances = Counter(y).values()
+        n_minority_instances, n_majority_instances = min(n_instances), max(n_instances)
         dataset_summary = pd.DataFrame([[dataset_name,
                                          X.shape[1],
-                                         y.size,
-                                         n_instances[1],
-                                         n_instances[0],
-                                         round(n_instances[0] / n_instances[1], 2)]],
-                                       columns=datasets_summary.columns)
+                                         len(X),
+                                         n_minority_instances,
+                                         n_majority_instances,
+                                         round(n_majority_instances / n_minority_instances, 2)]],
+                                       columns=summary_columns)
         datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
     datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
     return datasets_summary
 
 
+def _define_binary_experiment_parameters(model_search_cv):
+    """Define th binary experiment parameters."""
+    scoring = model_search_cv.scoring
+    if isinstance(scoring, list):
+        scoring_cols = ['mean_test_%s' % scorer for scorer in scoring]
+    else:
+        scoring_cols = ['mean_test_score']
+    group_keys = ['Dataset', 'Oversampler', 'Classifier', 'params']
+    estimator_type = model_search_cv.estimator._estimator_type
+    return scoring, scoring_cols, group_keys, estimator_type
+
+
+def _calculate_results(model_search_cv, datasets, scoring_cols):
+    """Calculates the results of binary imbalanced experiments."""
+    results = pd.DataFrame()
+    for dataset_name, (X, y) in datasets:
+        model_search_cv.fit(X, y)
+        result = pd.DataFrame(model_search_cv.cv_results_).loc[:, ['models', 'params'] + scoring_cols]
+        result = result.assign(Dataset=dataset_name)
+        results = results.append(result)
+    return results
+
+
 def _calculate_aggregated_results(results, scoring_cols, group_keys):
-    """Calculates the aggregated results across datasets
-    of binary imbalanced experiments."""
+    """Calculates the aggregated results across datasets of binary
+    imbalanced experiments."""
     aggregated_results = results.copy()
     aggregated_results.loc[:, 'models'] = aggregated_results.loc[:, 'models'].apply(lambda model: sub('_[0-9]*$', '', model).split('|'))
     aggregated_results[['Oversampler', 'Classifier']] = pd.DataFrame(aggregated_results.models.values.tolist())
@@ -134,6 +159,8 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
                                     n_splits=3, n_runs=3, random_state=None, n_jobs=-1):
+
+    # Extract estimators and parameter grids
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
     mscv = ModelSearchCV(estimators,
                          param_grids,
@@ -147,24 +174,11 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
                          n_jobs=n_jobs,
                          cache_cv=True)
 
-    # Define parameters
-    scoring = mscv.scoring
-    if isinstance(scoring, list):
-        scoring_cols = ['mean_test_%s' % scorer for scorer in scoring]
-    else:
-        scoring_cols = ['mean_test_score']
-    group_keys = ['Dataset', 'Oversampler', 'Classifier', 'params']
-    estimator_type = mscv.estimator._estimator_type
-
-    # Run experiments
-    results = pd.DataFrame()
-    for dataset_name, (X, y) in datasets:
-        mscv.fit(X, y)
-        result = pd.DataFrame(mscv.cv_results_).loc[:, ['models', 'params'] + scoring_cols]
-        result = result.assign(Dataset=dataset_name)
-        results = results.append(result)
+    # Define experiment parameters
+    scoring, scoring_cols, group_keys, estimator_type = _define_binary_experiment_parameters(mscv)
 
     # Results
+    results = _calculate_results(mscv, datasets, scoring_cols)
     aggregated_results = _calculate_aggregated_results(results, scoring_cols, group_keys)
     optimal_results = _calculate_optimal_results(aggregated_results, scoring_cols, group_keys)
     wide_optimal_results = _calculate_wide_optimal_results(optimal_results, scoring, estimator_type)
