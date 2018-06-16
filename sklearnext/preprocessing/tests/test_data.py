@@ -18,6 +18,7 @@ X, y = make_regression(n_features=10)
     (np.arange(0, 10))
 ])
 def test_feature_selector(indices):
+    """Test the feature selector."""
     selector = FeatureSelector(indices=indices)
     X_t = selector.fit_transform(X, y)
     assert X_t.shape[0] == X.shape[0]
@@ -26,18 +27,23 @@ def test_feature_selector(indices):
 
 
 def test_default_feature_selector():
+    """Test the default feature selector."""
     selector = FeatureSelector()
     X_t = selector.fit_transform(X, y)
     assert np.array_equal(X_t, X)
 
 
 def test_feature_selector_pipeline_integration():
+    """Test the integration of feature selector
+    and pipelines."""
     pipeline = Pipeline([('selector', FeatureSelector(indices=[0, 2])), ('lr', LinearRegression())])
     pipeline.fit(X, y)
 
 
 def test_feature_selector_set_parameters():
-    indices, updated_indices = [0,3,4], None
+    """Test the feature selector set of
+    parameters method."""
+    indices, updated_indices = [0, 3, 4], None
 
     selector = FeatureSelector(indices)
     X_t = selector.fit_transform(X, y)
@@ -54,17 +60,19 @@ def test_feature_selector_set_parameters():
     (0.1, np.random.RandomState(2))
 ])
 def test_row_selector_random(ratio, random_state):
+    """Test the random strategy of row selector."""
     selector = RowSelector(ratio, random_state)
     X_t, y_t = selector.fit_sample(X, y)
     n_samples = int(ratio * len(X))
     assert X_t.shape == (n_samples, X.shape[1])
     assert y_t.shape == (n_samples,)
-    # Assert corresondance X, y
+
 
 @pytest.mark.parametrize('ratio', [
     0.9, 0.4, 0.1, 1.0
 ])
 def test_row_selector_head(ratio):
+    """Test the head strategy of row selector."""
     selector = RowSelector(ratio, random_state='head')
     X_t, y_t = selector.fit_sample(X, y)
     n_samples = int(ratio * len(X))
@@ -76,6 +84,7 @@ def test_row_selector_head(ratio):
     0.2, 0.7, 0.5, 1.0
 ])
 def test_row_selector_tail(ratio):
+    """Test the tail strategy of row selector."""
     selector = RowSelector(ratio, random_state='tail')
     X_t, y_t = selector.fit_sample(X, y)
     n_samples = int(ratio * len(X))
@@ -84,6 +93,7 @@ def test_row_selector_tail(ratio):
 
 
 def test_default_row_selector():
+    """Test the default row selector."""
     selector = RowSelector()
     X_t, y_t = selector.fit_sample(X, y)
     assert np.array_equal(X_t, X)
@@ -94,6 +104,8 @@ def test_default_row_selector():
     np.arange(0, 10), np.arange(10, 100), np.arange(0, len(X))[::-1]
 ])
 def test_row_selector_different_input_data(indices):
+    """Test that row selector raises an error when
+    is fitted ans sampled on different data."""
     selector = RowSelector(ratio=0.5)
     selector.fit(X, y)
     with pytest.raises(RuntimeError):
@@ -101,6 +113,8 @@ def test_row_selector_different_input_data(indices):
 
 
 def test_row_selector_pipeline_integration():
+    """Test the integration of row selector
+    and pipelines."""
     pipeline = Pipeline(
         [
             ('selector', RowSelector(ratio=0.8, random_state=0)),
