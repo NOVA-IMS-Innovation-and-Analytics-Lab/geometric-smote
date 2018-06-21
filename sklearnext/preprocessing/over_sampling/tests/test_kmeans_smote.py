@@ -127,24 +127,15 @@ def test_smote_fallback(plot=False):
         }
     )
     smote = SMOTE(random_state=RND_SEED)
-    with warnings.catch_warnings(record=True) as w:
-        X_resampled, y_resampled = kmeans_smote.fit_sample(X, Y)
+    X_resampled, y_resampled = kmeans_smote.fit_sample(X, Y)
+    X_resampled_smote, y_resampled_smote = smote.fit_sample(X, Y)
 
-        assert len(w) == 1
-        assert "No minority clusters found" in str(w[0].message)
-        assert "Performing regular SMOTE" in str(w[0].message)
-        assert issubclass(w[0].category, UserWarning)
+    if plot:
+        plot_resampled(X, X_resampled, Y, y_resampled, 'smote_fallback_test_kmeans_smote')
+        plot_resampled(X, X_resampled_smote, Y, y_resampled_smote, 'smote_fallback_test_smote')
 
-        X_resampled_smote, y_resampled_smote = smote.fit_sample(X, Y)
-
-        if plot:
-            plot_resampled(X, X_resampled, Y, y_resampled,
-                           'smote_fallback_test_kmeans_smote')
-            plot_resampled(X, X_resampled_smote, Y, y_resampled_smote,
-                           'smote_fallback_test_smote')
-
-        assert_array_equal(X_resampled, X_resampled_smote)
-        assert_array_equal(y_resampled, y_resampled_smote)
+    assert_array_equal(X_resampled, X_resampled_smote)
+    assert_array_equal(y_resampled, y_resampled_smote)
 
 def test_smoke_multiclass(plot=False):
     """Execute k-means SMOTE with default parameters for multi-class dataset"""
