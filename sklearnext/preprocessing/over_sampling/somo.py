@@ -53,7 +53,7 @@ class SOMO(BaseOverSampler):
                  iterations=1000,
                  filtered_cluster_ratio=0.5,
                  inter_intra_cluster_ratio=0.5):
-        super(SOMO, self).__init__(ratio=ratio, random_state = random_state)
+        super(SOMO, self).__init__(ratio=ratio, random_state=random_state)
         self.som_rows = som_rows
         self.som_cols = som_cols
         self.iterations = iterations
@@ -71,7 +71,7 @@ class SOMO(BaseOverSampler):
 
         return som
 
-    def _filter_Cluster(self, som, X_sub, y_sub, class_sample):
+    def _filter_Cluster(self, som, y_sub, class_sample):
         """
         Description: Identifies all filtered cluster and the number of minority
             samples belonging to them
@@ -269,7 +269,7 @@ class SOMO(BaseOverSampler):
             else:
                 try:
                     som_cluster, filtered_cluster_size = self._filter_Cluster(
-                        som, X, y, class_sample)
+                        som, y, class_sample)
 
                     eucl_distances = self._calc_Distances(
                         X, class_sample, som_cluster, filtered_cluster_size)
