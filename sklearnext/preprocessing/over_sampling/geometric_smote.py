@@ -9,15 +9,15 @@ contains the implementation of the Geometric SMOTE oversampler.
 from scipy import sparse
 import numpy as np
 from numpy.linalg import norm
-from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
+from .base import ExtendedBaseOverSampler
 from ...utils import check_random_states
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
 
-def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformation_factor=.0, random_state=None):
+def _make_geometric_sample(center, surface_point, truncation_factor, deformation_factor, random_state):
     """Returns a generated point based on a center point ,a surface_point
     and three geometric transformations."""
 
@@ -48,7 +48,8 @@ def _make_geometric_sample(center, surface_point, truncation_factor=.0, deformat
 
     return point
 
-class GeometricSMOTE(BaseOverSampler):
+
+class GeometricSMOTE(ExtendedBaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
     Parameters
@@ -99,12 +100,19 @@ class GeometricSMOTE(BaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
+                 categorical_cols=None,
+                 categorical_threshold=1.0,
+                 categorical_strategy='most_frequent',
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
                  k_neighbors=5,
                  n_jobs=1):
-        super().__init__(ratio=ratio, random_state=random_state)
+        super().__init__(ratio=ratio,
+                         random_state=random_state,
+                         categorical_cols=categorical_cols,
+                         categorical_threshold=categorical_threshold,
+                         categorical_strategy=categorical_strategy)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
@@ -128,13 +136,12 @@ class GeometricSMOTE(BaseOverSampler):
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """Generate synthetic samples based on the selection strategy."""
-        random_state = check_random_state(self.random_state)
-        random_states = check_random_states(self.random_state, n_samples)
+        random_states = check_random_states(self.random_state_, n_samples)
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
-            samples_indices = random_state.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
+            samples_indices = self.random_state_.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
         if self.selection_strategy in ('majority', 'combined'):
@@ -142,7 +149,7 @@ class GeometricSMOTE(BaseOverSampler):
             self.nn_neg_.fit(X_neg)
             points_neg = self.nn_neg_.kneighbors(X_pos)[1]
             if self.selection_strategy == 'majority':
-                samples_indices = random_state.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
+                samples_indices = self.random_state_.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
         X_new = np.zeros((n_samples, X.shape[1]))
@@ -164,7 +171,7 @@ class GeometricSMOTE(BaseOverSampler):
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
-    def _sample(self, X, y):
+    def _group_sample(self, X, y):
         """Resample the dataset using the Geometric SMOTE algorithm.
 
         Parameters
@@ -204,6 +211,3 @@ class GeometricSMOTE(BaseOverSampler):
             y_resampled = np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
-
-
-    
