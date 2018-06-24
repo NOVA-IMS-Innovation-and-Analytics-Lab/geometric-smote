@@ -101,8 +101,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  ratio='auto',
                  random_state=None,
                  categorical_cols=None,
-                 categorical_threshold=1.0,
-                 categorical_strategy='most_frequent',
+                 imbalance_ratio_threshold=1.0,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
@@ -111,8 +110,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         super().__init__(ratio=ratio,
                          random_state=random_state,
                          categorical_cols=categorical_cols,
-                         categorical_threshold=categorical_threshold,
-                         categorical_strategy=categorical_strategy)
+                         imbalance_ratio_threshold=imbalance_ratio_threshold)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
@@ -121,6 +119,8 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
 
     def _validate_estimator(self):
         """Create the necessary objects for Geometric SMOTE."""
+
+        self.random_state_ = check_random_state(self.random_state)
 
         if self.selection_strategy not in SELECTION_STRATEGY:
             error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
@@ -136,43 +136,46 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """Generate synthetic samples based on the selection strategy."""
+
         random_states = check_random_states(self.random_state_, n_samples)
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
-        if self.selection_strategy in ('minority', 'combined'):
+        self.selection_strategy_ = 'minority' if len(X) == len(X_pos) else self.selection_strategy
+
+        if self.selection_strategy_ in ('minority', 'combined'):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
             samples_indices = self.random_state_.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
-        if self.selection_strategy in ('majority', 'combined'):
+        if self.selection_strategy_ in ('majority', 'combined'):
             X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
             self.nn_neg_.fit(X_neg)
             points_neg = self.nn_neg_.kneighbors(X_pos)[1]
-            if self.selection_strategy == 'majority':
+            if self.selection_strategy_ == 'majority':
                 samples_indices = self.random_state_.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
         X_new = np.zeros((n_samples, X.shape[1]))
         for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
-            if self.selection_strategy == 'minority':
-                center = X_pos[row]
+            center = X_pos[row]
+            if self.selection_strategy_ == 'minority':
                 surface_point = X_pos[points_pos[row, col]]
-            elif self.selection_strategy == 'majority':
-                center = X_pos[row]
+            elif self.selection_strategy_ == 'majority':
                 surface_point = X_neg[points_neg[row, col]]
             else:
-                center = X_pos[row]
                 surface_point_pos = X_pos[points_pos[row, col]]
                 surface_point_neg = X_neg[points_neg[row, 0]]
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
-            X_new[ind] = _make_geometric_sample(center, surface_point, self.truncation_factor, self.deformation_factor, random_state)
+            X_new[ind] = _make_geometric_sample(center, surface_point, self.truncation_factor,
+                                                self.deformation_factor, random_state)
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
-    def _group_sample(self, X, y):
-        """Resample the dataset using the Geometric SMOTE algorithm.
+    def _partial_sample(self, X, y):
+        """Resample the numerical features of the dataset
+        using the Geometric SMOTE algorithm.
 
         Parameters
         ----------
