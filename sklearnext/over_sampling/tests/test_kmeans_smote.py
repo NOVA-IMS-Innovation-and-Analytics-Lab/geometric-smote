@@ -5,8 +5,8 @@ Test oversampling method k-means SMOTE.
 import warnings
 import numpy as np
 from numpy.testing import assert_array_equal
-from ..kmeans_smote import KMeansSMOTE
 from imblearn.over_sampling import SMOTE, RandomOverSampler
+from ...over_sampling import KMeansSMOTE
 
 RND_SEED = 0
 R_TOL = 1e-4

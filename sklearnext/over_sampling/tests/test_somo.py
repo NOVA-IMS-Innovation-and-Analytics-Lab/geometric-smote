@@ -1,7 +1,7 @@
-from sklearn.datasets import make_classification
-from sklearnext.preprocessing.over_sampling.somo import SOMO
-import random as r
 import numpy as np
+import random as r
+from sklearn.datasets import make_classification
+from ...over_sampling import SOMO
 
 
 def test_random_state():

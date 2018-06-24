@@ -1,8 +1,6 @@
-from sklearnext.preprocessing.over_sampling.dbscan_smote import DBSCANSMOTE
 import pytest
-
 import numpy as np
-
+from ...over_sampling import DBSCANSMOTE
 
 @pytest.mark.parametrize("RND_SEED", [(42)])
 def test_random_seed(RND_SEED):
