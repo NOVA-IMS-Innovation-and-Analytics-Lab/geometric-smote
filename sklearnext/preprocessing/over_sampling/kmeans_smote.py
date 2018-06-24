@@ -11,12 +11,12 @@ import warnings
 import copy
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
-from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.over_sampling import SMOTE
 from imblearn.over_sampling import RandomOverSampler
+from .base import ExtendedBaseOverSampler
 
 
-class KMeansSMOTE(BaseOverSampler):
+class KMeansSMOTE(ExtendedBaseOverSampler):
     """Class to perform oversampling using K-Means SMOTE.
     K-Means SMOTE works in three steps:
     1. Cluster the entire input space using k-means.
@@ -198,7 +198,7 @@ class KMeansSMOTE(BaseOverSampler):
         return sampling_weights
 
 
-    def _sample(self, X, y):
+    def _partial_sample(self, X, y):
         """Resample the dataset.
         Parameters
         ----------

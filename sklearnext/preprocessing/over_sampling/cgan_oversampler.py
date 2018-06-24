@@ -8,8 +8,8 @@ Adversarial Network as an oversampling algorithm.
 # License: BSD 3 clause
 
 import numpy as np
-from imblearn.over_sampling.base import BaseOverSampler
 from sklearn.utils import check_random_state
+from .base import ExtendedBaseOverSampler
 
 OPTIMIZER = []
 
@@ -18,7 +18,7 @@ class CGAN:
     pass
 
 
-class CGANOversampler(BaseOverSampler):
+class CGANOversampler(ExtendedBaseOverSampler):
     """Class to perform oversampling using a
     Conditional Generative Adversarial Network as
     an oversampling algorithm.
@@ -124,7 +124,7 @@ class CGANOversampler(BaseOverSampler):
         self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps, logging_options=None)
         return self
 
-    def _sample(self, X, y):
+    def _partial_sample(self, X, y):
         """Resample the dataset.
 
         Parameters

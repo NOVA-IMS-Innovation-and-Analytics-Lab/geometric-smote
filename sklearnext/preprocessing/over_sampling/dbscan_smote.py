@@ -1,4 +1,3 @@
-from imblearn.over_sampling.base import BaseOverSampler
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
@@ -6,10 +5,11 @@ from scipy.spatial.distance import pdist
 from imblearn.over_sampling import SMOTE
 from warnings import filterwarnings, catch_warnings, warn
 from sklearn.exceptions import DataConversionWarning
+from .base import ExtendedBaseOverSampler
 import math
 
 
-class DBSCANSMOTE(BaseOverSampler):
+class DBSCANSMOTE(ExtendedBaseOverSampler):
     ''' Clusters the input data using DBScan and then oversamples using smote the defined clusters'''
 
     def __init__(self,
@@ -136,7 +136,7 @@ class DBSCANSMOTE(BaseOverSampler):
 
         return sampling_weights
 
-    def _sample(self, X, y):
+    def _partial_sample(self, X, y):
 
         # Create the clusters and set the labels
         self._set_cluster()

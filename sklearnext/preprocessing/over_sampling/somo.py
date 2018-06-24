@@ -2,7 +2,6 @@
 Class to perform Self-Organizing Map Oversampling.
 """
 
-from imblearn.over_sampling.base import BaseOverSampler
 import somoclu as somo_algorithm
 from collections import Counter
 import numpy as np
@@ -12,9 +11,10 @@ from sklearn.preprocessing import normalize
 from math import isnan
 from imblearn.over_sampling import SMOTE
 import warnings
+from .base import ExtendedBaseOverSampler
 warnings.filterwarnings('ignore')
 
-class SOMO(BaseOverSampler):
+class SOMO(ExtendedBaseOverSampler):
     """
     Self Organizing Map Oversampling Algorithm
     An oversampling algorithm that leverages the topological
@@ -249,7 +249,7 @@ class SOMO(BaseOverSampler):
                         modified_y, over_y[len(cur_X):])
         return modified_X, modified_y
 
-    def _sample(self, X, y):
+    def _partial_sample(self, X, y):
         """
         Description: Oversampling of each minority class
         Returns ----------
