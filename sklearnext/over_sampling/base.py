@@ -40,9 +40,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
                  ratio='auto',
                  random_state=None,
                  sampling_type=None,
+                 integer_cols=None,
                  categorical_cols=None,
                  imbalance_ratio_threshold=1.0):
         super(ExtendedBaseOverSampler, self).__init__(ratio, random_state, sampling_type)
+        self.integer_cols = integer_cols
         self.categorical_cols = categorical_cols
         self.imbalance_ratio_threshold = imbalance_ratio_threshold
 
@@ -94,12 +96,23 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             return self._partial_sample(X, y)
 
         max_col_index = X.shape[1]
+
+        try:
+            if len(self.integer_cols) == 0 or not set(range(max_col_index)).issuperset(self.integer_cols):
+                error_msg = 'Selected integer columns should be in the {} range. Got {} instead.'
+                raise ValueError(error_msg.format([0, max_col_index], self.integer_cols))
+        except:
+            raise ValueError('Parameter `integer_cols` should be a list or tuple in the %s range.' % [0, max_col_index])
+
         try:
             if len(self.categorical_cols) == 0 or not set(range(max_col_index)).issuperset(self.categorical_cols):
                 error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
                 raise ValueError(error_msg.format([0, max_col_index], self.categorical_cols))
         except:
             raise ValueError('Parameter `categorical_cols` should be a list or tuple in the %s range.' % [0, max_col_index])
+
+        if not set(self.integer_cols).isdisjoint(self.categorical_cols):
+            raise ValueError('Parameters `integer_cols` and `categorical_cols` should not have common elements.')
 
         if self.imbalance_ratio_threshold <= 0.0:
             raise ValueError('Parameter `categorical_threshold` should be a positive number.')
@@ -167,6 +180,9 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         df_excluded = pd.merge(df, excluded_groups)
         X_resampled = X_resampled.append(df_excluded.iloc[:, :-1]).values
         y_resampled = y_resampled.append(df_excluded.iloc[:, -1:]).values.reshape(-1)
+
+        # Integer columns
+        X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
 
         return X_resampled, y_resampled
 
