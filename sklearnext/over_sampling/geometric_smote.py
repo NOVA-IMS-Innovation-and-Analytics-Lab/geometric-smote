@@ -100,6 +100,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
+                 integer_cols=None,
                  categorical_cols=None,
                  imbalance_ratio_threshold=1.0,
                  truncation_factor=1.0,
@@ -109,6 +110,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  n_jobs=1):
         super().__init__(ratio=ratio,
                          random_state=random_state,
+                         integer_cols=integer_cols,
                          categorical_cols=categorical_cols,
                          imbalance_ratio_threshold=imbalance_ratio_threshold)
         self.truncation_factor = truncation_factor
