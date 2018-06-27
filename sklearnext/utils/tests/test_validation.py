@@ -3,19 +3,18 @@ Test the data module.
 """
 
 import pytest
-import numpy as np
 from sklearn.datasets import make_regression
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR, SVC
-from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.pipeline import Pipeline
-from ..validation import (
+from ...utils.validation import (
     _normalize_param_grid,
     check_param_grids,
     check_datasets,
-    check_oversamplers_classifiers,
-    check_random_states
+    check_random_states,
+    check_oversamplers_classifiers
 )
 
 X, y = make_regression()

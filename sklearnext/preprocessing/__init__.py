@@ -3,7 +3,7 @@ The :mod:`sklearnext.preprocessing` module includes feature
 and sample selection methods.
 """
 
-from .data import FeatureSelector, RowSelector
+from sklearnext.preprocessing.data import FeatureSelector, RowSelector
 
 __all__ = [
     'FeatureSelector',

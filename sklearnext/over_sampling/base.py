@@ -5,7 +5,6 @@ Extended base class for oversampling.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-from math import ceil
 from abc import abstractmethod
 from collections import Counter
 import numpy as np
@@ -185,4 +184,6 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
 
         return X_resampled, y_resampled
+
+
 

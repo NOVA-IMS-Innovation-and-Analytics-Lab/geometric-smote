@@ -11,6 +11,18 @@ from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 from sklearn.model_selection._search import _check_param_grid
 from imblearn.pipeline import Pipeline
+from imblearn.over_sampling.base import BaseOverSampler
+
+
+class _TrivialOversampler(BaseOverSampler):
+    """A class that implements no oversampling.
+    """
+
+    def _sample(self, X, y):
+        return X, y
+
+    def __repr__(self):
+        return 'No oversampling'
 
 
 def _normalize_param_grid(param_grid):
@@ -48,6 +60,11 @@ def check_param_grids(param_grids, estimators):
 
 def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state):
     """Extract estimators and parameters grids."""
+
+    # Replace none oversampler
+    oversamplers = [(smpl_name,
+                     smpl if smpl is not None else _TrivialOversampler(),
+                     param_grids[0] if len(param_grids) > 0 else {}) for smpl_name, smpl, *param_grids in oversamplers]
 
     # Extract estimators
     estimators_products = product(
@@ -104,7 +121,8 @@ def check_estimators(estimators):
     """Check estimators correct input."""
     error_msg = 'Invalid `estimators` attribute, `estimators` should be a list of (string, estimator) tuples.'
     try:
-        if not all([all([isinstance(name, str), isinstance(est, BaseEstimator)]) for name, est in estimators]) or len(estimators) == 0:
+        if not all([all([isinstance(name, str), isinstance(est, BaseEstimator)])
+                    for name, est in estimators]) or len(estimators) == 0:
             raise AttributeError(error_msg)
     except:
         raise AttributeError(error_msg)

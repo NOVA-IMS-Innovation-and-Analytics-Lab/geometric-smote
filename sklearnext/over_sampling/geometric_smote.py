@@ -12,7 +12,7 @@ from numpy.linalg import norm
 from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
 from .base import ExtendedBaseOverSampler
-from sklearnext.utils import check_random_states
+from ..utils import check_random_states
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 

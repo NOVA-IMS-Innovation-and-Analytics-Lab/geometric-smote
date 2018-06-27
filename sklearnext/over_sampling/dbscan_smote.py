@@ -1,3 +1,14 @@
+"""
+The :mod:`sklearnext.preprocessing.oversampling.cgan_oversampler`
+contains the implementation of the Conditional Generative
+Adversarial Network as an oversampling algorithm.
+"""
+
+# Author: Paulo Lapa
+#         Georgios Douzas <gdouzas@icloud.com>
+# License: BSD 3 clause
+
+import math
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
@@ -6,7 +17,6 @@ from imblearn.over_sampling import SMOTE
 from warnings import filterwarnings, catch_warnings, warn
 from sklearn.exceptions import DataConversionWarning
 from .base import ExtendedBaseOverSampler
-import math
 
 
 class DBSCANSMOTE(ExtendedBaseOverSampler):

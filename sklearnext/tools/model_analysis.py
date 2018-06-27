@@ -7,7 +7,7 @@ contains functions to evaluate the results of model search.
 # Licence: MIT
 
 import pandas as pd
-from ..model_selection import ModelSearchCV
+from sklearnext.model_selection import ModelSearchCV
 from sklearn.utils.validation import check_is_fitted
 
 

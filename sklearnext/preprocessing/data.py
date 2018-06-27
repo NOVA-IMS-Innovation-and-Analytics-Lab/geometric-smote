@@ -6,7 +6,6 @@ features and sample the input matrix.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-import warnings
 import numpy as np
 from sklearn.utils import indices_to_mask
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_array, check_random_state

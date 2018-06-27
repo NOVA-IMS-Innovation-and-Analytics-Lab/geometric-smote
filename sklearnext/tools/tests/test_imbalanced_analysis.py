@@ -10,9 +10,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedKFold, ParameterGrid
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
-from ...model_selection import ModelSearchCV
-from ...utils import check_oversamplers_classifiers
-from ..imbalanced_analysis import (
+from sklearnext.model_selection import ModelSearchCV
+from sklearnext.utils.validation import check_oversamplers_classifiers
+from sklearnext.tools.imbalanced_analysis import (
     summarize_binary_datasets,
     _define_binary_experiment_parameters,
     _calculate_results
@@ -34,8 +34,8 @@ GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
 N_RUNS = 3
 ESTIMATORS, PARAM_GRIDS = check_oversamplers_classifiers(OVERSAMPLERS, CLASSIFIERS, n_runs=N_RUNS, random_state=0).values()
 MSCV = ModelSearchCV(ESTIMATORS, PARAM_GRIDS, scoring=None, iid=True, refit=False,
-                     cv=StratifiedKFold(n_splits=3, shuffle=True, random_state=0), error_score='raise',
-                     return_train_score=False, scheduler=None, n_jobs=-1, cache_cv=True)
+                    cv=StratifiedKFold(n_splits=3, shuffle=True, random_state=0), error_score='raise',
+                    return_train_score=False, scheduler=None, n_jobs=-1, cache_cv=True)
 
 
 def test_summarize_binary_datasets():

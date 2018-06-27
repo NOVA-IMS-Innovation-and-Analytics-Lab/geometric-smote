@@ -4,7 +4,7 @@ Test the split module.
 
 import pytest
 from sklearn.datasets import make_regression
-from ..split import TimeSeriesSplit
+from ...model_selection import TimeSeriesSplit
 
 X, y = make_regression()
 

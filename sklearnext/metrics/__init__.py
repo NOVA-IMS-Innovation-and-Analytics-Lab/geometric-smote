@@ -5,8 +5,8 @@ Appends new scorers in to the SCORERS constant.
 from sklearn.metrics import SCORERS
 from sklearn.metrics import make_scorer
 from imblearn.metrics import geometric_mean_score
-from .classification import tp_score, tn_score, fp_score, fn_score
-from .regression import weighted_mean_squared_error
+from ..metrics.classification import tp_score, tn_score, fp_score, fn_score
+from ..metrics.regression import weighted_mean_squared_error
 
 __all__ = ['geometric_mean_score',
            'tp_score',

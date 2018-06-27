@@ -1,3 +1,7 @@
+"""
+Test the dbscan_smote module.
+"""
+
 import pytest
 import numpy as np
 from ...over_sampling import DBSCANSMOTE

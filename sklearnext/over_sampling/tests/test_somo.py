@@ -1,3 +1,7 @@
+"""
+Test the somo module.
+"""
+
 import numpy as np
 import random as r
 from sklearn.datasets import make_classification

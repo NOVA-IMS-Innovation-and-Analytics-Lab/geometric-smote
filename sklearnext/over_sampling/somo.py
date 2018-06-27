@@ -10,8 +10,8 @@ import pandas as pd
 from sklearn.preprocessing import normalize
 from math import isnan
 from imblearn.over_sampling import SMOTE
-import warnings
 from .base import ExtendedBaseOverSampler
+import warnings
 warnings.filterwarnings('ignore')
 
 class SOMO(ExtendedBaseOverSampler):
