@@ -12,6 +12,7 @@ from dask_searchcv.utils import copy_estimator
 from sklearn.metrics import r2_score, accuracy_score
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.validation import check_is_fitted
+import progressbar
 from ..utils import check_estimators
 
 
@@ -34,6 +35,18 @@ class _ParametrizedEstimators(_BaseComposition):
             warn('Estimators include both regressors and classifiers. Estimator type set to classifier.')
             return 'classifier'
         return steps[0]._estimator_type
+
+    @classmethod
+    def _create_progress_bar(cls, n_fitting_tasks):
+        cls.progress_bar = progressbar.ProgressBar(max_value=n_fitting_tasks, widgets=[progressbar.Percentage()])
+        if not hasattr(cls, 'n_fitting_tasks'):
+            cls.n_fitting_tasks = 1
+        if all([hasattr(cls, attribute) for attribute in ['ind', 'dataset_name', 'n_datasets']]):
+            cls.progress_bar.max_value *= cls.n_datasets
+            cls.progress_bar.prefix = 'Current dataset: {} | Completed datasets: {}/{} | Progress: '.format(
+                cls.dataset_name, cls.ind, cls.n_datasets)
+        else:
+            cls.progress_bar.prefix = 'Progress: '
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction
@@ -119,6 +132,11 @@ class _ParametrizedEstimators(_BaseComposition):
 
         # Fit estimator
         self.estimator_ = estimator.fit(X, y, *args, **kwargs)
+
+        # Increase number of fitted tasks
+        if hasattr(_ParametrizedEstimators, 'progress_bar'):
+            _ParametrizedEstimators.progress_bar.update(_ParametrizedEstimators.n_fitting_tasks)
+            _ParametrizedEstimators.n_fitting_tasks += 1
 
         return self
 

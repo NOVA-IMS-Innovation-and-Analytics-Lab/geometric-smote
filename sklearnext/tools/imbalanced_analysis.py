@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
 from sklearn.model_selection import StratifiedKFold
-from ..utils import check_datasets, check_oversamplers_classifiers
+from ..utils import check_datasets, check_oversamplers_classifiers, _ParametrizedEstimators
 from ..metrics import SCORERS
 from ..model_selection import ModelSearchCV
 
@@ -69,10 +69,17 @@ def _define_binary_experiment_parameters(model_search_cv):
     return scoring, scoring_cols, group_keys, estimator_type
 
 
-def _calculate_results(model_search_cv, datasets, scoring_cols):
+def _set_verbose_attributes(ind, dataset_name, datasets):
+    for attribute, value in zip(['ind', 'dataset_name', 'n_datasets'], [ind, dataset_name, len(datasets)]):
+        setattr(_ParametrizedEstimators, attribute, value)
+
+
+def _calculate_results(model_search_cv, datasets, scoring_cols, verbose):
     """Calculates the results of binary imbalanced experiments."""
     results = pd.DataFrame()
-    for dataset_name, (X, y) in datasets:
+    for ind, (dataset_name, (X, y)) in enumerate(datasets):
+        if verbose:
+            _set_verbose_attributes(ind, dataset_name, datasets)
         model_search_cv.fit(X, y)
         result = pd.DataFrame(model_search_cv.cv_results_).loc[:, ['models', 'params'] + scoring_cols]
         result = result.assign(Dataset=dataset_name)
@@ -158,7 +165,7 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
 
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
-                                    n_splits=3, n_runs=3, random_state=None, n_jobs=-1):
+                                    n_splits=3, n_runs=3, random_state=None, n_jobs=-1, verbose=True):
 
     # Extract estimators and parameter grids
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
@@ -172,13 +179,14 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
                          return_train_score=False,
                          scheduler=None,
                          n_jobs=n_jobs,
-                         cache_cv=True)
+                         cache_cv=True,
+                         verbose=verbose)
 
     # Define experiment parameters
     scoring, scoring_cols, group_keys, estimator_type = _define_binary_experiment_parameters(mscv)
 
     # Results
-    results = _calculate_results(mscv, datasets, scoring_cols)
+    results = _calculate_results(mscv, datasets, scoring_cols, verbose)
     aggregated_results = _calculate_aggregated_results(results, scoring_cols, group_keys)
     optimal_results = _calculate_optimal_results(aggregated_results, scoring_cols, group_keys)
     wide_optimal_results = _calculate_wide_optimal_results(optimal_results, scoring, estimator_type)

@@ -36,7 +36,7 @@ BASIC_COLUMNS = ['models', 'params', 'mean_fit_time']
 ])
 def test_report_model_search_results(scoring, sort_results):
     """Test the output of the model search report function."""
-    mscv = ModelSearchCV(CLASSIFIERS, CLASSIFIERS_PARAM_GRIDS, scoring=scoring, refit=False)
+    mscv = ModelSearchCV(CLASSIFIERS, CLASSIFIERS_PARAM_GRIDS, scoring=scoring, refit=False, verbose=False)
     mscv.fit(X_clf, y_clf)
     report = report_model_search_results(mscv, sort_results)
     assert len(report.columns) == (len(mscv.scorer_) if isinstance(mscv.scoring, list) else 1) + len(BASIC_COLUMNS)

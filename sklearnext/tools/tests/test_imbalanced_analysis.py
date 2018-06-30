@@ -35,7 +35,7 @@ N_RUNS = 3
 ESTIMATORS, PARAM_GRIDS = check_oversamplers_classifiers(OVERSAMPLERS, CLASSIFIERS, n_runs=N_RUNS, random_state=0).values()
 MSCV = ModelSearchCV(ESTIMATORS, PARAM_GRIDS, scoring=None, iid=True, refit=False,
                     cv=StratifiedKFold(n_splits=3, shuffle=True, random_state=0), error_score='raise',
-                    return_train_score=False, scheduler=None, n_jobs=-1, cache_cv=True)
+                    return_train_score=False, scheduler=None, n_jobs=-1, cache_cv=True, verbose=False)
 
 
 def test_summarize_binary_datasets():
@@ -72,6 +72,6 @@ def test_calculate_results(scoring, expected_results_columns):
     """Test the calculation of the experiment's results."""
     MSCV.set_params(scoring=scoring)
     scoring_cols = _define_binary_experiment_parameters(MSCV)[1]
-    results = _calculate_results(MSCV, DATASETS, scoring_cols)
+    results = _calculate_results(MSCV, DATASETS, scoring_cols, verbose=False)
     assert len(results) == len(ParameterGrid(MSCV.param_grids)) * len(DATASETS)
     assert expected_results_columns == results.columns.get_level_values(0).tolist()

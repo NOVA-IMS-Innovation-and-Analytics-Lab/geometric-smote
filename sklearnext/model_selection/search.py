@@ -6,7 +6,7 @@ the parameter and model space.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-from dask_searchcv.model_selection import GridSearchCV
+from dask_searchcv.model_selection import GridSearchCV, check_cv
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
 from ..utils import check_param_grids, _ParametrizedEstimators
 
@@ -268,9 +268,11 @@ class ModelSearchCV(GridSearchCV):
                  return_train_score=_RETURN_TRAIN_SCORE_DEFAULT,
                  scheduler=None,
                  n_jobs=-1,
-                 cache_cv=True):
+                 cache_cv=True,
+                 verbose=True):
         self.estimators = estimators
         self.param_grids = param_grids
+        self.verbose = verbose
         super(ModelSearchCV, self).__init__(estimator=_ParametrizedEstimators(estimators),
                                             param_grid=check_param_grids(param_grids, estimators),
                                             scoring=scoring,
@@ -299,7 +301,13 @@ class ModelSearchCV(GridSearchCV):
         self.cv_results_.update({'models': models})
 
     def fit(self, X, y=None, groups=None, **fit_params):
+
+        if self.verbose:
+            n_fitting_tasks = len(self._get_param_iterator()) * check_cv(self.cv).n_splits + int(self.refit)
+            self.estimator._create_progress_bar(n_fitting_tasks)
+
         super(ModelSearchCV, self).fit(X, y, groups, **fit_params)
         self._modify_grid_search_attrs()
+
         return self
 
