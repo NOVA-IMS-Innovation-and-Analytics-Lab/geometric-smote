@@ -128,4 +128,11 @@ def check_estimators(estimators):
         raise AttributeError(error_msg)
 
 
+def check_estimator_type(estimators):
+    """Returns the type of estimators."""
+    estimator_types = set([estimator._estimator_type for _, estimator in estimators])
+    if len(estimator_types) > 1:
+        raise ValueError('Both classifiers and regressors were found. One estimator type should be included.')
+    return estimator_types.pop()
+
 
