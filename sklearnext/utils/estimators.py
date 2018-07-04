@@ -7,19 +7,17 @@ various helper estimators and oversamplers.
 # License: BSD 3 clause
 
 import re
-from warnings import warn, filterwarnings
+from warnings import filterwarnings
 from dask_searchcv.utils import copy_estimator
-from sklearn.metrics import r2_score, accuracy_score
+from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.validation import check_is_fitted
 import progressbar
 from ..utils import check_estimators
 
 
-class _ParametrizedEstimators(_BaseComposition):
-    """The functionality of a collection of estimators is provided as
-    a single metaestimator. The fitted estimator is selected using a
-    parameter."""
+class _ParametrizedEstimatorsMixin(_BaseComposition):
+    """Mixin class for all parametrized estimators."""
 
     def __init__(self, estimators, est_name=None, random_state=None):
         self.estimators = estimators
@@ -27,14 +25,6 @@ class _ParametrizedEstimators(_BaseComposition):
         self.random_state = random_state
         check_estimators(estimators)
         self._validate_names([est_name for est_name, _ in estimators])
-        _ParametrizedEstimators._estimator_type = self._return_estimator_type()
-
-    def _return_estimator_type(self):
-        _, steps = zip(*self.estimators)
-        if len(set([step._estimator_type for step in steps if hasattr(step, '_estimator_type')])) > 1:
-            warn('Estimators include both regressors and classifiers. Estimator type set to classifier.')
-            return 'classifier'
-        return steps[0]._estimator_type
 
     @classmethod
     def _create_progress_bar(cls, n_fitting_tasks):
@@ -52,46 +42,6 @@ class _ParametrizedEstimators(_BaseComposition):
         else:
             cls.progress_bar.prefix = 'Progress: '
 
-    def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction
-        if estimator type is a regressor or the mean accuracy on the given
-        test data and labels if estimator type is a classifier.
-
-        The coefficient R^2 is defined as (1 - u/v), where u is the residual
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
-        sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        The best possible score is 1.0 and it can be negative (because the
-        model can be arbitrarily worse). A constant model that always
-        predicts the expected value of y, disregarding the input features,
-        would get a R^2 score of 0.0.
-
-        In multi-label classification, this is the subset accuracy
-        which is a harsh metric since you require for each sample that
-        each label set be correctly predicted.
-
-        Parameters
-        ----------
-        X : array-like, shape = (n_samples, n_features)
-            Test samples.
-
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
-            True labels for X.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            Mean accuracy of self.predict(X) wrt. y.
-
-        """
-        if _ParametrizedEstimators._estimator_type == 'regressor':
-            score = r2_score(y, self.predict(X), sample_weight=sample_weight, multioutput='variance_weighted')
-        elif _ParametrizedEstimators._estimator_type == 'classifier':
-            score = accuracy_score(y, self.predict(X), sample_weight=sample_weight)
-        return score
-
     def set_params(self, **params):
         """Set the parameters.
         Valid parameter keys can be listed with get_params().
@@ -99,8 +49,8 @@ class _ParametrizedEstimators(_BaseComposition):
         ----------
         params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the ``_ParametrizedEstimators``,
-            the individual estimators of the ``_ParametrizedEstimators`` can also be
+            In addition, to setting the parameters of the ``_ParametrizedEstimatorsMixin``,
+            the individual estimators of the ``_ParametrizedEstimatorsMixin`` can also be
             set or replaced by setting them to None.
         """
         super()._set_params('estimators', **params)
@@ -138,10 +88,10 @@ class _ParametrizedEstimators(_BaseComposition):
         self.estimator_ = estimator.fit(X, y, *args, **kwargs)
 
         # Increase number of fitted tasks
-        if hasattr(_ParametrizedEstimators, 'progress_bar'):
-            _ParametrizedEstimators.progress_bar.update(_ParametrizedEstimators.fitting_task)
-            _ParametrizedEstimators.tasks_text.update_mapping(tasks=_ParametrizedEstimators.fitting_task)
-            _ParametrizedEstimators.fitting_task += 1
+        if hasattr(_ParametrizedEstimatorsMixin, 'progress_bar'):
+            _ParametrizedEstimatorsMixin.progress_bar.update(_ParametrizedEstimatorsMixin.fitting_task)
+            _ParametrizedEstimatorsMixin.tasks_text.update_mapping(tasks=_ParametrizedEstimatorsMixin.fitting_task)
+            _ParametrizedEstimatorsMixin.fitting_task += 1
 
         return self
 
@@ -150,7 +100,20 @@ class _ParametrizedEstimators(_BaseComposition):
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict(X, *args, **kwargs)
 
+
+class _ParametrizedClassifiers(_ParametrizedEstimatorsMixin, ClassifierMixin):
+    """The functionality of a collection of classifiers is provided as
+    a single metaclassifier. The classifier to be fitted is selected using a
+    parameter."""
+
     def predict_proba(self, X, *args, **kwargs):
         """"Predict the probability with the selected estimator."""
         check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(X, *args, **kwargs)
+
+
+class _ParametrizedRegressors(_ParametrizedEstimatorsMixin, RegressorMixin):
+    """The functionality of a collection of regressors is provided as
+    a single metaregressor. The regressor to be fitted is selected using a
+    parameter."""
+

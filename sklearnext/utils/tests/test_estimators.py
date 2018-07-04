@@ -8,7 +8,8 @@ from sklearn.svm import SVR, SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.datasets import make_regression, make_classification
-from ...utils import _ParametrizedEstimators
+from ..estimators import _ParametrizedEstimatorsMixin
+from ...utils import _ParametrizedClassifiers, _ParametrizedRegressors
 
 X_reg, y_reg = make_regression()
 X_clf, y_clf = make_classification()
@@ -48,7 +49,7 @@ def _generate_expected_params(estimators):
 def test_parametrized_estimators_initialization(estimators):
     """Test the initialization of parametrized estimators class."""
     with pytest.raises(Exception):
-        _ParametrizedEstimators(estimators)
+        _ParametrizedEstimatorsMixin(estimators)
 
 
 @pytest.mark.parametrize('estimators,updated_params', [
@@ -57,7 +58,7 @@ def test_parametrized_estimators_initialization(estimators):
 ])
 def test_parametrized_estimators_params_methods(estimators, updated_params):
     """Test the set and get parameters methods."""
-    pe = _ParametrizedEstimators(estimators)
+    pe = _ParametrizedEstimatorsMixin(estimators)
     pe.set_params(**updated_params)
     assert pe.get_params() == _generate_expected_params(pe.estimators)
 
@@ -70,7 +71,7 @@ def test_parametrized_estimators_params_methods(estimators, updated_params):
 ])
 def test_parametrized_estimators_fitting(estimators, est_name, X, y):
     """Test parametrized estimators fitting process."""
-    pe = _ParametrizedEstimators(estimators, est_name)
+    pe = _ParametrizedEstimatorsMixin(estimators, est_name)
     pe.fit(X, y)
     fitted_estimator = dict(estimators).get(est_name)
     assert isinstance(fitted_estimator, pe.estimator_.__class__)
@@ -83,14 +84,16 @@ def test_parametrized_estimators_fitting(estimators, est_name, X, y):
 def test_parametrized_estimators_fitting_error(estimators, X, y, est_name):
     """Test parametrized estimators fitting error."""
     with pytest.raises(ValueError):
-        _ParametrizedEstimators(estimators, est_name).fit(X, y)
+        _ParametrizedEstimatorsMixin(estimators, est_name).fit(X, y)
 
 
-@pytest.mark.parametrize('estimators,estimator_type', [
-    (REGRESSORS, 'regressor'),
-    (CLASSIFIERS, 'classifier')
-])
-def test_parametrized_estimators_type(estimators, estimator_type):
-    """Test parametrized estimators type."""
-    pe = _ParametrizedEstimators(estimators)
-    assert pe._estimator_type == estimator_type
+def test_parametrized_classifiers_type():
+    """Test parametrized classifiers type of estimator."""
+    pf = _ParametrizedClassifiers(CLASSIFIERS)
+    assert pf._estimator_type == 'classifier'
+
+
+def test_parametrized_regressors_type():
+    """Test parametrized regressors type of estimator."""
+    pr = _ParametrizedRegressors(REGRESSORS)
+    assert pr._estimator_type == 'regressor'
