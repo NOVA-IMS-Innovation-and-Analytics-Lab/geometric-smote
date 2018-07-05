@@ -8,7 +8,7 @@ the parameter and model space.
 
 from dask_searchcv.model_selection import GridSearchCV, check_cv
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
-from ..utils import check_param_grids, _ParametrizedEstimators
+from ..utils import check_estimator_type, check_param_grids, _ParametrizedClassifiers, _ParametrizedRegressors
 
 _DOC_TEMPLATE = """{oneliner}
 
@@ -266,14 +266,17 @@ class ModelSearchCV(GridSearchCV):
                  cv=None,
                  error_score='raise',
                  return_train_score=_RETURN_TRAIN_SCORE_DEFAULT,
-                 scheduler='multiprocessing',
+                 scheduler=None,
                  n_jobs=-1,
                  cache_cv=True,
                  verbose=True):
         self.estimators = estimators
         self.param_grids = param_grids
         self.verbose = verbose
-        super(ModelSearchCV, self).__init__(estimator=_ParametrizedEstimators(estimators),
+        estimator = _ParametrizedClassifiers(estimators) \
+            if check_estimator_type(estimators) == 'classifier' \
+            else _ParametrizedRegressors(estimators)
+        super(ModelSearchCV, self).__init__(estimator=estimator,
                                             param_grid=check_param_grids(param_grids, estimators),
                                             scoring=scoring,
                                             iid=iid,
