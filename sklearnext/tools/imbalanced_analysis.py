@@ -167,7 +167,7 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
                                            n_splits=3, n_runs=3, random_state=None, verbose=True,
-                                           scheduler='multiprocessing', n_jobs=-1, cache_cv=True):
+                                           scheduler=None, n_jobs=-1, cache_cv=True):
 
     # Extract estimators and parameter grids
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
