@@ -37,8 +37,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
         cls.fitting_task = 1
         if all([hasattr(cls, attribute) for attribute in ['ind', 'dataset_name', 'n_datasets']]):
             progress_bar_msg = 'Current dataset: {} | Completed datasets: {}/{} | Progress: '
-            cls.progress_bar.prefix = progress_bar_msg.format(
-                cls.dataset_name, cls.ind, cls.n_datasets)
+            cls.progress_bar.prefix = progress_bar_msg.format(cls.dataset_name, cls.ind, cls.n_datasets)
         else:
             cls.progress_bar.prefix = 'Progress: '
 
@@ -68,7 +67,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
         return super()._get_params('estimators', deep=deep)
 
     def fit(self, X, y, *args, **kwargs):
-        """"Fit the selected estimator and dataset."""
+        """"Fit the selected estimator."""
 
         # Copy one of the estimators
         if self.est_name is None:
@@ -87,12 +86,6 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
         # Fit estimator
         self.estimator_ = estimator.fit(X, y, *args, **kwargs)
 
-        # Increase number of fitted tasks
-        if hasattr(_ParametrizedEstimatorsMixin, 'progress_bar'):
-            _ParametrizedEstimatorsMixin.progress_bar.update(_ParametrizedEstimatorsMixin.fitting_task)
-            _ParametrizedEstimatorsMixin.tasks_text.update_mapping(tasks=_ParametrizedEstimatorsMixin.fitting_task)
-            _ParametrizedEstimatorsMixin.fitting_task += 1
-
         return self
 
     def predict(self, X, *args, **kwargs):
@@ -106,6 +99,19 @@ class _ParametrizedClassifiers(_ParametrizedEstimatorsMixin, ClassifierMixin):
     a single metaclassifier. The classifier to be fitted is selected using a
     parameter."""
 
+    def fit(self, X, y, *args, **kwargs):
+        """"Fit the selected classifier."""
+
+        super(_ParametrizedClassifiers, self).fit(X, y, *args, **kwargs)
+
+        # Increase number of fitted tasks
+        if hasattr(_ParametrizedClassifiers, 'progress_bar'):
+            _ParametrizedClassifiers.progress_bar.update(_ParametrizedClassifiers.fitting_task)
+            _ParametrizedClassifiers.tasks_text.update_mapping(tasks=_ParametrizedClassifiers.fitting_task)
+            _ParametrizedClassifiers.fitting_task += 1
+
+        return self
+
     def predict_proba(self, X, *args, **kwargs):
         """"Predict the probability with the selected estimator."""
         check_is_fitted(self, 'estimator_')
@@ -116,4 +122,17 @@ class _ParametrizedRegressors(_ParametrizedEstimatorsMixin, RegressorMixin):
     """The functionality of a collection of regressors is provided as
     a single metaregressor. The regressor to be fitted is selected using a
     parameter."""
+
+    def fit(self, X, y, *args, **kwargs):
+        """"Fit the selected regressor."""
+
+        super(_ParametrizedRegressors, self).fit(X, y, *args, **kwargs)
+
+        # Increase number of fitted tasks
+        if hasattr(_ParametrizedRegressors, 'progress_bar'):
+            _ParametrizedRegressors.progress_bar.update(_ParametrizedRegressors.fitting_task)
+            _ParametrizedRegressors.tasks_text.update_mapping(tasks=_ParametrizedRegressors.fitting_task)
+            _ParametrizedRegressors.fitting_task += 1
+
+        return self
 
