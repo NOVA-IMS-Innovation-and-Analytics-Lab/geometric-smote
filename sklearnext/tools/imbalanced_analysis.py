@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare
 from sklearn.model_selection import StratifiedKFold
-from ..utils import check_datasets, check_oversamplers_classifiers, _ParametrizedEstimators
+from ..utils import check_datasets, check_oversamplers_classifiers
+from ..utils.estimators import _ParametrizedEstimatorsMixin
 from ..metrics import SCORERS
 from ..model_selection import ModelSearchCV
 
@@ -71,7 +72,7 @@ def _define_binary_experiment_parameters(model_search_cv):
 
 def _set_verbose_attributes(ind, dataset_name, datasets):
     for attribute, value in zip(['ind', 'dataset_name', 'n_datasets'], [ind, dataset_name, len(datasets)]):
-        setattr(_ParametrizedEstimators, attribute, value)
+        setattr(_ParametrizedEstimatorsMixin, attribute, value)
 
 
 def _calculate_results(model_search_cv, datasets, scoring_cols, verbose):
