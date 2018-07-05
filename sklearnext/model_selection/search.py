@@ -307,7 +307,7 @@ class ModelSearchCV(GridSearchCV):
 
         if self.verbose:
             n_fitting_tasks = len(self._get_param_iterator()) * check_cv(self.cv).n_splits + int(self.refit)
-            self.estimator._create_progress_bar(n_fitting_tasks)
+            self.estimator._create_progress_bar(n_fitting_tasks, self.scheduler)
 
         super(ModelSearchCV, self).fit(X, y, groups, **fit_params)
         self._modify_grid_search_attrs()

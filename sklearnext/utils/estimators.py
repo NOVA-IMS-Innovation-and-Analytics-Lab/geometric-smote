@@ -27,7 +27,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
         self._validate_names([est_name for est_name, _ in estimators])
 
     @classmethod
-    def _create_progress_bar(cls, n_fitting_tasks):
+    def _create_progress_bar(cls, n_fitting_tasks, scheduler):
         cls.tasks_text = progressbar.FormatCustomText('(%(tasks)d / %(n_tasks)d)', dict(tasks=0, n_tasks=n_fitting_tasks))
         cls.progress_bar = progressbar.ProgressBar(max_value=n_fitting_tasks,
                                                    widgets=[
@@ -35,11 +35,12 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
                                                        ' ',
                                                        cls.tasks_text])
         cls.fitting_task = 1
+        progress_bar_msg = str() if scheduler is 'multiprocessing' else 'Progress: '
         if all([hasattr(cls, attribute) for attribute in ['ind', 'dataset_name', 'n_datasets']]):
-            progress_bar_msg = 'Current dataset: {} | Completed datasets: {}/{} | Progress: '
+            progress_bar_msg += 'Current dataset: {} | Completed datasets: {}/{} | '
             cls.progress_bar.prefix = progress_bar_msg.format(cls.dataset_name, cls.ind, cls.n_datasets)
         else:
-            cls.progress_bar.prefix = 'Progress: '
+            cls.progress_bar.prefix = progress_bar_msg
 
     def set_params(self, **params):
         """Set the parameters.
