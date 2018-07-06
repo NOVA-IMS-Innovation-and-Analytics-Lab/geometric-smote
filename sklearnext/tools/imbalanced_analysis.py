@@ -201,4 +201,5 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
             'wide_optimal_results': wide_optimal_results,
             'ranking_results': ranking_results,
             'mean_ranking_results': mean_ranking_results,
-            'friedman_test_results': friedman_test_results}
+            'friedman_test_results': friedman_test_results,
+            'model_search_cv': mscv}
