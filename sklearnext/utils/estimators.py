@@ -37,7 +37,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
         cls.fitting_task = 1
         progress_bar_msg = str() if scheduler is 'multiprocessing' else 'Progress: '
         if all([hasattr(cls, attribute) for attribute in ['ind', 'dataset_name', 'n_datasets']]):
-            progress_bar_msg += 'Current dataset: {} | Completed datasets: {}/{} | '
+            progress_bar_msg = 'Current dataset: {} | Completed datasets: {}/{} | ' + progress_bar_msg
             cls.progress_bar.prefix = progress_bar_msg.format(cls.dataset_name, cls.ind, cls.n_datasets)
         else:
             cls.progress_bar.prefix = progress_bar_msg
