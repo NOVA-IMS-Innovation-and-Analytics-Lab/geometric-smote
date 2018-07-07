@@ -44,12 +44,12 @@ def test_summarize_binary_datasets():
     datasets_summary = summarize_binary_datasets(DATASETS)
     expected_datasets_summary = pd.DataFrame(
         {
-            'Dataset name': ['A', 'B'],
-            'Features': [20, 10],
+            'Dataset name': ['B', 'A'],
+            'Features': [10, 20],
             'Instances': [100, 100],
-            'Minority instances': [10, 20],
-            'Majority instances': [90, 80],
-            'Imbalance Ratio': [9.0, 4.0]
+            'Minority instances': [20, 10],
+            'Majority instances': [80, 90],
+            'Imbalance Ratio': [4.0, 9.0]
         }
     )
     pd.testing.assert_frame_equal(datasets_summary, expected_datasets_summary, check_dtype=False)
