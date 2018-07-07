@@ -55,7 +55,7 @@ def summarize_binary_datasets(datasets):
                                        columns=summary_columns)
         datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
     datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
-    return datasets_summary.sort_values('Imbalance Ratio')
+    return datasets_summary.sort_values('Imbalance Ratio').reset_index(drop=True)
 
 
 def _define_binary_experiment_parameters(model_search_cv):
