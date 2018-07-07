@@ -9,8 +9,10 @@ from abc import abstractmethod
 from collections import Counter
 import numpy as np
 import pandas as pd
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, check_X_y
+from sklearn.utils.metaestimators import _BaseComposition
 from imblearn.over_sampling.base import BaseOverSampler
+from imblearn.utils import check_ratio, check_target_type, hash_X_y
 
 
 def _generate_classes_stats(y, majority_label, imbalance_ratio_threshold, k_neighbors):
@@ -41,11 +43,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
                  sampling_type=None,
                  integer_cols=None,
                  categorical_cols=None,
-                 imbalance_ratio_threshold=1.0):
+                 categorical_ir_threshold=1.0):
         super(ExtendedBaseOverSampler, self).__init__(ratio, random_state, sampling_type)
         self.integer_cols = integer_cols
         self.categorical_cols = categorical_cols
-        self.imbalance_ratio_threshold = imbalance_ratio_threshold
+        self.imbalance_ratio_threshold = categorical_ir_threshold
 
     @abstractmethod
     def _partial_sample(self, X, y):
@@ -133,7 +135,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         )
         boolean_mask = classes_stats.iloc[:, -1].apply(lambda stat: stat[0])
         included_groups = classes_stats[boolean_mask].iloc[:, :-1].reset_index(drop=True)
-        self.n_overasmpled_groups_ = len(included_groups)
+        self.n_oversampled_groups_ = len(included_groups)
 
         # Calculate oversampling weights
         imbalance_ratios = classes_stats[boolean_mask].iloc[:, -1].apply(lambda stat: stat[1]).reset_index(drop=True)
@@ -184,6 +186,90 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
 
         return X_resampled, y_resampled
+
+
+class ClusteringBaseOverSampler(ExtendedBaseOverSampler, _BaseComposition):
+
+    def __init__(self,
+                 ratio='auto',
+                 random_state=None,
+                 sampling_type=None,
+                 integer_cols=None,
+                 categorical_cols=None,
+                 categorical_ir_threshold=1.0,
+                 clusterer=None,
+                 clustering_ir_threshold=1.0,
+                 density_exponent=None,
+                 cluster_topology=None):
+        super(ClusteringBaseOverSampler, self).__init__(ratio, random_state, sampling_type, integer_cols,
+                                                        categorical_cols, categorical_ir_threshold)
+        self.clusterer = clusterer
+        self.clustering_ir_threshold = clustering_ir_threshold
+        self.density_exponent = density_exponent
+        self.cluster_topology = cluster_topology
+
+    def set_params(self, **params):
+        """Set the parameters.
+        Valid parameter keys can be listed with get_params().
+        Parameters
+        ----------
+        params : keyword arguments
+            Specific parameters using e.g. set_params(parameter_name=new_value)
+            In addition, to setting the parameters of the ``_ParametrizedEstimatorsMixin``,
+            the individual estimators of the ``_ParametrizedEstimatorsMixin`` can also be
+            set or replaced by setting them to None.
+        """
+        super(ClusteringBaseOverSampler, self)._set_params('clusterer', **params)
+        return self
+
+    def get_params(self, deep=True):
+        """Get the parameters.
+        Parameters
+        ----------
+        deep: bool
+            Setting it to True gets the various estimators and the parameters
+            of the estimators as well
+        """
+        return super(ClusteringBaseOverSampler, self)._get_params('clusterer', deep=deep)
+
+    def _partial_sample(self, X, y):
+        pass
+
+    def fit(self, X, y):
+        """Find the classes statistics before to perform sampling.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        self : object,
+            Return self.
+
+        """
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        y = check_target_type(y)
+        self.X_hash_, self.y_hash_ = hash_X_y(X, y)
+        self.ratio_ = check_ratio(self.ratio, y, self._sampling_type)
+
+        # Cluster input space
+        self.clustering_labels_ = self.clusterer[0][1].fit_predict(X, y)
+
+        # Identify majority and minority
+        majority_label = [label for label, n_samples in self.ratio_.items() if n_samples == 0][0]
+        minority_labels = [label for label in self.ratio_.keys() if label != majority_label]
+
+        # Clusters imbalance ratios
+
+        weights = pd.DataFrame()
+
+
+        return self
 
 
 
