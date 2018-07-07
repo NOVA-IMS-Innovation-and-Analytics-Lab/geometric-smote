@@ -54,7 +54,7 @@ def summarize_binary_datasets(datasets):
                                          round(n_majority_instances / n_minority_instances, 2)]],
                                        columns=summary_columns)
         datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
-    datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
+    datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int).sort_values('Imbalance Ratio')
     return datasets_summary
 
 
