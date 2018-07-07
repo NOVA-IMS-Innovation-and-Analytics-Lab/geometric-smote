@@ -102,7 +102,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  random_state=None,
                  integer_cols=None,
                  categorical_cols=None,
-                 imbalance_ratio_threshold=1.0,
+                 categorical_ir_threshold=1.0,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
@@ -112,7 +112,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                          random_state=random_state,
                          integer_cols=integer_cols,
                          categorical_cols=categorical_cols,
-                         imbalance_ratio_threshold=imbalance_ratio_threshold)
+                         categorical_ir_threshold=categorical_ir_threshold)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy

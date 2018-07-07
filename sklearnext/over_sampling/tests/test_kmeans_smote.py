@@ -71,7 +71,7 @@ def test_smote_limit_case(plot=False):
     """Execute k-means SMOTE with parameters equivalent to SMOTE"""
     kmeans_smote = KMeansSMOTE(
         random_state=RND_SEED,
-        imbalance_ratio_threshold=float('Inf'),
+        categorical_ir_threshold=float('Inf'),
         kmeans_args={
             'n_clusters': 1
         }
@@ -94,7 +94,7 @@ def test_random_oversampling_limit_case(plot=False):
     """Execute k-means SMOTE with parameters equivalent to random oversampling"""
     kmeans_smote = KMeansSMOTE(
         random_state=RND_SEED,
-        imbalance_ratio_threshold=float('Inf'),
+        categorical_ir_threshold=float('Inf'),
         kmeans_args={
             'n_clusters': 1
         },
@@ -165,7 +165,7 @@ def test_smote_limit_case_multiclass(plot=False):
     """Execute k-means SMOTE with parameters equivalent to SMOTE"""
     kmeans_smote = KMeansSMOTE(
         random_state=RND_SEED,
-        imbalance_ratio_threshold=float('Inf'),
+        categorical_ir_threshold=float('Inf'),
         kmeans_args={
             'n_clusters': 1
         },
@@ -193,7 +193,7 @@ def test_multiclass_irt_dict(plot=False):
     kmeans_smote = KMeansSMOTE(
         random_state=RND_SEED,
         kmeans_args={'n_clusters': 10},
-        imbalance_ratio_threshold={1: 1, 2: np.inf})
+        categorical_ir_threshold={1: 1, 2: np.inf})
     X_resampled, y_resampled = kmeans_smote.fit_sample(
         X_MULTICLASS, Y_MULTICLASS)
 

@@ -75,7 +75,7 @@ class KMeansSMOTE(ExtendedBaseOverSampler):
     --------
     >>> import numpy as np
     >>> from imblearn.datasets import fetch_datasets
-    >>> from sklearnext.preprocessing import KMeansSMOTE
+    >>> from sklearnext.over_sampling import KMeansSMOTE
     >>>
     >>> datasets = fetch_datasets(filter_data=['oil'])
     >>> X, y = datasets['oil']['data'], datasets['oil']['target']
@@ -98,16 +98,16 @@ class KMeansSMOTE(ExtendedBaseOverSampler):
     """
 
     def __init__(self,
-                ratio='auto',
-                random_state=None,
-                kmeans_args={},
-                smote_args={},
-                imbalance_ratio_threshold=1.0,
-                density_power=None,
-                use_minibatch_kmeans=True,
-                n_jobs=1):
+                 ratio='auto',
+                 random_state=None,
+                 kmeans_args={},
+                 smote_args={},
+                 categorical_ir_threshold=1.0,
+                 density_power=None,
+                 use_minibatch_kmeans=True,
+                 n_jobs=1):
         super(KMeansSMOTE, self).__init__(ratio=ratio, random_state=random_state)
-        self.imbalance_ratio_threshold = imbalance_ratio_threshold
+        self.imbalance_ratio_threshold = categorical_ir_threshold
         self.kmeans_args = copy.deepcopy(kmeans_args)
         self.smote_args = copy.deepcopy(smote_args)
         self.random_state = random_state
