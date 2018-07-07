@@ -53,7 +53,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
             the individual estimators of the ``_ParametrizedEstimatorsMixin`` can also be
             set or replaced by setting them to None.
         """
-        super()._set_params('estimators', **params)
+        super(_ParametrizedEstimatorsMixin, self)._set_params('estimators', **params)
         check_estimators(self.estimators)
         return self
 
@@ -65,7 +65,7 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
             Setting it to True gets the various estimators and the parameters
             of the estimators as well
         """
-        return super()._get_params('estimators', deep=deep)
+        return super(_ParametrizedEstimatorsMixin, self)._get_params('estimators', deep=deep)
 
     def fit(self, X, y, *args, **kwargs):
         """"Fit the selected estimator."""
