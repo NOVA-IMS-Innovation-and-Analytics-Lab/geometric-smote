@@ -41,15 +41,18 @@ MSCV = ModelSearchCV(ESTIMATORS, PARAM_GRIDS, scoring=None, iid=True, refit=Fals
 def test_summarize_binary_datasets():
     """Test the output of summarize binary
     datasets function."""
-    np.testing.assert_array_equal(summarize_binary_datasets(DATASETS),
-                                  pd.DataFrame({
-                                      'Dataset name': ['A', 'B'],
-                                      '# features': [20, 10],
-                                      '# instances': [100, 100],
-                                      '# minority instances': [10, 20],
-                                      '# majority instances': [90, 80],
-                                      'Imbalance Ratio': [9.0, 4.0]
-                                  }))
+    datasets_summary = summarize_binary_datasets(DATASETS)
+    expected_datasets_summary = pd.DataFrame(
+        {
+            'Dataset name': ['A', 'B'],
+            'Features': [20, 10],
+            'Instances': [100, 100],
+            'Minority instances': [10, 20],
+            'Majority instances': [90, 80],
+            'Imbalance Ratio': [9.0, 4.0]
+        }
+    )
+    pd.testing.assert_frame_equal(datasets_summary, expected_datasets_summary, check_dtype=False)
 
 
 @pytest.mark.parametrize('scoring,expected_parameters', [

@@ -37,10 +37,10 @@ def summarize_binary_datasets(datasets):
     imbalanced datasets."""
     datasets = check_datasets(datasets)
     summary_columns = ["Dataset name",
-                       "# features",
-                       "# instances",
-                       "# minority instances",
-                       "# majority instances",
+                       "Features",
+                       "Instances",
+                       "Minority instances",
+                       "Majority instances",
                        "Imbalance Ratio"]
     datasets_summary = pd.DataFrame({}, columns=summary_columns)
     for dataset_name, (X, y) in datasets:
