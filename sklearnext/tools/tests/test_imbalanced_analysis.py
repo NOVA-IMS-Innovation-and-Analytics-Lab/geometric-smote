@@ -30,7 +30,6 @@ CLASSIFIERS = [
     ('lr', LogisticRegression()),
     ('svc', SVC(), {'C': [0.1, 1.0]})
 ]
-GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
 N_RUNS = 3
 ESTIMATORS, PARAM_GRIDS = check_oversamplers_classifiers(OVERSAMPLERS, CLASSIFIERS, n_runs=N_RUNS, random_state=0).values()
 MSCV = ModelSearchCV(ESTIMATORS, PARAM_GRIDS, scoring=None, iid=True, refit=False,
@@ -56,9 +55,9 @@ def test_summarize_binary_datasets():
 
 
 @pytest.mark.parametrize('scoring,expected_parameters', [
-    (None, (None, ['mean_test_score'], GROUP_KEYS, 'classifier')),
-    ('accuracy', ('accuracy', ['mean_test_score'], GROUP_KEYS, 'classifier')),
-    (['accuracy', 'f1'], (['accuracy', 'f1'], ['mean_test_accuracy', 'mean_test_f1'], GROUP_KEYS, 'classifier'))
+    (None, (None, ['mean_test_score'], 'classifier')),
+    ('accuracy', ('accuracy', ['mean_test_score'], 'classifier')),
+    (['accuracy', 'f1'], (['accuracy', 'f1'], ['mean_test_accuracy', 'mean_test_f1'], 'classifier'))
 ])
 def test_define_binary_experiment_parameters(scoring, expected_parameters):
     """Test the definition of the binary experimet parameters."""
