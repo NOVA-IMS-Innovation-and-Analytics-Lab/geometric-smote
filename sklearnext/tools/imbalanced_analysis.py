@@ -162,7 +162,7 @@ def _calculate_ranking_results(wide_optimal_results):
 
 
 def _calculate_friedman_test_results(ranking_results, alpha=0.05):
-    """Calculates the friedman test across datasets for every
+    """Calculates the Friedman test across datasets for every
     combination of classifiers and metrics."""
     if len(ranking_results.columns) < 6:
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
@@ -171,6 +171,12 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
         columns={0: 'p-value'})
     friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
     return friedman_test_results
+
+
+def _calculate_holm_test(wide_optimal_results, control_oversampler, alpha=0.05):
+    """Calculates the Holm's test across datasets for every
+        combination of classifiers and metrics using a control
+        oversampler."""
 
 
 def _format_metrics(results):
