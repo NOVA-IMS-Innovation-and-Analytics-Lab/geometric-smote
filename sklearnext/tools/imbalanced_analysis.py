@@ -12,7 +12,7 @@ from os import listdir
 from re import match, sub
 import numpy as np
 import pandas as pd
-from scipy.stats import friedmanchisquare
+from scipy.stats import friedmanchisquare, ttest_ind
 from sklearn.model_selection import StratifiedKFold
 from ..utils import check_datasets, check_oversamplers_classifiers
 from ..utils.estimators import _ParametrizedEstimatorsMixin
@@ -137,7 +137,7 @@ def _calculate_wide_optimal_results(optimal_results, scoring, estimator_type):
         wide_optimal_results['Metric'] = 'accuracy' if estimator_type == 'classifier' else 'r2'
     wide_optimal_results['Metric'] = pd.Categorical(wide_optimal_results['Metric'],
                                                     categories=scoring if isinstance(scoring, list) else None)
-    return  wide_optimal_results
+    return wide_optimal_results
 
 
 def _return_row_ranking(row, sign):
@@ -175,8 +175,17 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
 
 def _calculate_holm_test(wide_optimal_results, control_oversampler, alpha=0.05):
     """Calculates the Holm's test across datasets for every
-        combination of classifiers and metrics using a control
-        oversampler."""
+    combination of classifiers and metrics using a control
+    oversampler."""
+    oversamplers_names = wide_optimal_results.columns[3:].tolist()
+    oversamplers_names.remove(control_oversampler)
+    pvalues = pd.DataFrame()
+    for name in oversamplers_names:
+        pvalues_pair = wide_optimal_results.groupby(['Classifier', 'Metric'])[[name, control_oversampler]].apply(
+            lambda df: ttest_ind(df[name], df[control_oversampler])[1])
+        pvalues_pair = pd.DataFrame(pvalues_pair, columns=[name])
+        pvalues = pd.concat([pvalues, pvalues_pair], axis=1)
+
 
 
 def _format_metrics(results):
