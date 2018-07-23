@@ -12,7 +12,8 @@ from os import listdir
 from re import match, sub
 import numpy as np
 import pandas as pd
-from scipy.stats import friedmanchisquare, ttest_ind
+from scipy.stats import friedmanchisquare, ttest_rel
+from statsmodels.stats.multitest import multipletests
 from sklearn.model_selection import StratifiedKFold
 from ..utils import check_datasets, check_oversamplers_classifiers
 from ..utils.estimators import _ParametrizedEstimatorsMixin
@@ -162,7 +163,7 @@ def _calculate_ranking_results(wide_optimal_results):
 
 
 def _calculate_friedman_test_results(ranking_results, alpha=0.05):
-    """Calculates the Friedman test across datasets for every
+    """Calculate the Friedman test across datasets for every
     combination of classifiers and metrics."""
     if len(ranking_results.columns) < 6:
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
@@ -173,19 +174,24 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
     return friedman_test_results
 
 
-def _calculate_holm_test(wide_optimal_results, control_oversampler, alpha=0.05):
-    """Calculates the Holm's test across datasets for every
-    combination of classifiers and metrics using a control
+def _calculate_adjusted_pvalues_results(wide_optimal_results, control_oversampler):
+    """Use the Holm's method to adjust the p-values of a paired difference
+    t-test for every combination of classifiers and metrics using a control
     oversampler."""
     oversamplers_names = wide_optimal_results.columns[3:].tolist()
+    if control_oversampler is None:
+        control_oversampler = oversamplers_names[-1]
     oversamplers_names.remove(control_oversampler)
     pvalues = pd.DataFrame()
     for name in oversamplers_names:
         pvalues_pair = wide_optimal_results.groupby(['Classifier', 'Metric'])[[name, control_oversampler]].apply(
-            lambda df: ttest_ind(df[name], df[control_oversampler])[1])
+            lambda df: ttest_rel(df[name], df[control_oversampler])[1])
         pvalues_pair = pd.DataFrame(pvalues_pair, columns=[name])
         pvalues = pd.concat([pvalues, pvalues_pair], axis=1)
-
+    corrected_pvalues = pd.DataFrame(pvalues.apply(
+        lambda col: multipletests(col, method='holm')[1], axis=1).values.tolist(), columns=oversamplers_names)
+    corrected_pvalues = corrected_pvalues.set_index(pvalues.index).reset_index()
+    return corrected_pvalues
 
 
 def _format_metrics(results):
@@ -195,8 +201,8 @@ def _format_metrics(results):
 
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
-                                           n_splits=3, n_runs=3, random_state=None, verbose=True,
-                                           scheduler=None, n_jobs=-1, cache_cv=True):
+                                           control_oversampler=None, n_splits=3, n_runs=3, random_state=None,
+                                           verbose=True, scheduler=None, n_jobs=-1, cache_cv=True):
 
     # Extract estimators and parameter grids
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
@@ -228,10 +234,12 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
     ranking_results = _calculate_ranking_results(wide_optimal_results)
     mean_ranking_results = ranking_results.groupby(['Classifier', 'Metric'], as_index=False).mean()
     friedman_test_results = _calculate_friedman_test_results(ranking_results, alpha)
+    adjusted_pvalues_results = _calculate_adjusted_pvalues_results(wide_optimal_results, control_oversampler)
 
     return {'aggregated': aggregated_results,
             'optimal': optimal_results,
             'wide_optimal': _format_metrics(wide_optimal_results),
             'ranking': _format_metrics(ranking_results),
             'mean_ranking': _format_metrics(mean_ranking_results),
-            'friedman_test': _format_metrics(friedman_test_results)}
+            'friedman_test': _format_metrics(friedman_test_results),
+            'adjusted_pvalues': -_format_metrics(adjusted_pvalues_results)}
