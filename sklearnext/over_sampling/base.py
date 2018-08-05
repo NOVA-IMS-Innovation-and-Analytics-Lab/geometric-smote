@@ -47,10 +47,10 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         super(ExtendedBaseOverSampler, self).__init__(ratio, random_state, sampling_type)
         self.integer_cols = integer_cols
         self.categorical_cols = categorical_cols
-        self.imbalance_ratio_threshold = categorical_ir_threshold
+        self.categorical_ir_threshold = categorical_ir_threshold
 
     @abstractmethod
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         """Resample the numerical features of the dataset.
 
         Parameters
@@ -70,6 +70,37 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             The corresponding label of `X_resampled`
         """
         pass
+
+    def _integer_sample(self, X, y):
+        """Resample the integer features of the dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the numerical data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
+            The array containing the numerical resampled data.
+
+        y_resampled : ndarray, shape (n_samples_new,)
+            The corresponding label of `X_resampled`
+        """
+
+        X_resampled, y_resampled = self._numerical_sample(X, y)
+        if self.integer_cols is not None:
+            try:
+                if len(self.integer_cols) == 0 or not set(range(self.max_col_index_)).issuperset(self.integer_cols):
+                    error_msg = 'Selected integer columns should be in the {} range. Got {} instead.'
+                    raise ValueError(error_msg.format([0, self.max_col_index_], self.integer_cols))
+            except:
+                raise ValueError('Parameter `integer_cols` should be a list or tuple in the %s range.' % [0, self.max_col_index_])
+            X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
+        return X_resampled, y_resampled
 
     def _sample(self, X, y):
         """Resample the dataset.
@@ -92,30 +123,22 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         """
 
         self.random_state_ = check_random_state(self.random_state)
+        self.max_col_index_ = X.shape[1]
 
         if self.categorical_cols is None:
-            return self._partial_sample(X, y)
-
-        max_col_index = X.shape[1]
+            return self._integer_sample(X, y)
 
         try:
-            if len(self.integer_cols) == 0 or not set(range(max_col_index)).issuperset(self.integer_cols):
-                error_msg = 'Selected integer columns should be in the {} range. Got {} instead.'
-                raise ValueError(error_msg.format([0, max_col_index], self.integer_cols))
-        except:
-            raise ValueError('Parameter `integer_cols` should be a list or tuple in the %s range.' % [0, max_col_index])
-
-        try:
-            if len(self.categorical_cols) == 0 or not set(range(max_col_index)).issuperset(self.categorical_cols):
+            if len(self.categorical_cols) == 0 or not set(range(self.max_col_index_)).issuperset(self.categorical_cols):
                 error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
-                raise ValueError(error_msg.format([0, max_col_index], self.categorical_cols))
+                raise ValueError(error_msg.format([0, self.max_col_index_], self.categorical_cols))
         except:
-            raise ValueError('Parameter `categorical_cols` should be a list or tuple in the %s range.' % [0, max_col_index])
+            raise ValueError('Parameter `categorical_cols` should be a list or tuple in the %s range.' % [0, self.max_col_index_])
 
-        if not set(self.integer_cols).isdisjoint(self.categorical_cols):
+        if self.integer_cols is not None and not set(self.integer_cols).isdisjoint(self.categorical_cols):
             raise ValueError('Parameters `integer_cols` and `categorical_cols` should not have common elements.')
 
-        if self.imbalance_ratio_threshold <= 0.0:
+        if self.categorical_ir_threshold <= 0.0:
             raise ValueError('Parameter `categorical_threshold` should be a positive number.')
 
         df = pd.DataFrame(np.column_stack((X, y)))
@@ -128,7 +151,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
                 df.columns[-1]: lambda y: _generate_classes_stats(
                     y,
                     majority_label,
-                    self.imbalance_ratio_threshold,
+                    self.categorical_ir_threshold,
                     self.k_neighbors if hasattr(self, 'k_neighbors') else None
                 )
             }
@@ -163,7 +186,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             X_group, y_group = df_group.iloc[:, :-1], df_group.iloc[:, -1]
 
             # Oversample data
-            X_group_resampled, y_group_resampled = self._partial_sample(X_group.values, y_group.values)
+            X_group_resampled, y_group_resampled = self._integer_sample(X_group.values, y_group.values)
             X_group_categorical = np.array(group_values * len(X_group_resampled)).reshape(len(X_group_resampled), -1)
             X_group_resampled = np.column_stack((X_group_resampled, X_group_categorical))
             X_group_resampled = pd.DataFrame(X_group_resampled, columns=list(X_group.columns) + self.categorical_cols)
@@ -181,9 +204,6 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         df_excluded = pd.merge(df, excluded_groups)
         X_resampled = X_resampled.append(df_excluded.iloc[:, :-1]).values
         y_resampled = y_resampled.append(df_excluded.iloc[:, -1:]).values.reshape(-1)
-
-        # Integer columns
-        X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
 
         return X_resampled, y_resampled
 
@@ -232,7 +252,7 @@ class ClusteringBaseOverSampler(ExtendedBaseOverSampler, _BaseComposition):
         """
         return super(ClusteringBaseOverSampler, self)._get_params('clusterer', deep=deep)
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         pass
 
     def fit(self, X, y):

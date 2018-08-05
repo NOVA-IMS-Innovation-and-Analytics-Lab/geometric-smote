@@ -198,7 +198,7 @@ class KMeansSMOTE(ExtendedBaseOverSampler):
         return sampling_weights
 
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         """Resample the dataset.
         Parameters
         ----------

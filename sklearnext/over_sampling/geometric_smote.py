@@ -175,7 +175,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         y_new = np.array([pos_class_label] * len(samples_indices))
         return X_new, y_new
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         """Resample the numerical features of the dataset
         using the Geometric SMOTE algorithm.
 

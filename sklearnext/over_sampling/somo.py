@@ -249,7 +249,7 @@ class SOMO(ExtendedBaseOverSampler):
                         modified_y, over_y[len(cur_X):])
         return modified_X, modified_y
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         """
         Description: Oversampling of each minority class
         Returns ----------

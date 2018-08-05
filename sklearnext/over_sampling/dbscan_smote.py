@@ -146,7 +146,7 @@ class DBSCANSMOTE(ExtendedBaseOverSampler):
 
         return sampling_weights
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
 
         # Create the clusters and set the labels
         self._set_cluster()

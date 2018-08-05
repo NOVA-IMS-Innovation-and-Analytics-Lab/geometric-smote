@@ -124,7 +124,7 @@ class CGANOversampler(ExtendedBaseOverSampler):
         self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps, logging_options=None)
         return self
 
-    def _partial_sample(self, X, y):
+    def _numerical_sample(self, X, y):
         """Resample the dataset.
 
         Parameters
