@@ -71,8 +71,8 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         """
         pass
 
-    def _integer_sample(self, X, y):
-        """Resample the integer features of the dataset.
+    def _categorical_sample(self, X, y):
+        """Resample using the categorical features of the dataset.
 
         Parameters
         ----------
@@ -91,52 +91,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             The corresponding label of `X_resampled`
         """
 
-        X_resampled, y_resampled = self._numerical_sample(X, y)
-        if self.integer_cols is not None:
-            try:
-                if len(self.integer_cols) == 0 or not set(range(self.max_col_index_)).issuperset(self.integer_cols):
-                    error_msg = 'Selected integer columns should be in the {} range. Got {} instead.'
-                    raise ValueError(error_msg.format([0, self.max_col_index_], self.integer_cols))
-            except:
-                raise ValueError('Parameter `integer_cols` should be a list or tuple in the %s range.' % [0, self.max_col_index_])
-            X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
-        return X_resampled, y_resampled
-
-    def _sample(self, X, y):
-        """Resample the dataset.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-
-        y : array-like, shape (n_samples,)
-            Corresponding label for each sample in X.
-
-        Returns
-        -------
-        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
-            The array containing the resampled data.
-
-        y_resampled : ndarray, shape (n_samples_new,)
-            The corresponding label of `X_resampled`
-        """
-
-        self.random_state_ = check_random_state(self.random_state)
-        self.max_col_index_ = X.shape[1]
-
-        if self.categorical_cols is None:
-            return self._integer_sample(X, y)
-
-        try:
-            if len(self.categorical_cols) == 0 or not set(range(self.max_col_index_)).issuperset(self.categorical_cols):
-                error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
-                raise ValueError(error_msg.format([0, self.max_col_index_], self.categorical_cols))
-        except:
-            raise ValueError('Parameter `categorical_cols` should be a list or tuple in the %s range.' % [0, self.max_col_index_])
-
-        if self.integer_cols is not None and not set(self.integer_cols).isdisjoint(self.categorical_cols):
-            raise ValueError('Parameters `integer_cols` and `categorical_cols` should not have common elements.')
+        if not isinstance(self.categorical_cols, (list, tuple)) or \
+                len(self.categorical_cols) == 0 or \
+                not set(range(self.max_col_index_)).issuperset(self.categorical_cols):
+            error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
+            raise ValueError(error_msg.format([0, self.max_col_index_ - 1], self.categorical_cols))
 
         if self.categorical_ir_threshold <= 0.0:
             raise ValueError('Parameter `categorical_threshold` should be a positive number.')
@@ -186,7 +145,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             X_group, y_group = df_group.iloc[:, :-1], df_group.iloc[:, -1]
 
             # Oversample data
-            X_group_resampled, y_group_resampled = self._integer_sample(X_group.values, y_group.values)
+            X_group_resampled, y_group_resampled = self._numerical_sample(X_group.values, y_group.values)
             X_group_categorical = np.array(group_values * len(X_group_resampled)).reshape(len(X_group_resampled), -1)
             X_group_resampled = np.column_stack((X_group_resampled, X_group_categorical))
             X_group_resampled = pd.DataFrame(X_group_resampled, columns=list(X_group.columns) + self.categorical_cols)
@@ -203,7 +162,76 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         excluded_groups = classes_stats[~boolean_mask].iloc[:, :-1].reset_index(drop=True)
         df_excluded = pd.merge(df, excluded_groups)
         X_resampled = X_resampled.append(df_excluded.iloc[:, :-1]).values
-        y_resampled = y_resampled.append(df_excluded.iloc[:, -1:]).values.reshape(-1)
+        y_resampled = y_resampled.append(df_excluded.iloc[:, -1:]).values.reshape(-1).astype(int)
+
+        return X_resampled, y_resampled
+
+    def _integer_sample(self, X_resampled, y_resampled):
+        """Resample the integer features of the dataset.
+
+        Parameters
+        ----------
+        X_resampled : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the numerical resampled data.
+
+        y_resampled : array-like, shape (n_samples,)
+            Corresponding label for each sample in X_resampled.
+
+        Returns
+        -------
+        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
+            The array containing the resampled data.
+
+        y_resampled : ndarray, shape (n_samples_new,)
+            The corresponding label of `X_resampled`
+        """
+
+        if not isinstance(self.integer_cols, (list, tuple)) or \
+                len(self.integer_cols) == 0 or \
+                not set(range(self.max_col_index_)).issuperset(self.integer_cols):
+            error_msg = 'Selected integer columns should be in the {} range. Got {} instead.'
+            raise ValueError(error_msg.format([0, self.max_col_index_ - 1], self.integer_cols))
+        X_resampled[:, self.integer_cols] = np.round(X_resampled[:, self.integer_cols]).astype(int)
+        return X_resampled, y_resampled
+
+    def _sample(self, X, y):
+        """Resample the dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
+            The array containing the resampled data.
+
+        y_resampled : ndarray, shape (n_samples_new,)
+            The corresponding label of `X_resampled`
+        """
+
+        self.random_state_ = check_random_state(self.random_state)
+        self.max_col_index_ = X.shape[1]
+
+        if self.categorical_cols is None and self.integer_cols is None:
+            return self._numerical_sample(X, y)
+
+        if self.categorical_cols is not None and self.integer_cols is None:
+            return self._categorical_sample(X, y)
+
+        if self.categorical_cols is None and self.integer_cols is not None:
+            X_resampled, y_resampled = self._numerical_sample(X, y)
+            X_resampled, y_resampled = self._integer_sample(X_resampled, y_resampled)
+
+        if self.categorical_cols is not None and self.integer_cols is not None:
+            if not set(self.integer_cols).isdisjoint(self.categorical_cols):
+                raise ValueError('Parameters `integer_cols` and `categorical_cols` should not have common elements.')
+            X_resampled, y_resampled = self._categorical_sample(X, y)
+            X_resampled, y_resampled = self._integer_sample(X_resampled, y_resampled)
 
         return X_resampled, y_resampled
 
