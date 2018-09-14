@@ -31,7 +31,7 @@ def _generate_classes_stats(y, majority_label, imbalance_ratio_threshold, k_neig
 
 class ExtendedBaseOverSampler(BaseOverSampler):
     """An extension of the base class for over-sampling algorithms to
-    handle categorical features.
+    handle integer and categorical features.
 
     Warning: This class should not be used directly. Use the derive classes
     instead.
