@@ -208,11 +208,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
 
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
-            if sparse.issparse(X_new):
-                X_resampled = sparse.vstack([X_resampled, X_new])
-            else:
-                X_resampled = np.vstack((X_resampled, X_new))
-
+            X_resampled = np.vstack((X_resampled, X_new))
             y_resampled = np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
