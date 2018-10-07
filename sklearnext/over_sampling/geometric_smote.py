@@ -100,9 +100,9 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
-                 integer_cols=None,
                  categorical_cols=None,
-                 categorical_ir_threshold=1.0,
+                 clusterer=None,
+                 distribution_function=None,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
@@ -110,9 +110,9 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  n_jobs=1):
         super().__init__(ratio=ratio,
                          random_state=random_state,
-                         integer_cols=integer_cols,
                          categorical_cols=categorical_cols,
-                         categorical_ir_threshold=categorical_ir_threshold)
+                         clusterer=clusterer,
+                         distribution_function=distribution_function)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
