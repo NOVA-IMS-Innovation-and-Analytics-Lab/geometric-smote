@@ -167,7 +167,7 @@ class SOM(BaseEstimator, ClusterMixin):
         # Initialize Somoclu object
         if not hasattr(self, 'labels_'):
 
-            self.som_ = Somoclu(n_columns=self.n_columns_, n_rows=self.n_rows_, initialcodebook=self.initialcodebook,
+            self.som_ = Somoclu(n_columns=self.n_columns, n_rows=self.n_rows, initialcodebook=self.initialcodebook,
                                 kerneltype=self.kerneltype, maptype=self.maptype, gridtype=self.gridtype,
                                 compactsupport=self.compactsupport, neighborhood=self.neighborhood, 
                                 std_coeff=self.std_coeff, initialization=self.initialization, data=None, 
