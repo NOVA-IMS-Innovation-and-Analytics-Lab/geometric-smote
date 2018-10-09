@@ -82,7 +82,7 @@ def _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_
     inter_clusters_density = {(label1, label2): (clusters_density[label1] + clusters_density[label2]) for label1, label2 in filtered_neighbors}
     
     # Calculate weights
-    weights = {(label1, label2): (1 / density if sparsity_based else density) for label, density in inter_clusters_density.items()}
+    weights = {(label1, label2): (1 / density if sparsity_based else density) for (label1, label2), density in inter_clusters_density.items()}
     normalization_factor = sum(weights.values())
 
     # Distribute generated samples
@@ -270,5 +270,4 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         self.ratio_ = initial_ratio
 
         return X_resampled, y_resampled
-
 

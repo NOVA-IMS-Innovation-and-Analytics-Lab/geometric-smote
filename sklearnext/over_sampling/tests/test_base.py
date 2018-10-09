@@ -3,6 +3,7 @@ Test the base module.
 """
 
 from collections import OrderedDict
+from unittest import mock
 
 import pytest
 import numpy as np
@@ -10,6 +11,7 @@ from sklearn.datasets import make_classification
 from sklearn.cluster import KMeans
 from imblearn.utils import check_ratio
 
+from ...cluster import SOM
 from ..base import (
     _count_clusters_samples,
     _calculate_clusters_density,
@@ -58,20 +60,32 @@ def test_calculate_clusters_density(filtering_threshold, distances_exponent):
 ])
 def test_intra_distribute(clusters_density, sparsity_based):
     """Test the distribution of generated samples in each cluster."""
-    distribution = _intra_distribute(clusters_density, sparsity_based, 1.0)
-    if clusters_density == {0: 5.0, 1: 15.0} and sparsity_based:
-        assert distribution == [(0, 0.75), (1, 0.25)]
-    elif clusters_density == {0: 5.0, 1: 15.0} and not sparsity_based:
-        assert distribution == [(0, 0.25), (1, 0.75)]
+    distribution = dict(_intra_distribute(clusters_density, sparsity_based, 1.0))
+    if sparsity_based:
+        np.testing.assert_approx_equal(distribution[0], 0.75)
+        np.testing.assert_approx_equal(distribution[1], 0.25)
+    else:
+        np.testing.assert_approx_equal(distribution[0], 0.25)
+        np.testing.assert_approx_equal(distribution[1], 0.75)
 
 
 @pytest.mark.parametrize('clusters_density,sparsity_based', [
-    ({0: 5.0, 1: 15.0}, True),
-    ({0: 5.0, 1: 15.0}, False)
+    ({0: 5.0, 1: 15.0, 2: 25.0}, True),
+    ({0: 5.0, 1: 15.0, 2: 25.0}, False)
 ])
 def test_inter_distribute(clusters_density, sparsity_based):
     """Test the distribution of generated samples in each cluster."""
-    pass
+    clusterer = mock.Mock()
+    clusterer.neighbors_ = [(0, 1), (0, 2), (0, 3)] 
+    distribution = dict(_inter_distribute(clusterer, clusters_density, sparsity_based, 0.0))
+    if sparsity_based:
+        np.testing.assert_approx_equal(distribution[(0, 1)], 0.6)
+        np.testing.assert_approx_equal(distribution[(0, 2)], 0.4)
+    else:
+        np.testing.assert_approx_equal(distribution[(0, 1)], 0.4)
+        np.testing.assert_approx_equal(distribution[(0, 2)], 0.6)
+    
+    
     
 
 
