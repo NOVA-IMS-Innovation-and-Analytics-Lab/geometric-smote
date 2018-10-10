@@ -139,6 +139,9 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """Generate synthetic samples based on the selection strategy."""
 
+        if n_samples == 0:
+                return np.array([], dtype=X.dtype).reshape(0, X.shape[1]), np.array([], dtype=y.dtype)
+
         random_states = check_random_states(self.random_state_, n_samples)
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
         self.selection_strategy_ = 'minority' if len(X) == len(X_pos) else self.selection_strategy
@@ -202,9 +205,6 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         y_resampled = y.copy()
 
         for class_label, n_samples in self.ratio_.items():
-
-            if n_samples == 0:
-                continue
 
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
