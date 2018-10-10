@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.utils import check_random_state, check_X_y
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.metrics.pairwise import euclidean_distances
+from imblearn.over_sampling import RandomOverSampler
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_ratio, check_target_type, hash_X_y
 
@@ -304,26 +305,37 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         self.intra_ratios_ = []
         for label, proportion in self.intra_distribution_:
             
-            # Deal with cases where the number of neighbors is greater than the number of samples in cluster
-            mask = (self.clusterer.labels_ == label)
-            oversampler_uses_knn = hasattr(self, 'k_neighbors')
-            n_samples, min_n_samples = mask.sum(), Counter(y[mask]).most_common()[-1][1]
-            factor = ceil(self.k_neighbors / min_n_samples) + 1 if oversampler_uses_knn and self.k_neighbors >= min_n_samples else 1
-            
             # Filter in cluster data
-            X_in_cluster, y_in_cluster = np.vstack([X[mask]] * factor), np.hstack([y[mask]] * factor)
+            mask = (self.clusterer.labels_ == label)
+            X_in_cluster, y_in_cluster = np.vstack(X[mask]), np.hstack(y[mask])
 
             # Modify ratio
-            target_n_samples = sum(initial_ratio.values())
-            feasible_n_samples = sum({class_label: n_samples for class_label, n_samples in initial_ratio.items() if class_label in y_in_cluster}.values())
-            proportion = (target_n_samples / feasible_n_samples) * proportion
             self.ratio_ = {class_label: round(n_samples * proportion) for class_label, n_samples in initial_ratio.items() if class_label in y_in_cluster}
+
+            # Deal with corner cases
+            initial_attributes_values = {}
+            n_samples, min_n_samples = mask.sum(), Counter(y[mask]).most_common()[-1][1]
+
+            if min_n_samples == 1:
+                initial_attributes_values['_numerical_sample'] = self._numerical_sample
+                random_oversampler = RandomOverSampler()
+                random_oversampler.ratio_ = self.ratio_
+                self._numerical_sample = random_oversampler._sample
+            else:
+                for attribute in ('k_neighbors', 'm_neighbors', 'n_neighbors'):
+                    if hasattr(self, attribute):
+                        initial_attributes_values[attribute] = getattr(self, attribute)
+                        setattr(self, attribute, n_samples - 1 if attribute == 'm_neighbors' else min_n_samples - 1)
 
             # Resample data
             X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X_in_cluster, y_in_cluster)
-            X_resampled = np.vstack((X_resampled, X_resampled_cluster[(n_samples * (factor - 1)):]))
-            y_resampled = np.hstack((y_resampled, y_resampled_cluster[(n_samples * (factor - 1)):]))
+            X_resampled, y_resampled = np.vstack((X_resampled, X_resampled_cluster)), np.hstack((y_resampled, y_resampled_cluster)) 
             
+            # Restore modified attributes
+            for attribute, value in initial_attributes_values.items():
+                setattr(self, attribute, value)
+            
+            # Append intracluster ratio
             self.intra_ratios_.append((label, self.ratio_.copy()))
         
         # Add non cluster data
