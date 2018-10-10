@@ -140,7 +140,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         """Generate synthetic samples based on the selection strategy."""
 
         if n_samples == 0:
-                return np.array([], dtype=X.dtype).reshape(0, X.shape[1]), np.array([], dtype=y.dtype)
+            return np.array([], dtype=X.dtype).reshape(0, X.shape[1]), np.array([], dtype=y.dtype)
 
         random_states = check_random_states(self.random_state_, n_samples)
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
