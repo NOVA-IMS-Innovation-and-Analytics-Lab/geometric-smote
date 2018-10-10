@@ -7,6 +7,8 @@ Extended base class for oversampling.
 
 from abc import abstractmethod
 from collections import Counter, OrderedDict
+from inspect import signature
+from math import ceil
 
 import numpy as np
 import pandas as pd
@@ -54,7 +56,7 @@ def _calculate_clusters_density(clustering_labels, X, y, filtering_threshold, di
     # Convert infinite densities to finite
     finite_densites = [val for val in clusters_density.values() if not np.isinf(val)]
     max_density = max(finite_densites) if len(finite_densites) > 0 else 1.0
-    clusters_density = {label: (max_density if np.isinf(density) else density) for label, density in clusters_density.items()}
+    clusters_density = {label: float(max_density if np.isinf(density) else density) for label, density in clusters_density.items()}
     
     return clusters_density
 
@@ -74,9 +76,6 @@ def _intra_distribute(clusters_density, sparsity_based, distribution_ratio):
 def _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_ratio):
     """Distribute the generated samples between clusters based on their density."""
     
-    # Identify topological neighbors
-    topological_neighbors = clusterer.topological_neighbors_
-    
     # Sum their density for each pair
     filtered_neighbors = [pair for pair in clusterer.neighbors_ if pair[0] in clusters_density.keys() and pair[1] in clusters_density.keys()]
     inter_clusters_density = {(label1, label2): (clusters_density[label1] + clusters_density[label2]) for label1, label2 in filtered_neighbors}
@@ -90,15 +89,46 @@ def _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_
 
     return distribution
 
-def generate_distribution(clusterer, X, y, filtering_threshold=1.0, distances_exponent=None, sparsity_based=True, distribution_ratio=None):
+def density_distribution(clusterer, X, y, filtering_threshold=1.0, distances_exponent=None, sparsity_based=True, distribution_ratio=None):
     """Distribute the generated samples based on the minority samples density of the clusters."""
     
     # Set default parameters
     distances_exponent = X.shape[1] if distances_exponent is None else distances_exponent
     distribution_ratio = 1.0 if distribution_ratio is None else distribution_ratio
 
+    # Check parameters
+    error_msgs = {
+        'filtering_threshold': 'Parameter `filtering_threshold` should be a non negative number.',
+        'distances_exponent': 'Parameter `distances_exponent` should be a non negative number.',
+        'sparsity_based': 'Parameter `sparsity_based` should be True or False.',
+        'distribution_ratio': 'Parameter `distribution_ratio` should be a number in the range [0.0, 1.0].'
+    }
+
+    try:
+        if filtering_threshold < 0.0:
+            raise ValueError(error_msgs['filtering_threshold'])
+    except TypeError:
+        raise TypeError(error_msgs['filtering_threshold'])
+
+    try:
+        if distances_exponent < 0.0:
+            raise ValueError(error_msgs['distances_exponent'])
+    except TypeError:
+        raise TypeError(error_msgs['distances_exponent'])
+
+    if not isinstance(sparsity_based, bool):
+        raise TypeError(error_msgs['sparsity_based'])
+
+    try:
+        if distribution_ratio < 0.0 or distribution_ratio > 1.0:
+            raise ValueError(error_msgs['distribution_ratio'])
+        if distribution_ratio < 1.0 and not hasattr(clusterer, 'neighbors_'):
+            raise ValueError('Clusterer does not define a neighborhood structure, i.e. attribute `neiborhood_` not found. Parameter `distribution_ratio` should be set to 1.0.')
+    except TypeError:
+        raise TypeError(error_msgs['distribution_ratio'])
+
     # Calculate clusters density
-    clustering_labels = clusterer.predict(X)
+    clustering_labels = clusterer.labels_
     clusters_density = _calculate_clusters_density(clustering_labels, X, y, filtering_threshold, distances_exponent)
 
     # Calculate intracluster distribution
@@ -131,13 +161,14 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         self.distribution_function = distribution_function
 
     def _validate_categorical_cols(self, max_col_index):
-        """Validate categotical columns."""
+        """Validate categorical columns."""
         if self.categorical_cols is not None:
-            wrong_input = not isinstance(self.categorical_cols, (list, tuple)) or \
-                          len(self.categorical_cols) == 0 or \
-                          not set(range(max_col_index)).issuperset(self.categorical_cols)
-            if wrong_input:
-                error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
+            wrong_type = not isinstance(self.categorical_cols, (list, tuple)) or len(self.categorical_cols) == 0              
+            wrong_range = not set(range(max_col_index)).issuperset(self.categorical_cols)
+            error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
+            if wrong_type:    
+                raise TypeError(error_msg.format([0, max_col_index - 1], self.categorical_cols))
+            elif wrong_range:
                 raise ValueError(error_msg.format([0, max_col_index - 1], self.categorical_cols))
 
     def _apply_clustering(self, X, y, **fit_params):
@@ -148,10 +179,10 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
     def _distribute_samples(self, X, y, **fit_params):
         """Distribute the generated samples on clusters."""
         if self.clusterer is not None:
-            self.intra_distribution_, self.inter_distribution_ = self.distribution_function(self.clusterer, X, y, **fit_params)
+            self.intra_distribution_, self.inter_distribution_ = self.distribution_function_(self.clusterer, X, y, **fit_params)
         else:
-            self.intra_distribution_ = [(0, 1.0)]
-            self.inter_distribution_ = []
+            self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
+            
 
     def set_params(self, **params):
         """Set the parameters.
@@ -196,14 +227,22 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         """
         super(ExtendedBaseOverSampler, self).fit(X, y)
 
+        # Check distribution function
+        self.distribution_function_ = self.distribution_function if self.distribution_function is not None else density_distribution
+
         # Validate categorical columns
         self._validate_categorical_cols(X.shape[1])
 
+        # Split fit params
+        var_names = signature(self.distribution_function_).parameters.keys()
+        fit_params_distribute = {param: value for param, value in fit_params.items() if param in var_names}
+        fit_params_clustering = {param: value for param, value in fit_params.items() if param not in var_names}
+
         # Cluster input space
-        self._apply_clustering(X, y, **fit_params)
+        self._apply_clustering(X, y, **fit_params_clustering)
 
         # Distribute the generated samples
-        self._distribute_samples(X, y, **fit_params)
+        self._distribute_samples(X, y, **fit_params_distribute)
 
         return self
 
@@ -250,6 +289,10 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
             The corresponding label of `X_resampled`
         """
 
+        # No clustering is applied
+        if self.clusterer is None:
+            return self._numerical_sample(X, y)
+
         # Inital ratio
         initial_ratio = self.ratio_.copy()
 
@@ -258,13 +301,35 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         y_resampled = np.array([], dtype=y.dtype)
 
         # Intracluster oversampling
-        self.intra_samples_ = []
-        for cluster_label, proportion in self.intra_distribution_:
-            self.ratio_ = {class_label:round(n_samples * proportion) for class_label, n_samples in initial_ratio.items()}
-            X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X, y)
-            X_resampled = np.vstack((X_resampled, X_resampled_cluster))
-            y_resampled = np.hstack((y_resampled, y_resampled_cluster))
-            self.intra_samples_.append((cluster_label, self.ratio_))
+        self.intra_ratios_ = []
+        for label, proportion in self.intra_distribution_:
+            
+            # Deal with cases where the number of neighbors is greater than the number of samples in cluster
+            mask = (self.clusterer.labels_ == label)
+            oversampler_uses_knn = hasattr(self, 'k_neighbors')
+            n_samples, min_n_samples = mask.sum(), Counter(y[mask]).most_common()[-1][1]
+            factor = ceil(self.k_neighbors / min_n_samples) + 1 if oversampler_uses_knn and self.k_neighbors >= min_n_samples else 1
+            
+            # Filter in cluster data
+            X_in_cluster, y_in_cluster = np.vstack([X[mask]] * factor), np.hstack([y[mask]] * factor)
+
+            # Modify ratio
+            target_n_samples = sum(initial_ratio.values())
+            feasible_n_samples = sum({class_label: n_samples for class_label, n_samples in initial_ratio.items() if class_label in y_in_cluster}.values())
+            proportion = (target_n_samples / feasible_n_samples) * proportion
+            self.ratio_ = {class_label: round(n_samples * proportion) for class_label, n_samples in initial_ratio.items() if class_label in y_in_cluster}
+
+            # Resample data
+            X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X_in_cluster, y_in_cluster)
+            X_resampled = np.vstack((X_resampled, X_resampled_cluster[(n_samples * (factor - 1)):]))
+            y_resampled = np.hstack((y_resampled, y_resampled_cluster[(n_samples * (factor - 1)):]))
+            
+            self.intra_ratios_.append((label, self.ratio_.copy()))
+        
+        # Add non cluster data
+        labels, _ = zip(*self.intra_distribution_)
+        mask = ~np.isin(self.clusterer.labels_, labels)
+        X_resampled, y_resampled = np.vstack((X_resampled, X[mask])), np.hstack((y_resampled, y[mask]))
 
         # Restore initial ratio
         self.ratio_ = initial_ratio
