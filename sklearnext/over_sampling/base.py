@@ -178,7 +178,7 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
     
     def _distribute_samples(self, X, y, **fit_params):
         """Distribute the generated samples on clusters."""
-        if self.clusterer is not None:
+        if self.clusterer is not None and hasattr(self.clusterer, 'neighbors_'):
             self.intra_distribution_, self.inter_distribution_ = self.distribution_function_(self.clusterer, X, y, **fit_params)
         else:
             self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
@@ -299,7 +299,7 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         # Initialize resampled arrays
         X_resampled = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
         y_resampled = np.array([], dtype=y.dtype)
-
+        
         # Intracluster oversampling
         self.intra_ratios_ = []
         for label, proportion in self.intra_distribution_:
