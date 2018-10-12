@@ -3,14 +3,14 @@ Test the base module.
 """
 
 from itertools import product
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 from unittest import mock
 
 import pytest
 import numpy as np
 from sklearn.cluster import KMeans
 
-from ...over_sampling import SMOTE
+from ...over_sampling import RandomOverSampler, SMOTE
 from ...cluster import SOM
 from ..base import (
     _count_clusters_samples,
@@ -157,28 +157,27 @@ def test_fit(clusterer):
     """Test the fit method of the extended base oversampler."""
     oversampler = _TestOverSampler(clusterer=clusterer).fit(X, y)
     assert oversampler.ratio_ == {0: 0, 1: 4, 2: 6}
-    if clusterer is None:
-        assert not hasattr(oversampler, 'intra_distribution_')
-        assert not hasattr(oversampler, 'inter_distribution_')
+    assert hasattr(oversampler, 'intra_distribution_')
+    assert hasattr(oversampler, 'inter_distribution_')
+    if isinstance(clusterer, SOM):
+        assert len(oversampler.inter_distribution_) > 0
     else:
-        assert hasattr(oversampler, 'intra_distribution_')
-        assert hasattr(oversampler, 'inter_distribution_')
-        if isinstance(clusterer, KMeans):
-            assert len(oversampler.inter_distribution_) == 0
+        assert len(oversampler.inter_distribution_) == 0
 
 
-@pytest.mark.parametrize('oversampler_class', [_TestOverSampler, SMOTE])
-def test_intra_sample(oversampler_class):
+@pytest.mark.parametrize('X,y,oversampler_class', [
+    (np.array([(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]), np.array([0, 0, 1, 1, 1]), RandomOverSampler),
+    (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), RandomOverSampler),
+    (np.array([(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]), np.array([0, 0, 1, 1, 1]), SMOTE),
+    (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), SMOTE)
+])
+def test_intra_sample_corner_cases(X, y, oversampler_class):
     """Test the _intra_sample method of the extended base oversampler."""
-    clusterer = mock.Mock(spec=['labels_', 'fit'])
-    clusterer.labels_ = LABELS
-    oversampler = oversampler_class(clusterer=clusterer).fit(X, y, filtering_threshold=3.0, 
-                                    distances_exponent=0, sparsity_based=False)
-    initial_ratio = oversampler.ratio_.copy()
-    X_new, y_new = oversampler._intra_sample(X, y, initial_ratio)
-    assert oversampler.ratio_ == initial_ratio
-    assert oversampler.intra_distribution_ == [(0, 0.2), (2, 0.2), (3, 0.6)]
-    assert len(oversampler.inter_distribution_) == 0
-    #assert X_new.size == 0 and y_new.size == 0
+    oversampler = oversampler_class().fit(X, y)
+    X_new, y_new = oversampler._intra_sample(X, y, oversampler.ratio_)
+    y_count = Counter(y)
+    assert len(X_new) == y_count[1] - y_count[0]
+    assert X_new.min() >= 0.0 and X_new.max() <= 1.0
+
 
     
