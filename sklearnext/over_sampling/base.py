@@ -17,7 +17,7 @@ from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.metrics.pairwise import euclidean_distances
 from imblearn.over_sampling import RandomOverSampler
 from imblearn.over_sampling.base import BaseOverSampler
-from imblearn.utils import check_ratio, check_target_type, hash_X_y
+from imblearn.utils import check_ratio, check_target_type, hash_X_y, check_neighbors_object
 
 
 def _count_clusters_samples(labels):
@@ -136,7 +136,7 @@ def density_distribution(clusterer, X, y, filtering_threshold=1.0, distances_exp
     intra_distribution = _intra_distribute(clusters_density, sparsity_based, distribution_ratio)
 
     # Calculate intercluster distribution
-    inter_distribution = _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_ratio)
+    inter_distribution = _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_ratio) if hasattr(clusterer, 'neighbors_') else []
 
     return intra_distribution, inter_distribution
 
@@ -179,12 +179,9 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
     
     def _distribute_samples(self, X, y, **fit_params):
         """Distribute the generated samples on clusters."""
-        if self.clusterer is not None and hasattr(self.clusterer, 'neighbors_'):
+        if self.clusterer is not None:
             self.intra_distribution_, self.inter_distribution_ = self.distribution_function_(self.clusterer, X, y, **fit_params)
-        else:
-            self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
             
-
     def set_params(self, **params):
         """Set the parameters.
         Valid parameter keys can be listed with get_params().
@@ -248,9 +245,8 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         return self
 
     @abstractmethod
-    def _numerical_sample(self, X, y):
-        """Resample the numerical features of the dataset
-        using the Geometric SMOTE algorithm.
+    def _basic_sample(self, X, y):
+        """Basic resample of the dataset.
 
         Parameters
         ----------
@@ -269,6 +265,115 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
             The corresponding label of `X_resampled`
         """
         pass
+
+    def _intra_sample(self, X, y, initial_ratio):
+        """Intracluster resampling."""
+
+        # Initialize arrays of new data
+        X_new = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
+        y_new = np.array([], dtype=y.dtype)
+        
+        # Intracluster oversampling
+        self.intra_ratios_ = []
+        for label, proportion in self.intra_distribution_:
+            
+            # Filter data in cluster
+            mask = (self.clusterer.labels_ == label)
+            X_in_cluster, y_in_cluster = X[mask], y[mask]
+
+            # Calculate ratio in the cluster
+            cluster_ratio = {class_label: round(n_samples * proportion) 
+                             for class_label, n_samples in initial_ratio.items()}
+
+            # Count in cluster target variable
+            y_cluster_count = Counter(y_in_cluster)
+
+            # Resample data
+            for class_label, n_samples in cluster_ratio.items():
+
+                # Modify ratio
+                self.ratio_ = {l: (n if l == class_label else 0) for l, n in cluster_ratio.items()}
+                
+                # Number of samples
+                n_minority_samples = y_cluster_count[class_label]
+
+                # Adjust attributes for corner cases
+                initial_attributes = {}
+                if n_minority_samples == 1:
+                    initial_attributes['_basic_sample'] = self._basic_sample
+                    random_oversampler = RandomOverSampler()
+                    random_oversampler.ratio_ = self.ratio_.copy()
+                    self._basic_sample = random_oversampler._sample
+                elif hasattr(self, 'k_neighbors') and n_minority_samples <= self.k_neighbors:
+                    initial_attributes['k_neighbors'] = self.k_neighbors
+                    self.k_neighbors = n_minority_samples - 1
+                elif hasattr(self, 'n_neighbors') and n_minority_samples <= self.n_neighbors:
+                    initial_attributes['n_neighbors'] = self.n_neighbors
+                    self.n_neighbors = n_minority_samples - 1
+                if n_minority_samples > 1 and hasattr(self, 'm_neighbors') and y_in_cluster.size <= self.m_neighbors:
+                    initial_attributes['m_neighbors'] = self.m_neighbors
+                    self.m_neighbors = y_in_cluster.size - 1
+                
+                # Resample class data
+                X_new_cluster, y_new_cluster = self._basic_sample(X_in_cluster, y_in_cluster)
+                X_new_cluster, y_new_cluster = X_new_cluster[len(X_in_cluster):], y_new_cluster[len(X_in_cluster):]
+                X_new, y_new = np.vstack((X_new, X_new_cluster)), np.hstack((y_new, y_new_cluster)) 
+
+            
+                # Restore modified attributes
+                for attribute, value in initial_attributes.items():
+                    setattr(self, attribute, value)
+            
+            # Append intracluster ratio
+            self.intra_ratios_.append((label, self.ratio_.copy()))
+        
+        # Restore initial ratio
+        self.ratio_ = initial_ratio
+
+        return X_new, y_new
+
+    def _inter_sample(self, X, y, initial_ratio):
+        """Intercluster resampling."""
+
+        # Initialize arrays of new data
+        X_new = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
+        y_new = np.array([], dtype=y.dtype)
+
+        # # Intercluster oversampling
+        # self.inter_ratios_ = []
+        # for (label1, label2), proportion in self.inter_distribution_:
+            
+        #     # Filter data in clusters 1 and 2
+        #     mask1 = (self.clusterer.labels_ == label1)
+        #     mask2 = (self.clusterer.labels_ == label2)
+        #     X_in_cluster1, y_in_cluster1 = np.vstack(X[mask1]), np.hstack(y[mask1])
+        #     X_in_cluster2, y_in_cluster2 = np.vstack(X[mask2]), np.hstack(y[mask2])
+        #     X_in_clusters, y_in_clusters = np.vstack((X_in_cluster1, X_in_cluster2)), np.hstack((y_in_cluster1, y_in_cluster2))
+
+        #     # Calculate distance matrix
+        #     nn = check_neighbors_object('nn', len(X_in_clusters) - 1)
+        #     nn.fit(X_inter)
+
+        #     # Intercluster ratio
+        #     ratio = {class_label: round(n_samples * proportion) for class_label, n_samples in initial_ratio.items() if class_label in (y_in_cluster1 & y_in_cluster2) and n_samples > 0}
+
+        #     # Resample data
+        #     for class_label, n_samples in ratio.items():
+        #         for _ in range(n_samples):
+        #             self.ratio_ = {class_label: 1}
+        #             mask = (y_in_clusters == class_label)
+
+        #     X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X_in_cluster, y_in_cluster)
+        #     X_resampled, y_resampled = np.vstack((X_resampled, X_resampled_cluster)), np.hstack((y_resampled, y_resampled_cluster)) 
+            
+        #     # Append intercluster ratio
+        #     self.intra_ratios_.append((label, ratio))
+        
+        # # Restore initial ratio
+        # self.ratio_ = initial_ratio
+
+        return X_new, y_new
+
 
     def _sample(self, X, y):
         """Resample the dataset.
@@ -292,59 +397,18 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
 
         # No clustering is applied
         if self.clusterer is None:
-            return self._numerical_sample(X, y)
+            return self._basic_sample(X, y)
 
         # Inital ratio
         initial_ratio = self.ratio_.copy()
 
-        # Initialize resampled arrays
-        X_resampled = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
-        y_resampled = np.array([], dtype=y.dtype)
-        
         # Intracluster oversampling
-        self.intra_ratios_ = []
-        for label, proportion in self.intra_distribution_:
-            
-            # Filter in cluster data
-            mask = (self.clusterer.labels_ == label)
-            X_in_cluster, y_in_cluster = np.vstack(X[mask]), np.hstack(y[mask])
-
-            # Modify ratio
-            self.ratio_ = {class_label: round(n_samples * proportion) for class_label, n_samples in initial_ratio.items() if class_label in y_in_cluster}
-
-            # Deal with corner cases
-            initial_attributes_values = {}
-            n_samples, min_n_samples = mask.sum(), Counter(y[mask]).most_common()[-1][1]
-
-            if min_n_samples == 1:
-                initial_attributes_values['_numerical_sample'] = self._numerical_sample
-                random_oversampler = RandomOverSampler()
-                random_oversampler.ratio_ = self.ratio_
-                self._numerical_sample = random_oversampler._sample
-            else:
-                for attribute in ('k_neighbors', 'm_neighbors', 'n_neighbors'):
-                    if hasattr(self, attribute):
-                        initial_attributes_values[attribute] = getattr(self, attribute)
-                        setattr(self, attribute, n_samples - 1 if attribute == 'm_neighbors' else min_n_samples - 1)
-
-            # Resample data
-            X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X_in_cluster, y_in_cluster)
-            X_resampled, y_resampled = np.vstack((X_resampled, X_resampled_cluster)), np.hstack((y_resampled, y_resampled_cluster)) 
-            
-            # Restore modified attributes
-            for attribute, value in initial_attributes_values.items():
-                setattr(self, attribute, value)
-            
-            # Append intracluster ratio
-            self.intra_ratios_.append((label, self.ratio_.copy()))
+        X_intra_new, y_intra_new = self._intra_sample(X, y, initial_ratio)
         
-        # Add non cluster data
-        labels, _ = zip(*self.intra_distribution_)
-        mask = ~np.isin(self.clusterer.labels_, labels)
-        X_resampled, y_resampled = np.vstack((X_resampled, X[mask])), np.hstack((y_resampled, y[mask]))
+        # Intercluster oversampling
+        X_inter_new, y_inter_new = self._inter_sample(X, y, initial_ratio)
 
-        # Restore initial ratio
-        self.ratio_ = initial_ratio
+        # Stack resampled data
+        X_resampled, y_resampled = np.vstack((X, X_intra_new, X_inter_new)), np.hstack((y, y_intra_new, y_inter_new))
 
         return X_resampled, y_resampled
-
