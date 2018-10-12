@@ -9,14 +9,31 @@ from imblearn import over_sampling
 
 from .base import ExtendedBaseOverSampler
 
-SMOTE_ATTRIBUTES = (
-    '_in_danger_noise', 
-    '_make_samples', 
-    '_validate_estimator', 
-    '_sample_regular', 
-    '_sample_borderline', 
-    '_sample_svm'
-)
+
+def monkey_patch_attributes(attributes_mapping):
+    """Monkey patch attributes to the selected oversamplers."""
+    for (patched_oversampler, oversampler), attributes in attributes_mapping.items():
+        for attribute in attributes_mapping[(patched_oversampler, oversampler)]:
+            setattr(patched_oversampler, attribute, getattr(oversampler, attribute))
+        patched_oversampler._basic_sample = oversampler._sample
+
+
+class RandomOverSampler(ExtendedBaseOverSampler):
+
+    def __init__(self,
+                 ratio='auto',
+                 random_state=None,
+                 categorical_cols=None,
+                 clusterer=None,
+                 distribution_function=None):
+        super().__init__(ratio=ratio,
+                         random_state=random_state,
+                         categorical_cols=categorical_cols,
+                         clusterer=clusterer,
+                         distribution_function=distribution_function)
+    
+    def _basic_sample(self, X, y):
+        pass
 
 
 class SMOTE(ExtendedBaseOverSampler):
@@ -52,6 +69,38 @@ class SMOTE(ExtendedBaseOverSampler):
     def _basic_sample(self, X, y):
         pass
 
-for attribute in SMOTE_ATTRIBUTES:
-    setattr(SMOTE, attribute, getattr(over_sampling.SMOTE, attribute))
-SMOTE._basic_sample = over_sampling.SMOTE._sample
+
+class ADASYN(ExtendedBaseOverSampler):
+
+    def __init__(self,
+                 ratio='auto',
+                 random_state=None,
+                 categorical_cols=None,
+                 clusterer=None,
+                 distribution_function=None,
+                 k=None,
+                 n_neighbors=5,
+                 n_jobs=1):
+        super().__init__(ratio=ratio,
+                         random_state=random_state,
+                         categorical_cols=categorical_cols,
+                         clusterer=clusterer,
+                         distribution_function=distribution_function)
+        self.k = k
+        self.n_neighbors = n_neighbors
+        self.n_jobs = n_jobs
+    
+    def _basic_sample(self, X, y):
+        pass
+
+
+# Define monkey patched attributes
+ATTRIBUTES_MAPPING = {
+    (RandomOverSampler, over_sampling.RandomOverSampler): (),
+    (SMOTE, over_sampling.SMOTE): ('_in_danger_noise', '_make_samples', '_validate_estimator', '_sample_regular', '_sample_borderline', '_sample_svm'),
+    (ADASYN, over_sampling.ADASYN): ('_validate_estimator', )
+}
+
+# Apply monkey patching
+monkey_patch_attributes(ATTRIBUTES_MAPPING)
+    
