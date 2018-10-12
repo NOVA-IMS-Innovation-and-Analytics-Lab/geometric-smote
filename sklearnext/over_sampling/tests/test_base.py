@@ -10,7 +10,7 @@ import pytest
 import numpy as np
 from sklearn.cluster import KMeans
 
-from ...over_sampling import RandomOverSampler, SMOTE
+from ...over_sampling import RandomOverSampler, SMOTE, GeometricSMOTE
 from ...cluster import SOM
 from ..base import (
     _count_clusters_samples,
@@ -169,7 +169,9 @@ def test_fit(clusterer):
     (np.array([(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]), np.array([0, 0, 1, 1, 1]), RandomOverSampler),
     (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), RandomOverSampler),
     (np.array([(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]), np.array([0, 0, 1, 1, 1]), SMOTE),
-    (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), SMOTE)
+    (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), SMOTE),
+    (np.array([(0, 0), (1, 1), (2, 2), (3, 3), (4, 4)]), np.array([0, 0, 1, 1, 1]), GeometricSMOTE),
+    (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), GeometricSMOTE)
 ])
 def test_intra_sample_corner_cases(X, y, oversampler_class):
     """Test the _intra_sample method of the extended base oversampler."""
@@ -177,7 +179,6 @@ def test_intra_sample_corner_cases(X, y, oversampler_class):
     X_new, y_new = oversampler._intra_sample(X, y, oversampler.ratio_)
     y_count = Counter(y)
     assert len(X_new) == y_count[1] - y_count[0]
-    assert X_new.min() >= 0.0 and X_new.max() <= 1.0
 
 
     
