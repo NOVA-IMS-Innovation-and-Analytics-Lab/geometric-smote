@@ -344,38 +344,13 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         X_new = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
         y_new = np.array([], dtype=y.dtype)
 
-        # # Intercluster oversampling
-        # self.inter_ratios_ = []
-        # for (label1, label2), proportion in self.inter_distribution_:
+        # Intercluster oversampling
+        self.inter_ratios_ = []
+        for (label1, label2), proportion in self.inter_distribution_:
             
-        #     # Filter data in clusters 1 and 2
-        #     mask1 = (self.clusterer.labels_ == label1)
-        #     mask2 = (self.clusterer.labels_ == label2)
-        #     X_in_cluster1, y_in_cluster1 = np.vstack(X[mask1]), np.hstack(y[mask1])
-        #     X_in_cluster2, y_in_cluster2 = np.vstack(X[mask2]), np.hstack(y[mask2])
-        #     X_in_clusters, y_in_clusters = np.vstack((X_in_cluster1, X_in_cluster2)), np.hstack((y_in_cluster1, y_in_cluster2))
-
-        #     # Calculate distance matrix
-        #     nn = check_neighbors_object('nn', len(X_in_clusters) - 1)
-        #     nn.fit(X_inter)
-
-        #     # Intercluster ratio
-        #     ratio = {class_label: round(n_samples * proportion) for class_label, n_samples in initial_ratio.items() if class_label in (y_in_cluster1 & y_in_cluster2) and n_samples > 0}
-
-        #     # Resample data
-        #     for class_label, n_samples in ratio.items():
-        #         for _ in range(n_samples):
-        #             self.ratio_ = {class_label: 1}
-        #             mask = (y_in_clusters == class_label)
-
-        #     X_resampled_cluster, y_resampled_cluster = self._numerical_sample(X_in_cluster, y_in_cluster)
-        #     X_resampled, y_resampled = np.vstack((X_resampled, X_resampled_cluster)), np.hstack((y_resampled, y_resampled_cluster)) 
-            
-        #     # Append intercluster ratio
-        #     self.intra_ratios_.append((label, ratio))
-        
-        # # Restore initial ratio
-        # self.ratio_ = initial_ratio
+            # Filter data in cluster 1 and cluster 2
+            mask1, mask2 = (self.clusterer.labels_ == label1), (self.clusterer.labels_ == label2)
+            X_in_cluster1, y_in_cluster1, X_in_cluster2, y_in_cluster2 = X[mask1], y[mask1], X[mask2], y[mask2]
 
         return X_new, y_new
 
