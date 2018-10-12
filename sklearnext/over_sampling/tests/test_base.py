@@ -2,15 +2,15 @@
 Test the base module.
 """
 
+from itertools import product
 from collections import OrderedDict
 from unittest import mock
 
 import pytest
 import numpy as np
-from sklearn.datasets import make_classification
 from sklearn.cluster import KMeans
-from imblearn.utils import check_ratio
 
+from ...over_sampling import SMOTE
 from ...cluster import SOM
 from ..base import (
     _count_clusters_samples,
@@ -21,15 +21,17 @@ from ..base import (
     ExtendedBaseOverSampler
 )
 
-X_bin, y_bin = make_classification(random_state=0, weights=[0.9, 0.1])
-X_multi, y_multi = make_classification(random_state=0, n_classes=3, n_informative=5, weights=[0.7, 0.2, 0.1])
+X = np.array(list(product(range(5), range(4))))
+y = np.array([0] * 10 + [1] * 6 + [2] * 4)
+LABELS = np.array([0, 1, 1, 1, 0, 2, 2, 2, 0, 2, 2, 2, 0, 3, 3, 3, 0, 3, 3, 3])
+NEIGHBORS = [(0, 1), (0, 2), (0, 3), (1, 2), (2, 3)]
 
 
 class _TestOverSampler(ExtendedBaseOverSampler):
     """Oversampler used for testing."""
 
-    def _numerical_sample(self, X, y):
-        pass
+    def _basic_sample(self, X, y):
+        return X, y
 
 
 @pytest.mark.parametrize('labels,samples_counts', [
@@ -97,41 +99,41 @@ def test_filtering_threshold_parameter():
     """Test the filtering threshold parameter."""
     clusterer = mock.Mock()
     with pytest.raises(ValueError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, filtering_threshold=-1.0)
+        distribution = density_distribution(clusterer, X, y, filtering_threshold=-1.0)
     with pytest.raises(TypeError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, filtering_threshold=None)
+        distribution = density_distribution(clusterer, X, y, filtering_threshold=None)
 
 
 def test_distances_exponent_parameter():
     """Test the distances exponent parameter."""
     clusterer = mock.Mock()
     with pytest.raises(ValueError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, distances_exponent=-1.0)
+        distribution = density_distribution(clusterer, X, y, distances_exponent=-1.0)
     with pytest.raises(TypeError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, distances_exponent='value')
+        distribution = density_distribution(clusterer, X, y, distances_exponent='value')
 
 
 def test_sparsity_based_parameter():
     """Test the sparsity based parameter."""
     clusterer = mock.Mock()
     with pytest.raises(TypeError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, sparsity_based='value')
+        distribution = density_distribution(clusterer, X, y, sparsity_based='value')
 
 
 @pytest.mark.parametrize('distribution_ratio', [-1.0, 2.0])
 def test_distribution_ratio_parameter(distribution_ratio):
     """Test the distribution ratio parameter."""
     clusterer = mock.Mock()
-    clusterer.neighbors_ = [(0, 1), (0, 2), (0, 3)]
+    clusterer.neighbors_ = NEIGHBORS
     with pytest.raises(ValueError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, distribution_ratio=distribution_ratio)
+        distribution = density_distribution(clusterer, X, y, distribution_ratio=distribution_ratio)
 
 
 def test_distribution_ratio_parameter_neighbor():
     """Test the distribution ratio parameter."""
-    clusterer = KMeans()
+    clusterer = KMeans().fit(X, y)
     with pytest.raises(ValueError):
-        distribution = density_distribution(clusterer, X_bin, y_bin, distribution_ratio=0.5)
+        distribution = density_distribution(clusterer, X, y, distribution_ratio=0.5)
 
 
 @pytest.mark.parametrize('categorical_cols', [[], (), {}, 'value'])
@@ -139,12 +141,44 @@ def test_validate_categorical_cols_type(categorical_cols):
     """Test the type validation of categorical columns for the extended base oversampler."""
     oversampler = _TestOverSampler(categorical_cols=categorical_cols)
     with pytest.raises(TypeError):    
-        oversampler.fit(X_bin, y_bin)
+        oversampler.fit(X, y)
 
 
-@pytest.mark.parametrize('categorical_cols', [[-1], [0, X_bin.shape[1]]])
+@pytest.mark.parametrize('categorical_cols', [[-1], [0, X.shape[1]]])
 def test_validate_categorical_cols_value(categorical_cols):
     """Test the value validation of categorical columns for the extended base oversampler."""
     oversampler = _TestOverSampler(categorical_cols=categorical_cols)
     with pytest.raises(ValueError):    
-        oversampler.fit(X_bin, y_bin)
+        oversampler.fit(X, y)
+
+
+@pytest.mark.parametrize('clusterer', [None, KMeans(), SOM()])
+def test_fit(clusterer):
+    """Test the fit method of the extended base oversampler."""
+    oversampler = _TestOverSampler(clusterer=clusterer).fit(X, y)
+    assert oversampler.ratio_ == {0: 0, 1: 4, 2: 6}
+    if clusterer is None:
+        assert not hasattr(oversampler, 'intra_distribution_')
+        assert not hasattr(oversampler, 'inter_distribution_')
+    else:
+        assert hasattr(oversampler, 'intra_distribution_')
+        assert hasattr(oversampler, 'inter_distribution_')
+        if isinstance(clusterer, KMeans):
+            assert len(oversampler.inter_distribution_) == 0
+
+
+@pytest.mark.parametrize('oversampler_class', [_TestOverSampler, SMOTE])
+def test_intra_sample(oversampler_class):
+    """Test the _intra_sample method of the extended base oversampler."""
+    clusterer = mock.Mock(spec=['labels_', 'fit'])
+    clusterer.labels_ = LABELS
+    oversampler = oversampler_class(clusterer=clusterer).fit(X, y, filtering_threshold=3.0, 
+                                    distances_exponent=0, sparsity_based=False)
+    initial_ratio = oversampler.ratio_.copy()
+    X_new, y_new = oversampler._intra_sample(X, y, initial_ratio)
+    assert oversampler.ratio_ == initial_ratio
+    assert oversampler.intra_distribution_ == [(0, 0.2), (2, 0.2), (3, 0.6)]
+    assert len(oversampler.inter_distribution_) == 0
+    #assert X_new.size == 0 and y_new.size == 0
+
+    
