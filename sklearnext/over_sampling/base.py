@@ -181,7 +181,9 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         """Distribute the generated samples on clusters."""
         if self.clusterer is not None:
             self.intra_distribution_, self.inter_distribution_ = self.distribution_function_(self.clusterer, X, y, **fit_params)
-            
+        else:
+            self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
+
     def set_params(self, **params):
         """Set the parameters.
         Valid parameter keys can be listed with get_params().
@@ -278,11 +280,14 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         for label, proportion in self.intra_distribution_:
             
             # Filter data in cluster
-            mask = (self.clusterer.labels_ == label)
-            X_in_cluster, y_in_cluster = X[mask], y[mask]
+            if self.clusterer is not None:
+                mask = (self.clusterer.labels_ == label)
+                X_in_cluster, y_in_cluster = X[mask], y[mask]
+            else:
+                X_in_cluster, y_in_cluster = X, y
 
             # Calculate ratio in the cluster
-            cluster_ratio = {class_label: round(n_samples * proportion) 
+            cluster_ratio = {class_label: (round(n_samples * proportion) if class_label in y_in_cluster else 0)
                              for class_label, n_samples in initial_ratio.items()}
 
             # Count in cluster target variable
@@ -394,10 +399,6 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         y_resampled : ndarray, shape (n_samples_new,)
             The corresponding label of `X_resampled`
         """
-
-        # No clustering is applied
-        if self.clusterer is None:
-            return self._basic_sample(X, y)
 
         # Inital ratio
         initial_ratio = self.ratio_.copy()
