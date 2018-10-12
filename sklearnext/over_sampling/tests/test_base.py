@@ -174,11 +174,20 @@ def test_fit(clusterer):
     (np.array([(0, 0), (2, 2), (3, 3), (4, 4)]), np.array([0, 1, 1, 1]), GeometricSMOTE)
 ])
 def test_intra_sample_corner_cases(X, y, oversampler_class):
-    """Test the _intra_sample method of the extended base oversampler."""
+    """Test the _intra_sample method of the extended base oversampler
+    for various corner cases and oversamplers."""
     oversampler = oversampler_class().fit(X, y)
     X_new, y_new = oversampler._intra_sample(X, y, oversampler.ratio_)
     y_count = Counter(y)
-    assert len(X_new) == y_count[1] - y_count[0]
+    assert X_new.shape == (y_count[1] - y_count[0], X.shape[1])
 
+
+def test_intra_sample():
+    """Test the _intra_sample method of the extended base oversampler."""
+    clusterer = mock.Mock(spec=['fit', 'labels_'])
+    clusterer.labels_ = LABELS
+    oversampler = SMOTE().fit(X, y, filtering_threshold=3.0, distances_exponent=0, sparsity_based=False)
+    X_new, y_new = oversampler._intra_sample(X, y, oversampler.ratio_)
+    assert X_new.shape == (10, X.shape[1])
 
     
