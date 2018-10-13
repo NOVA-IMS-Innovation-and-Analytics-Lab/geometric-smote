@@ -31,33 +31,53 @@ class _TrivialOversampler(ExtendedBaseOverSampler):
 def _normalize_param_grid(param_grid):
     """Normalize the parameter grid to use with
     parametrized estimators."""
+
+    # Check the parameters grid
     _check_param_grid(param_grid)
+
+    # Copy the parameters grid
     normalized_param_grid = param_grid.copy()
+
+    # Parse the estimator name
     est_name = list(set([param.split('__')[0] for param in param_grid.keys()]))
+
+    # Update with the estimator name
     normalized_param_grid.update({'est_name': est_name})
+
     return normalized_param_grid
 
 
 def check_param_grids(param_grids, estimators):
-    """Normalize the parameter grid to use with
+    """Check the parameters grids to use with
     parametrized estimators."""
+
+    # Multiple parameter grids
     if isinstance(param_grids, list):
         normalized_param_grids = []
         for param_grid in param_grids:
             normalized_param_grids.append(_normalize_param_grid(param_grid)
                                           if 'est_name' not in param_grid.keys() else param_grid.copy())
+    
+    # Single parameter grid
     else:
         normalized_param_grids = [_normalize_param_grid(param_grids)
                                   if 'est_name' not in param_grids.keys() else param_grids.copy()]
+    
+    # Get unique estimators names
     est_names, _ = zip(*estimators)
     est_names = set(est_names)
+
+    # Identify generated estimators names
     try:
         generated_est_names = set([param_grid['est_name'][0] for param_grid in normalized_param_grids])
     except IndexError:
         generated_est_names = set()
         normalized_param_grids = []
+
+    # Append missing estimators names
     for est_name in est_names.difference(generated_est_names):
         normalized_param_grids += [{'est_name': [est_name]}]
+
     return normalized_param_grids
 
 
@@ -83,8 +103,14 @@ def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_sta
                                 if len(smpl) > 2 else {} for smpl in oversamplers]
     classifiers_param_grids = [{('%s__%s' % (clf[0], par)): val for par, val in clf[2].items()}
                                if len(clf) > 2 else {} for clf in classifiers]
+
+    # Generate all parameter grids combinations
     param_grids_products = product(oversamplers_param_grids, classifiers_param_grids, range(n_runs))
+    
+    # Check random states
     random_states = check_random_states(random_state, len(estimators))
+    
+    # Populate parameters grids
     param_grids = []
     est_names, _ = zip(*estimators)
     for (oversampler_param_grid , classifier_param_grid, run_id), random_state, est_name in \
@@ -103,7 +129,10 @@ def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_sta
 def check_datasets(datasets):
     """Check that datasets is a list of (X,y) pairs or a dictionary of dataset-name:(X,y) pairs."""
     try:
+        # Get datasets names
         datasets_names = [dataset_name for dataset_name, _ in datasets]
+
+        # Check if datasets names are unique strings
         are_all_strings = all([isinstance(dataset_name, str) for dataset_name in datasets_names])
         are_unique = len(list(datasets_names)) == len(set(datasets_names))
         if are_all_strings and are_unique:
@@ -135,7 +164,7 @@ def check_estimator_type(estimators):
     """Returns the type of estimators."""
     estimator_types = set([estimator._estimator_type for _, estimator in estimators])
     if len(estimator_types) > 1:
-        raise ValueError('Both classifiers and regressors were found. One estimator type should be included.')
+        raise ValueError('Both classifiers and regressors were found. A single estimator type should be included.')
     return estimator_types.pop()
 
 
