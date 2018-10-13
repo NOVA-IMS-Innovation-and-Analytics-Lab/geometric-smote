@@ -9,9 +9,8 @@ Adversarial Network as an oversampling algorithm.
 
 import numpy as np
 from sklearn.utils import check_random_state
-from .base import ExtendedBaseOverSampler
 
-OPTIMIZER = []
+from .base import ExtendedBaseOverSampler
 
 
 class CGAN:
@@ -30,45 +29,61 @@ class CGANOversampler(ExtendedBaseOverSampler):
         the dataset. Otherwise, the ratio is defined as the number
         of samples in the minority class over the the number of samples
         in the majority class.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by np.random.
+
+    categorical_cols : list, optional (default=None)
+        The indices of categorical columns.
+
+    clusterer : Clusterer object, optional (default=None)
+        A clustering algorithm that is used to generate new samples 
+        in each cluster defined by the ``labels_`` attribute and between 
+        the clusters if the ``neighbors_`` attribute is defined.
+
+    distribution_function : callable, optional (default=None)
+        Determines the the strategy to distribute generated 
+        samples across the clusters. The signature is 
+        ``distribution_function(clusterer, X, y, **kwargs)`` where 
+        the optional arguments are passed to the ``fit`` method.
+
     n_Z_features : int
         Number of features of the Z noise space.
+
     discriminator_hidden_layers : list of (int, activation function) tuples
         Each tuple represents the number of neurons and the activation
         function of the discriminator's corresponding hidden layer.
+
     generator_hidden_layers : list of (int, activation function) tuples
         Each tuple represents the number of neurons and the activation
         function of the generators's corresponding hidden layer.
+
     discriminator_optimizer : TensorFlow optimizer, default AdamOptimizer
         The optimizer for the discriminator.
+
     generator_optimizer : TensorFlow optimizer, default AdamOptimizer
         The optimizer for the generator.
+
     discriminator_initializer : list of strings or TensorFlow tensor, default ['xavier', 'zeros']
         The initialization type of the discriminator's parameters.
+
     generator_initializer : list of strings or TensorFlow tensor, default ['xavier', 'zeros']
         The initialization type of the generator's parameters.
+
     nb_epoch : int
         Number of epochs for the CGAN training
+
     batch_size : int
         The minibatch size.
+
     discriminator_steps : int
         The discriminator update steps followed by a single generator update.
 
     Attributes
     ----------
-    min_c_ : str or int
-        The identifier of the minority class.
-    max_c_ : str or int
-        The identifier of the majority class.
-    stats_c_ : dict of str/int : int
-        A dictionary in which the number of occurences of each class is
-        reported.
-    X_shape_ : tuple of int
-        Shape of the data `X` during fitting.
     cgan_ : CGAN object
         A CGAN instance containing the discriminator and generator.
     """
@@ -79,14 +94,16 @@ class CGANOversampler(ExtendedBaseOverSampler):
                  n_Z_features=None,
                  discriminator_hidden_layers=None,
                  generator_hidden_layers=None,
-                 discriminator_optimizer=OPTIMIZER,
-                 discriminator_initializer=['xavier', 'zeros'],
-                 generator_optimizer=OPTIMIZER,
-                 generator_initializer=['xavier', 'zeros'],
+                 discriminator_optimizer=None,
+                 discriminator_initializer=None,
+                 generator_optimizer=None,
+                 generator_initializer=None,
                  nb_epoch=None,
                  batch_size=None,
                  discriminator_steps=1):
-        super().__init__(ratio=ratio, random_state=random_state)
+        super(CGANOversampler, self).__init__(ratio=ratio, random_state=random_state, 
+                                              categorical_cols=categorical_cols, clusterer=clusterer,
+                                              distribution_function=distribution_function)
         self.n_Z_features = n_Z_features
         self.discriminator_hidden_layers = discriminator_hidden_layers
         self.generator_hidden_layers = generator_hidden_layers
@@ -114,6 +131,8 @@ class CGANOversampler(ExtendedBaseOverSampler):
             Return self.
         """
         super().fit(X, y)
+
+        # Define CGAN
         self.cgan_ = CGAN(self.n_Z_features,
                           self.discriminator_hidden_layers,
                           self.generator_hidden_layers,
@@ -121,11 +140,13 @@ class CGANOversampler(ExtendedBaseOverSampler):
                           self.discriminator_initializer,
                           self.generator_optimizer,
                           self.generator_initializer)
-        self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps, logging_options=None)
+        # Fit CGAN
+        self.cgan_.train(X, y, self.nb_epoch, self.batch_size, self.discriminator_steps)
+
         return self
 
-    def _numerical_sample(self, X, y):
-        """Resample the dataset.
+    def _basic_sample(self, X, y):
+        """Basic resample of the dataset.
 
         Parameters
         ----------
@@ -141,10 +162,13 @@ class CGANOversampler(ExtendedBaseOverSampler):
         y_resampled : ndarray, shape (n_samples_new)
             The corresponding label of `X_resampled`
         """
+
+        # Check random state
         random_state = check_random_state(self.random_state)
+        
+        # Resample data
         for class_sample, num_samples in self.ratio_.items():
-            X_resampled = np.concatenate([X, self.cgan_.generate_samples(num_samples, class_sample, random_state)],
-                                         axis=0)
-            y_resampled = np.concatenate([y, [class_sample] * num_samples], axis=0)
+            X_resampled = np.vstack((X, self.cgan_.generate_samples(num_samples, class_sample, random_state)))
+            y_resampled = np.hstack((y, [class_sample] * num_samples))
 
         return X_resampled, y_resampled
