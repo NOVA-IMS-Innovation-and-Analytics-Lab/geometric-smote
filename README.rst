@@ -14,14 +14,14 @@ Prerequisites
 - Pandas
 - Scikit-Learn
 - Imbalanced-Learn
+- Dask-ML
 
 Installation
 ============
 
+Clone the repository and activate a Python virtual environment. Then run the following commands:
+
 .. code:: shell
 
-    git clone https://github.com/gdouzas/scikit-learn-extensions
     cd scikit-learn-extensions
-    python3 -m venv pyenv
-    source pyenv/bin/activate
     pip install .
