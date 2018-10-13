@@ -12,6 +12,7 @@ from sklearn.cluster import KMeans
 
 from ...over_sampling import RandomOverSampler, SMOTE, GeometricSMOTE
 from ...cluster import SOM
+from ...utils.validation import _TrivialOversampler
 from ..base import (
     _count_clusters_samples,
     _calculate_clusters_density,
@@ -25,13 +26,6 @@ X = np.array(list(product(range(5), range(4))))
 y = np.array([0] * 10 + [1] * 6 + [2] * 4)
 LABELS = np.array([0, 1, 1, 1, 0, 2, 2, 2, 0, 2, 2, 2, 0, 3, 3, 3, 0, 3, 3, 3])
 NEIGHBORS = [(0, 1), (0, 2), (0, 3), (1, 2), (2, 3)]
-
-
-class _TestOverSampler(ExtendedBaseOverSampler):
-    """Oversampler used for testing."""
-
-    def _basic_sample(self, X, y):
-        return X, y
 
 
 @pytest.mark.parametrize('labels,samples_counts', [
@@ -139,7 +133,7 @@ def test_distribution_ratio_parameter_neighbor():
 @pytest.mark.parametrize('categorical_cols', [[], (), {}, 'value'])
 def test_validate_categorical_cols_type(categorical_cols):
     """Test the type validation of categorical columns for the extended base oversampler."""
-    oversampler = _TestOverSampler(categorical_cols=categorical_cols)
+    oversampler = _TrivialOversampler(categorical_cols=categorical_cols)
     with pytest.raises(TypeError):    
         oversampler.fit(X, y)
 
@@ -147,7 +141,7 @@ def test_validate_categorical_cols_type(categorical_cols):
 @pytest.mark.parametrize('categorical_cols', [[-1], [0, X.shape[1]]])
 def test_validate_categorical_cols_value(categorical_cols):
     """Test the value validation of categorical columns for the extended base oversampler."""
-    oversampler = _TestOverSampler(categorical_cols=categorical_cols)
+    oversampler = _TrivialOversampler(categorical_cols=categorical_cols)
     with pytest.raises(ValueError):    
         oversampler.fit(X, y)
 
@@ -155,7 +149,7 @@ def test_validate_categorical_cols_value(categorical_cols):
 @pytest.mark.parametrize('clusterer', [None, KMeans(), SOM()])
 def test_fit(clusterer):
     """Test the fit method of the extended base oversampler."""
-    oversampler = _TestOverSampler(clusterer=clusterer).fit(X, y)
+    oversampler = _TrivialOversampler(clusterer=clusterer).fit(X, y)
     assert oversampler.ratio_ == {0: 0, 1: 4, 2: 6}
     assert hasattr(oversampler, 'intra_distribution_')
     assert hasattr(oversampler, 'inter_distribution_')

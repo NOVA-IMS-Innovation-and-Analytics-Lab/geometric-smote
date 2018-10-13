@@ -7,18 +7,21 @@ for input validation.
 # License: BSD 3 clause
 
 from itertools import product
+
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 from sklearn.model_selection._search import _check_param_grid
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling.base import BaseOverSampler
 
+from ..over_sampling.base import ExtendedBaseOverSampler
 
-class _TrivialOversampler(BaseOverSampler):
+
+class _TrivialOversampler(ExtendedBaseOverSampler):
     """A class that implements no oversampling.
     """
 
-    def _sample(self, X, y):
+    def _basic_sample(self, X, y):
         return X, y
 
     def __repr__(self):
