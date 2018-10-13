@@ -186,8 +186,22 @@ def test_intra_sample():
     """Test the _intra_sample method of the extended base oversampler."""
     clusterer = mock.Mock(spec=['fit', 'labels_'])
     clusterer.labels_ = LABELS
-    oversampler = SMOTE().fit(X, y, filtering_threshold=3.0, distances_exponent=0, sparsity_based=False)
+    oversampler = SMOTE(clusterer=clusterer)
+    oversampler.fit(X, y, filtering_threshold=3.0, 
+                    distances_exponent=0, sparsity_based=False)
     X_new, y_new = oversampler._intra_sample(X, y, oversampler.ratio_)
-    assert X_new.shape == (10, X.shape[1])
+    assert X_new.shape == (9, X.shape[1])
+
+
+def test_inter_sample():
+    """Test the _inter_sample method of the extended base oversampler."""
+    clusterer = mock.Mock(spec=['fit', 'labels_', 'neighbors_'])
+    clusterer.labels_, clusterer.neighbors_  = LABELS, NEIGHBORS
+    oversampler = SMOTE(clusterer=clusterer)
+    oversampler.fit(X, y, filtering_threshold=3.0, distances_exponent=0, 
+                    sparsity_based=False, distribution_ratio=0.0)
+    X_new, y_new = oversampler._inter_sample(X, y, oversampler.ratio_)
+    assert X_new.shape == (7, X.shape[1])
+    
 
     

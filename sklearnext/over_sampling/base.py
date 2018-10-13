@@ -184,6 +184,31 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
         else:
             self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
 
+    def _modify_attributes(self, n_minority_samples, n_samples):
+        """Modify attributes for corner cases."""
+        
+        initial_attributes = {}
+        
+        # Use random oversampling
+        if n_minority_samples == 1:
+            initial_attributes['_basic_sample'] = self._basic_sample
+            random_oversampler = RandomOverSampler()
+            random_oversampler.ratio_ = self.ratio_.copy()
+            self._basic_sample = random_oversampler._sample
+        
+        # Decrease number of nearest neighbors
+        elif hasattr(self, 'k_neighbors') and n_minority_samples <= self.k_neighbors:
+            initial_attributes['k_neighbors'] = self.k_neighbors
+            self.k_neighbors = n_minority_samples - 1
+        elif hasattr(self, 'n_neighbors') and n_minority_samples <= self.n_neighbors:
+            initial_attributes['n_neighbors'] = self.n_neighbors
+            self.n_neighbors = n_minority_samples - 1
+        if n_minority_samples > 1 and hasattr(self, 'm_neighbors') and n_samples <= self.m_neighbors:
+            initial_attributes['m_neighbors'] = self.m_neighbors
+            self.m_neighbors = n_samples - 1
+
+        return initial_attributes
+
     def set_params(self, **params):
         """Set the parameters.
         Valid parameter keys can be listed with get_params().
@@ -297,34 +322,19 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
             for class_label, n_samples in cluster_ratio.items():
 
                 # Modify ratio
-                self.ratio_ = {l: (n if l == class_label else 0) for l, n in cluster_ratio.items()}
+                self.ratio_ = {class_label: n_samples}
                 
                 # Number of samples
                 n_minority_samples = y_cluster_count[class_label]
 
-                # Adjust attributes for corner cases
-                initial_attributes = {}
-                if n_minority_samples == 1:
-                    initial_attributes['_basic_sample'] = self._basic_sample
-                    random_oversampler = RandomOverSampler()
-                    random_oversampler.ratio_ = self.ratio_.copy()
-                    self._basic_sample = random_oversampler._sample
-                elif hasattr(self, 'k_neighbors') and n_minority_samples <= self.k_neighbors:
-                    initial_attributes['k_neighbors'] = self.k_neighbors
-                    self.k_neighbors = n_minority_samples - 1
-                elif hasattr(self, 'n_neighbors') and n_minority_samples <= self.n_neighbors:
-                    initial_attributes['n_neighbors'] = self.n_neighbors
-                    self.n_neighbors = n_minority_samples - 1
-                if n_minority_samples > 1 and hasattr(self, 'm_neighbors') and y_in_cluster.size <= self.m_neighbors:
-                    initial_attributes['m_neighbors'] = self.m_neighbors
-                    self.m_neighbors = y_in_cluster.size - 1
+                # Modify attributes for corner cases
+                initial_attributes = self._modify_attributes(n_minority_samples, y_in_cluster.size)
                 
                 # Resample class data
                 X_new_cluster, y_new_cluster = self._basic_sample(X_in_cluster, y_in_cluster)
                 X_new_cluster, y_new_cluster = X_new_cluster[len(X_in_cluster):], y_new_cluster[len(X_in_cluster):]
                 X_new, y_new = np.vstack((X_new, X_new_cluster)), np.hstack((y_new, y_new_cluster)) 
 
-            
                 # Restore modified attributes
                 for attribute, value in initial_attributes.items():
                     setattr(self, attribute, value)
@@ -340,9 +350,20 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
     def _inter_sample(self, X, y, initial_ratio):
         """Intercluster resampling."""
 
+        # Random state
+        random_state = check_random_state(self.random_state)
+
         # Initialize arrays of new data
         X_new = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
         y_new = np.array([], dtype=y.dtype)
+
+        # Number of nearest neighbors
+        if hasattr(self, 'k_neighbors'):
+            k = self.k_neighbors
+        elif hasattr(self, 'n_neighbors'):
+            k = self.n_neighbors
+        else:
+            return X_new, y_new
 
         # Intercluster oversampling
         self.inter_ratios_ = []
@@ -351,6 +372,53 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
             # Filter data in cluster 1 and cluster 2
             mask1, mask2 = (self.clusterer.labels_ == label1), (self.clusterer.labels_ == label2)
             X_in_cluster1, y_in_cluster1, X_in_cluster2, y_in_cluster2 = X[mask1], y[mask1], X[mask2], y[mask2]
+
+            # Calculate ratio in the clusters
+            clusters_ratio = {class_label: (round(n_samples * proportion) 
+                              if class_label in y_in_cluster1 and class_label in y_in_cluster2 else 0)
+                              for class_label, n_samples in initial_ratio.items()}
+
+            # Resample data
+            for class_label, n_samples in clusters_ratio.items():
+
+                # Modify ratio
+                self.ratio_ = {class_label: 1}
+
+                for _ in range(n_samples):
+                    
+                    # Identify clusters
+                    ind = random_state.choice([1, -1])
+                    (X1, X2), (y1, y2) = [X_in_cluster1, X_in_cluster2][::ind], [y_in_cluster1, y_in_cluster2][::ind]
+                    
+                    # Select randomly a minority class sample from cluster 1
+                    ind1 = random_state.choice(np.where(y1 == class_label)[0])
+                    X1_class, y1_class = X1[ind1:(ind1 + 1)], y1[ind1:(ind1 + 1)]
+                    
+                    # Select minority class samples from cluster 2
+                    ind2 = np.where(y2 == class_label)[0]
+                    X2_class, y2_class = X2[ind2], y2[ind2] 
+
+                    # Calculate distance matrix
+                    X_class = np.vstack((X1_class, X2_class))
+                    k_nn = min(k, len(X_class) - 1)
+                    nn = check_neighbors_object('nn', k_nn).fit(X_class)
+                    ind_nn = random_state.choice(nn.kneighbors()[1][0])
+
+                    # Resample class data
+                    X_in_clusters = np.vstack((X1_class, X2_class[(ind_nn - 1): ind_nn], X1[y1 != class_label], X2[y2 != class_label]))
+                    y_in_clusters = np.hstack((y1_class, y2_class[(ind_nn - 1): ind_nn], y1[y1 != class_label], y2[y2 != class_label]))
+
+                    # Modify attributes for corner cases
+                    initial_attributes = self._modify_attributes(1, y_in_clusters.size)
+
+                    # Resample class data
+                    X_new_cluster, y_new_cluster = self._basic_sample(X_in_clusters, y_in_clusters)
+                    X_new_cluster, y_new_cluster = X_new_cluster[len(X_in_clusters):], y_new_cluster[len(X_in_clusters):]
+                    X_new, y_new = np.vstack((X_new, X_new_cluster)), np.hstack((y_new, y_new_cluster)) 
+
+                    # Restore modified attributes
+                    for attribute, value in initial_attributes.items():
+                        setattr(self, attribute, value)
 
         return X_new, y_new
 
