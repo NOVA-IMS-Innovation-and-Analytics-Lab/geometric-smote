@@ -6,13 +6,12 @@ contains the implementation of the Geometric SMOTE oversampler.
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
-from scipy import sparse
 import numpy as np
 from numpy.linalg import norm
 from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
+
 from .base import ExtendedBaseOverSampler
-from ..utils import check_random_states
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
@@ -21,15 +20,17 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     """Returns a generated point based on a center point ,a surface_point
     and three geometric transformations."""
 
-    # Generate a point inside the unit hyper-sphere
+    # Zero radius case
     if np.array_equal(center, surface_point):
         return center
+
+    # Generate a point on the surface of a unit hyper-sphere 
     radius = norm(center - surface_point)
-    random_state = check_random_state(random_state)
     normal_samples = random_state.normal(size=center.size)
     point_on_unit_sphere = normal_samples / norm(normal_samples)
     point = (random_state.uniform(size=1) ** (1 / center.size)) * point_on_unit_sphere
 
+    # Parallel unit vector
     parallel_unit_vector = (surface_point - center) / norm(surface_point - center)
 
     # Truncation
@@ -76,6 +77,20 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         generator; If ``RandomState`` instance, random_state is the random
         number generator; If ``None``, the random number generator is the
         ``RandomState`` instance used by ``np.random``.
+    
+    categorical_cols : list, optional (default=None)
+        The indices of categorical columns.
+
+    clusterer : Clusterer object, optional (default=None)
+        A clustering algorithm that is used to generate new samples 
+        in each cluster defined by the ``labels_`` attribute and between 
+        the clusters if the ``neighbors_`` attribute is defined.
+
+    distribution_function : callable, optional (default=None)
+        Determines the the strategy to distribute generated 
+        samples across the clusters. The signature is 
+        ``distribution_function(clusterer, X, y, **kwargs)`` where 
+        the optional arguments are passed to the ``fit`` method.
 
     truncation_factor : float, optional (default=0.0)
         The type of truncation. The values should be in the [-1.0, 1.0] range.
@@ -108,11 +123,9 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  selection_strategy='combined',
                  k_neighbors=5,
                  n_jobs=1):
-        super().__init__(ratio=ratio,
-                         random_state=random_state,
-                         categorical_cols=categorical_cols,
-                         clusterer=clusterer,
-                         distribution_function=distribution_function)
+        super(GeometricSMOTE, self).__init__(ratio=ratio, random_state=random_state, 
+                                             categorical_cols=categorical_cols, clusterer=clusterer,
+                                             distribution_function=distribution_function)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
@@ -122,16 +135,20 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
     def _validate_estimator(self):
         """Create the necessary objects for Geometric SMOTE."""
 
+        # Check random state
         self.random_state_ = check_random_state(self.random_state)
-
+        
+        # Validate strategy
         if self.selection_strategy not in SELECTION_STRATEGY:
             error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
             raise ValueError(error_msg.format(SELECTION_STRATEGY, self.selection_strategy))
 
+        # Create nearest neighbors object for positive class
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object('nns_positive', self.k_neighbors, additional_neighbor=1)
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
+        # Create nearest neighbors object for negative class
         if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
@@ -139,19 +156,25 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """Generate synthetic samples based on the selection strategy."""
 
+        # Return zero new samples
         if n_samples == 0:
             return np.array([], dtype=X.dtype).reshape(0, X.shape[1]), np.array([], dtype=y.dtype)
 
-        random_states = check_random_states(self.random_state_, n_samples)
+        # Select positive class samples
         X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
+
+        # Force minority strategy if no negative class samples are present
         self.selection_strategy_ = 'minority' if len(X) == len(X_pos) else self.selection_strategy
 
+        # Minority or combined strategy
         if self.selection_strategy_ in ('minority', 'combined'):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
             samples_indices = self.random_state_.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
+        
+        # Majority or combined strategy
         if self.selection_strategy_ in ('majority', 'combined'):
             X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
             self.nn_neg_.fit(X_neg)
@@ -160,22 +183,37 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                 samples_indices = self.random_state_.randint(low=0, high=len(points_neg.flatten()), size=n_samples)
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
+
+        # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
-        for ind, (row, col, random_state) in enumerate(zip(rows, cols, random_states)):
+        for ind, (row, col) in enumerate(zip(rows, cols)):
+            
+            # Define center point
             center = X_pos[row]
+
+            # Minority strategy
             if self.selection_strategy_ == 'minority':
                 surface_point = X_pos[points_pos[row, col]]
+            
+            # Majority strategy
             elif self.selection_strategy_ == 'majority':
                 surface_point = X_neg[points_neg[row, col]]
+
+            # Combined strategy
             else:
                 surface_point_pos = X_pos[points_pos[row, col]]
                 surface_point_neg = X_neg[points_neg[row, 0]]
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
+            
+            # Append new sample
             X_new[ind] = _make_geometric_sample(center, surface_point, self.truncation_factor,
-                                                self.deformation_factor, random_state)
+                                                self.deformation_factor, self.random_state_)
+        
+        # Create new samples for target variable
         y_new = np.array([pos_class_label] * len(samples_indices))
+        
         return X_new, y_new
 
     def _basic_sample(self, X, y):
@@ -198,16 +236,19 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
             The corresponding label of `X_resampled`
         """
 
+        # Validate estimator's parameters
         self._validate_estimator()
 
-        X_resampled = X.copy()
-        y_resampled = y.copy()
+        # Copy data
+        X_resampled, y_resampled = X.copy(), y.copy()
 
+        # Resample data
         for class_label, n_samples in self.ratio_.items():
-
+            
+            # Apply gsmote mechanism
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
-            X_resampled = np.vstack((X_resampled, X_new))
-            y_resampled = np.hstack((y_resampled, y_new))
+            # Append new data
+            X_resampled, y_resampled = np.vstack((X_resampled, X_new)), np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
