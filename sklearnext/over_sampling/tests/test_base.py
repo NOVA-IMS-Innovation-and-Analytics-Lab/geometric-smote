@@ -200,7 +200,11 @@ def test_inter_sample():
     oversampler = SMOTE(clusterer=clusterer)
     oversampler.fit(X, y, filtering_threshold=3.0, distances_exponent=0, 
                     sparsity_based=False, distribution_ratio=0.0)
-    X_new, y_new = oversampler._inter_sample(X, y, oversampler.ratio_)
+    initial_ratio = oversampler.ratio_
+    k_neighbors = oversampler.k_neighbors
+    X_new, y_new = oversampler._inter_sample(X, y, initial_ratio)
+    assert oversampler.ratio_ == initial_ratio
+    assert oversampler.k_neighbors == k_neighbors
     assert X_new.shape == (7, X.shape[1])
     
 

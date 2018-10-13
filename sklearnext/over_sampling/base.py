@@ -420,6 +420,9 @@ class ExtendedBaseOverSampler(BaseOverSampler, _BaseComposition):
                     for attribute, value in initial_attributes.items():
                         setattr(self, attribute, value)
 
+        # Restore initial ratio
+        self.ratio_ = initial_ratio
+
         return X_new, y_new
 
 
