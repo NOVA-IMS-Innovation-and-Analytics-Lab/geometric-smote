@@ -9,6 +9,7 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.datasets import make_classification
+
 from ...tools import report_model_search_results
 from ...model_selection import ModelSearchCV
 

@@ -10,9 +10,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedKFold, ParameterGrid
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
-from sklearnext.model_selection import ModelSearchCV
-from sklearnext.utils.validation import check_oversamplers_classifiers
-from sklearnext.tools.imbalanced_analysis import (
+
+from ...model_selection import ModelSearchCV
+from ...utils.validation import check_oversamplers_classifiers
+from ...tools.imbalanced_analysis import (
     summarize_binary_datasets,
     _define_binary_experiment_parameters,
     _calculate_results

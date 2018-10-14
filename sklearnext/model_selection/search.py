@@ -8,6 +8,7 @@ the parameter and model space.
 
 from dask_searchcv.model_selection import GridSearchCV, check_cv
 from dask_searchcv.model_selection import _RETURN_TRAIN_SCORE_DEFAULT
+
 from ..utils import check_estimator_type, check_param_grids, _ParametrizedClassifiers, _ParametrizedRegressors
 
 _DOC_TEMPLATE = """{oneliner}

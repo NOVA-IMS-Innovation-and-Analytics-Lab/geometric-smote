@@ -10,11 +10,13 @@ from collections import Counter
 from os.path import join
 from os import listdir
 from re import match, sub
+
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare, ttest_rel
 from statsmodels.stats.multitest import multipletests
 from sklearn.model_selection import StratifiedKFold
+
 from ..utils import check_datasets, check_oversamplers_classifiers
 from ..utils.estimators import _ParametrizedEstimatorsMixin
 from ..metrics import SCORERS
@@ -25,27 +27,42 @@ GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
 
 def read_csv_dir(dirpath):
     "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
+    
+    # Define empty datasets list to return
     datasets = []
+
+    # Read csv filenames
     csv_files = [csv_file for csv_file in listdir(dirpath) if match('^.+\.csv$', csv_file)]
+    
+    # Populate datasets list
     for csv_file in csv_files:
         dataset = pd.read_csv(join(dirpath, csv_file))
         X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
         dataset_name = sub(".csv", "", csv_file)
         datasets.append((dataset_name, (X, y)))
+
     return datasets
 
 
 def summarize_binary_datasets(datasets):
     """Creates a summary of the binary class
     imbalanced datasets."""
+
+    # Check datasets format
     datasets = check_datasets(datasets)
+    
+    # Define summary table columns
     summary_columns = ["Dataset name",
                        "Features",
                        "Instances",
                        "Minority instances",
                        "Majority instances",
                        "Imbalance Ratio"]
+    
+    # Define empty summary table
     datasets_summary = pd.DataFrame({}, columns=summary_columns)
+    
+    # Populate summary table
     for dataset_name, (X, y) in datasets:
         n_instances = Counter(y).values()
         n_minority_instances, n_majority_instances = min(n_instances), max(n_instances)
@@ -57,47 +74,80 @@ def summarize_binary_datasets(datasets):
                                          round(n_majority_instances / n_minority_instances, 2)]],
                                        columns=summary_columns)
         datasets_summary = datasets_summary.append(dataset_summary, ignore_index=True)
+    
+    # Cast to integer columns
     datasets_summary[datasets_summary.columns[1:-1]] = datasets_summary[datasets_summary.columns[1:-1]].astype(int)
+
     return datasets_summary.sort_values('Imbalance Ratio').reset_index(drop=True)
 
 
 def _define_binary_experiment_parameters(model_search_cv):
-    """Define th binary experiment parameters."""
+    """Define the binary experiment parameters."""
+    
+    # Get scoring attribute
     scoring = model_search_cv.scoring
+
+    # Define scoring columns
     if isinstance(scoring, list):
         scoring_cols = ['mean_test_%s' % scorer for scorer in scoring]
     else:
         scoring_cols = ['mean_test_score']
+
+    # Get estimator type attribute
     estimator_type = model_search_cv.estimator._estimator_type
+
     return scoring, scoring_cols, estimator_type
 
 
 def _set_verbose_attributes(ind, dataset_name, datasets):
+    """Set attributes used when experimental procedure is verbose."""
     for attribute, value in zip(['ind', 'dataset_name', 'n_datasets'], [ind, dataset_name, len(datasets)]):
         setattr(_ParametrizedEstimatorsMixin, attribute, value)
 
 
 def _calculate_results(model_search_cv, datasets, scoring_cols, verbose):
     """Calculates the results of binary imbalanced experiments."""
+
+    # Define empty results table
     results = pd.DataFrame()
+
+    # Populate results table
     for ind, (dataset_name, (X, y)) in enumerate(datasets):
+
+        # set verbose attributes
         if verbose:
             _set_verbose_attributes(ind, dataset_name, datasets)
+        
+        # Fit model search
         model_search_cv.fit(X, y)
+        
+        # Get results
         result = pd.DataFrame(model_search_cv.cv_results_).loc[:, ['models', 'params'] + scoring_cols]
+        
+        # Append dataset name column
         result = result.assign(Dataset=dataset_name)
+
+        # Append result
         results = results.append(result)
+
     return results
 
 
 def _calculate_aggregated_results(results, scoring_cols):
     """Calculates the aggregated results across datasets of binary
     imbalanced experiments."""
+
+    # Copy results
     aggregated_results = results.copy()
+    
+    # Parse oversamplers and classifiers
     aggregated_results.loc[:, 'models'] = aggregated_results.loc[:, 'models'].apply(lambda model: sub('_[0-9]*$', '', model).split('|'))
     aggregated_results[['Oversampler', 'Classifier']] = pd.DataFrame(aggregated_results.models.values.tolist())
+    
+    # Cast parameters to string
     aggregated_results['params'] = aggregated_results.loc[:, 'params'].apply(str).drop(columns='models')
 
+    # Calculate aggregated mean and standard deviation
     scoring_mapping = {scorer_name: [np.mean, np.std] for scorer_name in scoring_cols}
     aggregated_results = aggregated_results.groupby(GROUP_KEYS).agg(scoring_mapping)
 
@@ -107,19 +157,32 @@ def _calculate_aggregated_results(results, scoring_cols):
 def _calculate_optimal_results(aggregated_results, datasets_names, oversamplers_names, classifiers_names, scoring_cols):
     """"Calculate optimal results across hyperparameters for any combination of
     datasets, overamplers, classifiers and metrics."""
+
+    # Select mean values
     optimal_results = aggregated_results[[(score, 'mean') for score in scoring_cols]].reset_index()
+    
+    # Flatten columns
     optimal_results.columns = optimal_results.columns.get_level_values(0)
+    
+    # Calculate maximum score per gorup key
     agg_measures = {score: max for score in scoring_cols}
     optimal_results = optimal_results.groupby(GROUP_KEYS[:-1]).agg(agg_measures).reset_index()
+    
+    # Format as long table
     optimal_results = optimal_results.melt(id_vars=GROUP_KEYS[:-1],
                                            value_vars=scoring_cols,
                                            var_name='Metric',
                                            value_name='Score')
+    
+    # Cast to categorical columns
     optimal_results_cols = GROUP_KEYS[:-1] + ['Metric']
     names = [datasets_names, oversamplers_names, classifiers_names, scoring_cols]
     for col, name in zip(optimal_results_cols, names):
         optimal_results[col] = pd.Categorical(optimal_results[col], name)
+    
+    # Sort values
     optimal_results = optimal_results.sort_values(optimal_results_cols).reset_index(drop=True)
+    
     return optimal_results
 
 

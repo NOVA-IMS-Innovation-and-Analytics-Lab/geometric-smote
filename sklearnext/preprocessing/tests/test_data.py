@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
 from imblearn.pipeline import Pipeline
+
 from ...preprocessing import FeatureSelector, RowSelector
 
 X, y = make_regression(n_features=10)
