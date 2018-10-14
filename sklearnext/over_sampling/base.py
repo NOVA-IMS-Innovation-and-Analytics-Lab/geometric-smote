@@ -142,7 +142,8 @@ def density_distribution(clusterer, X, y, filtering_threshold=1.0, distances_exp
 
 class ExtendedBaseOverSampler(BaseOverSampler):
     """An extension of the base class for over-sampling algorithms to
-    handle integer and categorical features as well as a .
+    handle integer and categorical features as well as clustering based 
+    oversampling.
 
     Warning: This class should not be used directly. Use the derive classes
     instead.
