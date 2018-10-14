@@ -41,5 +41,5 @@ def test_report_model_search_results(scoring, sort_results):
     mscv.fit(X_clf, y_clf)
     report = report_model_search_results(mscv, sort_results)
     assert len(report.columns) == (len(mscv.scorer_) if isinstance(mscv.scoring, list) else 1) + len(BASIC_COLUMNS)
-    if sort_results:
+    if sort_results is not None:
         assert_array_equal(report[sort_results], report[sort_results].sort_values(ascending=(sort_results == 'mean_fit_time')))

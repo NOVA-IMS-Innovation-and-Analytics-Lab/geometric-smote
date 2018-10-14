@@ -291,26 +291,43 @@ class ModelSearchCV(GridSearchCV):
 
     @staticmethod
     def _split_est_name(param_grid):
+        """Split the estimator name."""
+
+        # Exclude random state
         param_grid = {param:value for param, value in param_grid.items() if param != 'random_state'}
+
+        # Remove and get the estimator name
         est_name = param_grid.pop('est_name')
+
         return est_name, {'__'.join(param.split('__')[1:]):value for param, value in param_grid.items()}
 
     def _modify_grid_search_attrs(self):
+        """Modify the object's grid search attributes."""
+
+        # Create best estimator attribte
         if hasattr(self, 'best_estimator_'):
             self.best_estimator_ = self.best_estimator_.estimator_
+        
+        # Populate models list
         models = []
         for ind, param_grid in enumerate(self.cv_results_['params']):
             est_name, self.cv_results_['params'][ind] = self._split_est_name(param_grid)
             models.append(est_name)
+        
+        # Append models list to results
         self.cv_results_.update({'models': models})
 
     def fit(self, X, y=None, groups=None, **fit_params):
 
+        # Print progress bas
         if self.verbose:
             n_fitting_tasks = len(self._get_param_iterator()) * check_cv(self.cv).n_splits + int(self.refit)
             self.estimator._create_progress_bar(n_fitting_tasks, self.scheduler)
 
+        # Call superclass fit method
         super(ModelSearchCV, self).fit(X, y, groups, **fit_params)
+        
+        # Modify attributes
         self._modify_grid_search_attrs()
 
         return self

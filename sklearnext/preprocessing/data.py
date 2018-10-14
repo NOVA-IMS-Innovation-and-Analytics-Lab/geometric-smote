@@ -33,17 +33,17 @@ class FeatureSelector(_BaseFilter):
         self.indices = indices
 
     def _check_params(self, X, y):
-        self.num_features_ = X.shape[1]
+        self.n_features_ = X.shape[1]
         if self.indices is not None:
             self.indices_ = check_array(self.indices, ensure_2d=False)
         else:
-            self.indices_ = np.arange(0, self.num_features_)
-        if not set(np.arange(self.num_features_)).issuperset(set(self.indices_)):
+            self.indices_ = np.arange(0, self.n_features_)
+        if not set(np.arange(self.n_features_)).issuperset(set(self.indices_)):
             raise ValueError("Parameter indices should be an array of any index of the features; Got %r." % self.indices)
 
     def _get_support_mask(self):
         check_is_fitted(self, 'scores_')
-        mask = indices_to_mask(self.indices_, self.num_features_)
+        mask = indices_to_mask(self.indices_, self.n_features_)
         return mask
 
 
@@ -52,7 +52,7 @@ class RowSelector(SamplerMixin):
 
         Parameters
         ----------
-        percentage : float, optional (default=None)
+        ratio : float, optional (default=None)
             The ratio of samples to keep. The values should be in the [0.0, 1.0] range.
         random_state : str, int, RandomState instance or None, optional (default=None)
             If str, valid choices are 'head' or 'tail' where the first or last samples
@@ -83,13 +83,20 @@ class RowSelector(SamplerMixin):
         self : object,
             Return self.
         """
+        
+        # Check input data
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+
+        # Calculate the number of samples to keep
         if self.ratio is not None and self.ratio != 1.0:
             self.ratio_ = self.ratio
             self.n_samples_ = int(self.ratio_ * len(X))
         else:
             self.ratio_ = None
+
+        # Calculate hash values for input data
         self.X_hash_, self.y_hash_ = hash_X_y(X, y)
+
         return self
 
     def _sample(self, X, y):
@@ -111,18 +118,27 @@ class RowSelector(SamplerMixin):
         y_resampled : ndarray, shape (n_samples_new,)
             The corresponding rows of `X_resampled`
         """
+
+        # Return the initial input data
         if self.ratio_ is None:
             return X.copy(), y.copy()
+        
+        # Return the first rows
         if self.random_state == 'head':
             X_resampled = X[:self.n_samples_].copy()
             y_resampled = y[:self.n_samples_].copy()
+
+        # Return the last rows
         elif self.random_state == 'tail':
             X_resampled = X[-self.n_samples_:].copy()
             y_resampled = y[-self.n_samples_:].copy()
+
+        # Return rows randomly
         else:
             indices = check_random_state(self.random_state).randint(0, len(X), self.n_samples_)
             X_resampled = X[indices].copy()
             y_resampled = y[indices].copy()
+            
         return X_resampled, y_resampled
 
 

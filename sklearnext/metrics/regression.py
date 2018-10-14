@@ -44,13 +44,22 @@ def weighted_mean_squared_error(y_true,
         A non-negative floating point value (the best value is 0.0), or an
         array of floating point values, one for each individual target.
     """
+
+    # Check input data
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
+    
+    # Calculate weights
     weights = abs((y_true < y_pred) - asymmetry_factor)
+
+    # Calculate errors
     output_errors = 2* np.average(weights * (y_true - y_pred) ** 2, axis=0, weights=sample_weight)
+    
+    # Handle multioutput
     if isinstance(multioutput, string_types):
         if multioutput == 'raw_values':
             return output_errors
         elif multioutput == 'uniform_average':
             multioutput = None
+    
     return np.average(output_errors, weights=multioutput)

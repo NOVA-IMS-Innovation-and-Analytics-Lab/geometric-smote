@@ -158,7 +158,7 @@ def _calculate_optimal_results(aggregated_results, datasets_names, oversamplers_
     """"Calculate optimal results across hyperparameters for any combination of
     datasets, overamplers, classifiers and metrics."""
 
-    # Select mean values
+    # Select mean scores
     optimal_results = aggregated_results[[(score, 'mean') for score in scoring_cols]].reset_index()
     
     # Flatten columns
@@ -188,17 +188,23 @@ def _calculate_optimal_results(aggregated_results, datasets_names, oversamplers_
 
 def _calculate_wide_optimal_results(optimal_results, scoring, estimator_type):
     """Calculate optimal results in wide format."""
+
+    # Format as wide table
     wide_optimal_results = optimal_results.pivot_table(index=['Dataset', 'Classifier', 'Metric'],
                                                        columns=['Oversampler'],
                                                        values='Score')
     wide_optimal_results.columns = wide_optimal_results.columns.tolist()
     wide_optimal_results.reset_index(inplace=True)
+    
+    # Transform metric column
     if isinstance(scoring, list):
         wide_optimal_results['Metric'] = wide_optimal_results['Metric'].replace('mean_test_', '', regex=True)
     elif isinstance(scoring, str):
         wide_optimal_results['Metric'] = scoring
     else:
         wide_optimal_results['Metric'] = 'accuracy' if estimator_type == 'classifier' else 'r2'
+
+    # Cast to categorical
     wide_optimal_results['Metric'] = pd.Categorical(wide_optimal_results['Metric'],
                                                     categories=scoring if isinstance(scoring, list) else None)
     return wide_optimal_results
@@ -208,11 +214,16 @@ def _return_row_ranking(row, sign):
     """Returns the ranking of mean cv scores for
     a row of an array. In case of tie, each value
     is replaced with its group average."""
+
+    # Calculate ranking
     ranking = (sign * row).argsort().argsort().astype(float)
+    
+    # Break the tie
     groups = np.unique(row, return_inverse=True)[1]
     for group_label in np.unique(groups):
         indices = (groups == group_label)
         ranking[indices] = ranking[indices].mean()
+
     return ranking.size - ranking
 
 
@@ -228,12 +239,21 @@ def _calculate_ranking_results(wide_optimal_results):
 def _calculate_friedman_test_results(ranking_results, alpha=0.05):
     """Calculate the Friedman test across datasets for every
     combination of classifiers and metrics."""
+
+    # Raise an error when less then three oversamplers are used
     if len(ranking_results.columns) < 6:
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
+
+    # DEfine function that calculate p-value
     extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
+    
+    # Calculate p-values
     friedman_test_results = ranking_results.groupby(['Classifier', 'Metric']).apply(extract_pvalue).reset_index().rename(
         columns={0: 'p-value'})
+    
+    # Compare p-values to significance level
     friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
+
     return friedman_test_results
 
 
@@ -241,11 +261,19 @@ def _calculate_adjusted_pvalues_results(wide_optimal_results, control_oversample
     """Use the Holm's method to adjust the p-values of a paired difference
     t-test for every combination of classifiers and metrics using a control
     oversampler."""
+
+    # Get the oversamplers name
     oversamplers_names = wide_optimal_results.columns[3:].tolist()
+    
+    # Use the last if no control oversampler is provided
     if control_oversampler is None:
         control_oversampler = oversamplers_names[-1]
     oversamplers_names.remove(control_oversampler)
+    
+    # Define empty p-values table
     pvalues = pd.DataFrame()
+
+    # Populate p-values table
     for name in oversamplers_names:
         pvalues_pair = wide_optimal_results.groupby(['Classifier', 'Metric'])[[name, control_oversampler]].apply(
             lambda df: ttest_rel(df[name], df[control_oversampler])[1])
@@ -254,6 +282,7 @@ def _calculate_adjusted_pvalues_results(wide_optimal_results, control_oversample
     corrected_pvalues = pd.DataFrame(pvalues.apply(
         lambda col: multipletests(col, method='holm')[1], axis=1).values.tolist(), columns=oversamplers_names)
     corrected_pvalues = corrected_pvalues.set_index(pvalues.index).reset_index()
+    
     return corrected_pvalues
 
 

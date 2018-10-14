@@ -48,12 +48,23 @@ class TimeSeriesSplit(_BaseKFold):
             The testing set indices for that split.
         """
 
-        X, y, groups = indexable(X, y, groups)
+        # Check input data
+        X, y, _ = indexable(X, y, groups)
+        
+        # Get number of samples
         n_samples = _num_samples(X)
+
+        # Get the indices
         indices = np.arange(n_samples)
+
+        # Calculate the test set size
         test_size = int(n_samples * self.test_percentage)
+
+        # Calculate test set start and end points
         test_starts = [n_samples - test_size * ind for ind in range(1, self.n_splits + 1)]
         test_ends = [n_samples - test_size * ind for ind in range(0, self.n_splits)]
+        
+        # Generated train and test indices
         for test_start, test_end in zip(test_starts, test_ends):
             train_indices = indices[0:test_start]
             test_indices = indices[test_start:test_end]
