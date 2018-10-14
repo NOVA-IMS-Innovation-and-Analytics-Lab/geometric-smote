@@ -8,11 +8,13 @@ various helper estimators and oversamplers.
 
 import re
 from warnings import filterwarnings
+
 from dask_searchcv.utils import copy_estimator
 from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.utils.validation import check_is_fitted
 import progressbar
+
 from ..utils import check_estimators
 
 
@@ -20,21 +22,27 @@ class _ParametrizedEstimatorsMixin(_BaseComposition):
     """Mixin class for all parametrized estimators."""
 
     def __init__(self, estimators, est_name=None, random_state=None):
+        
+        check_estimators(estimators)      
         self.estimators = estimators
         self.est_name = est_name
         self.random_state = random_state
-        check_estimators(estimators)
         self._validate_names([est_name for est_name, _ in estimators])
 
     @classmethod
     def _create_progress_bar(cls, n_fitting_tasks, scheduler):
+
+        # Format text
         cls.tasks_text = progressbar.FormatCustomText('(%(tasks)d / %(n_tasks)d)', dict(tasks=0, n_tasks=n_fitting_tasks))
-        cls.progress_bar = progressbar.ProgressBar(max_value=n_fitting_tasks,
-                                                   widgets=[
-                                                       progressbar.Percentage(),
-                                                       ' ',
-                                                       cls.tasks_text])
+        
+        # Define progress bar
+        cls.progress_bar = progressbar.ProgressBar(max_value=n_fitting_tasks, 
+                                                   widgets=[progressbar.Percentage(), ' ', cls.tasks_text])
+        
+        # Initialize fitting task
         cls.fitting_task = 1
+
+        # Define progress bar message
         progress_bar_msg = str() if scheduler is 'multiprocessing' else 'Progress: '
         if all([hasattr(cls, attribute) for attribute in ['ind', 'dataset_name', 'n_datasets']]):
             progress_bar_msg = 'Current dataset: {} | Completed datasets: {}/{} | ' + progress_bar_msg
