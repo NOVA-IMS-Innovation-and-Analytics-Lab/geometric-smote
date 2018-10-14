@@ -9,6 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR, SVC
 from imblearn.over_sampling import RandomOverSampler, SMOTE
 from imblearn.pipeline import Pipeline
+
 from ...utils.validation import (
     _normalize_param_grid,
     check_param_grids,

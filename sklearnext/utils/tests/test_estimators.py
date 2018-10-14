@@ -8,6 +8,7 @@ from sklearn.svm import SVR, SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.datasets import make_regression, make_classification
+
 from ..estimators import _ParametrizedEstimatorsMixin
 from ...utils import _ParametrizedClassifiers, _ParametrizedRegressors
 
