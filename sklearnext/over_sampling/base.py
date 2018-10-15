@@ -12,6 +12,7 @@ from math import ceil
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, clone
 from sklearn.utils import check_random_state, check_X_y
 from sklearn.metrics.pairwise import euclidean_distances
 from imblearn.over_sampling import RandomOverSampler
@@ -19,125 +20,168 @@ from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_ratio, check_target_type, hash_X_y, check_neighbors_object
 
 
-def _count_clusters_samples(labels):
-    """Count the minority and majority samples in each cluster."""
-    labels_counts = Counter(labels)
-    samples_counts = OrderedDict()
-    for label, count in labels_counts.items():
-        samples_counts.setdefault(label[0], []).append((label[1], count))
-    return samples_counts
+class BaseDistributor(BaseEstimator):
+
+    def __init__(self, labels=None, neighbors=None):
+        self.labels = labels
+        self.neighbors = neighbors
+
+    def fit(self, X, y):
+        """Find the intra-label and inter-label statistics.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        self : object,
+            Return self.
+
+        """
+        self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
+        return self
+
+    def apply(self):
+        """Distribute the samples intra-label and inter-label."""
+        return self.intra_distribution_, self.inter_distribution_
 
 
-def _calculate_clusters_density(clustering_labels, X, y, filtering_threshold, distances_exponent):
-    """Calculate the density of the filtered clusters."""
-    
-    # Calculate clusters distribution
-    majority_label = Counter(y).most_common()[0][0]
-    labels = list(zip(clustering_labels, y == majority_label))
-    samples_counts = _count_clusters_samples(labels)
+class DensityDistributor(BaseDistributor):
 
-    # Calculate density
-    clusters_density = dict()
-    for cluster_label, ((is_majority, n_samples), *cluster_info) in samples_counts.items():
+    def __init__(self, labels=None, neighbors=None, filtering_threshold=1.0, distances_exponent=0, sparsity_based=True, distribution_ratio=None):
+        super(DensityDistributor, self).__init__(labels=labels, neighbors=neighbors)
+        self.filtering_threshold = filtering_threshold
+        self.distances_exponent = distances_exponent
+        self.sparsity_based = sparsity_based
+        self.distribution_ratio = distribution_ratio
+
+    def _calculate_clusters_density(self, X, y):
+        """Calculate the density of the filtered clusters."""
+
+        # Generate a combination of cluster and class labels
+        majority_label = Counter(y).most_common()[0][0]
+        multi_labels = list(zip(self.labels, y == majority_label))
+
+        # Count samples per multilabel
+        labels_counts = Counter(multi_labels)
+        self.samples_counts_ = OrderedDict()
+        for label, count in labels_counts.items():
+            self.samples_counts_.setdefault(label[0], []).append((label[1], count))
+
+        # Calculate density
+        self.clusters_density_ = dict()
+        for cluster_label, ((is_majority, n_samples), *cluster_info) in self.samples_counts_.items():
         
-        # Calculate number of majority and minority samples in each cluster
-        n_class_samples = (n_samples, cluster_info[0][1]) if cluster_info else (n_samples, 0)
-        n_majority_samples, n_minority_samples = n_class_samples if is_majority else n_class_samples[::-1]
+            # Calculate number of majority and minority samples in each cluster
+            n_class_samples = (n_samples, cluster_info[0][1]) if cluster_info else (n_samples, 0)
+            n_majority_samples, n_minority_samples = n_class_samples if is_majority else n_class_samples[::-1]
         
-        # Calculate imbalance ratio
-        IR = n_majority_samples / n_minority_samples if n_minority_samples > 0 else np.inf
+            # Calculate imbalance ratio
+            IR = n_majority_samples / n_minority_samples if n_minority_samples > 0 else np.inf
 
-        # Identify filtered clusters
-        if IR < filtering_threshold:
-            mask = [label == cluster_label and not is_majority for label, is_majority in labels]
-            sum_distances = np.triu(euclidean_distances(X[mask])).sum()
-            clusters_density[cluster_label] =  n_minority_samples / (sum_distances ** distances_exponent) if sum_distances > 0 else np.inf
+            # Identify filtered clusters
+            if IR < self.filtering_threshold:
+                mask = [label == cluster_label and not is_majority for label, is_majority in multi_labels]
+                sum_distances = np.triu(euclidean_distances(X[mask])).sum()
+                self.clusters_density_[cluster_label] =  n_minority_samples / (sum_distances ** self.distances_exponent) if sum_distances > 0 else np.inf
         
-    # Convert infinite densities to finite
-    finite_densites = [val for val in clusters_density.values() if not np.isinf(val)]
-    max_density = max(finite_densites) if len(finite_densites) > 0 else 1.0
-    clusters_density = {label: float(max_density if np.isinf(density) else density) for label, density in clusters_density.items()}
+        # Convert infinite densities to finite
+        finite_densites = [val for val in self.clusters_density_.values() if not np.isinf(val)]
+        max_density = max(finite_densites) if len(finite_densites) > 0 else 1.0
+        self.clusters_density_ = {label: float(max_density if np.isinf(density) else density) for label, density in self.clusters_density_.items()}
+
+    def _intra_distribute(self):
+        """Distribute the generated samples in each cluster based on their density."""
     
-    return clusters_density
+        # Calculate weights
+        weights = {label: (1 / density if self.sparsity_based else density) for label, density in self.clusters_density_.items()}
+        normalization_factor = sum(weights.values())
 
+        # Distribute generated samples
+        self.intra_distribution_ = [(label, self.distribution_ratio_ * weight / normalization_factor) for label, weight in weights.items()]
 
-def _intra_distribute(clusters_density, sparsity_based, distribution_ratio):
-    """Distribute the generated samples in each cluster based on their density."""
+    def _inter_distribute(self):
+        """Distribute the generated samples between clusters based on their density."""
+            
+        # Sum their density for each pair
+        filtered_neighbors = [pair for pair in self.neighbors if pair[0] in self.clusters_density_.keys() and pair[1] in self.clusters_density_.keys()]
+        inter_clusters_density = {(label1, label2): (self.clusters_density_[label1] + self.clusters_density_[label2]) for label1, label2 in filtered_neighbors}
     
-    # Calculate weights
-    weights = {label: (1 / density if sparsity_based else density) for label, density in clusters_density.items()}
-    normalization_factor = sum(weights.values())
+        # Calculate weights
+        weights = {(label1, label2): (1 / density if self.sparsity_based else density) for (label1, label2), density in inter_clusters_density.items()}
+        normalization_factor = sum(weights.values())
 
-    # Distribute generated samples
-    distribution = [(label, distribution_ratio * weight / normalization_factor) for label, weight in weights.items()]
+        # Distribute generated samples
+        self.inter_distribution_ = [((label1, label2), (1 - self.distribution_ratio_) * weight / normalization_factor) for (label1, label2), weight in weights.items()]
     
-    return distribution
+    def fit(self, X, y):
+        """Find the intra-label and inter-label statistics based on the minority samples density of the clusters.
 
-def _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_ratio):
-    """Distribute the generated samples between clusters based on their density."""
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+
+        y : array-like, shape (n_samples,)
+            Corresponding label for each sample in X.
+
+        Returns
+        -------
+        self : object,
+            Return self.
+        """
+
+        super(DensityDistributor, self).fit(X, y)
+
+        if self.labels is None:
+            return self
     
-    # Sum their density for each pair
-    filtered_neighbors = [pair for pair in clusterer.neighbors_ if pair[0] in clusters_density.keys() and pair[1] in clusters_density.keys()]
-    inter_clusters_density = {(label1, label2): (clusters_density[label1] + clusters_density[label2]) for label1, label2 in filtered_neighbors}
-    
-    # Calculate weights
-    weights = {(label1, label2): (1 / density if sparsity_based else density) for (label1, label2), density in inter_clusters_density.items()}
-    normalization_factor = sum(weights.values())
+        # Set default distribution ratio
+        self.distribution_ratio_ = 1.0 if self.distribution_ratio is None else self.distribution_ratio
 
-    # Distribute generated samples
-    distribution = [((label1, label2), (1 - distribution_ratio) * weight / normalization_factor) for (label1, label2), weight in weights.items()]
+        # Check parameters
+        error_msgs = {
+            'filtering_threshold': 'Parameter `filtering_threshold` should be a non negative number.',
+            'distances_exponent': 'Parameter `distances_exponent` should be a non negative number.',
+            'sparsity_based': 'Parameter `sparsity_based` should be True or False.',
+            'distribution_ratio': 'Parameter `distribution_ratio` should be a number in the range [0.0, 1.0].'
+        }
 
-    return distribution
+        try:
+            if self.filtering_threshold < 0.0:
+                raise ValueError(error_msgs['filtering_threshold'])
+        except TypeError:
+            raise TypeError(error_msgs['filtering_threshold'])
 
-def density_distribution(clusterer, X, y, filtering_threshold=1.0, distances_exponent=None, sparsity_based=True, distribution_ratio=None):
-    """Distribute the generated samples based on the minority samples density of the clusters."""
-    
-    # Set default parameters
-    distances_exponent = X.shape[1] if distances_exponent is None else distances_exponent
-    distribution_ratio = 1.0 if distribution_ratio is None else distribution_ratio
+        try:
+            if self.distances_exponent < 0.0:
+                raise ValueError(error_msgs['distances_exponent'])
+        except TypeError:
+            raise TypeError(error_msgs['distances_exponent'])
 
-    # Check parameters
-    error_msgs = {
-        'filtering_threshold': 'Parameter `filtering_threshold` should be a non negative number.',
-        'distances_exponent': 'Parameter `distances_exponent` should be a non negative number.',
-        'sparsity_based': 'Parameter `sparsity_based` should be True or False.',
-        'distribution_ratio': 'Parameter `distribution_ratio` should be a number in the range [0.0, 1.0].'
-    }
+        if not isinstance(self.sparsity_based, bool):
+            raise TypeError(error_msgs['sparsity_based'])
 
-    try:
-        if filtering_threshold < 0.0:
-            raise ValueError(error_msgs['filtering_threshold'])
-    except TypeError:
-        raise TypeError(error_msgs['filtering_threshold'])
+        try:
+            if self.distribution_ratio_ < 0.0 or self.distribution_ratio_ > 1.0:
+                raise ValueError(error_msgs['distribution_ratio'])
+            if self.distribution_ratio_ < 1.0 and self.neighbors is None:
+                raise ValueError('Parameter `neiborhood` is equal to None, therefore attribute `distribution_ratio` should be equal to 1.0.')
+        except TypeError:
+            raise TypeError(error_msgs['distribution_ratio'])
 
-    try:
-        if distances_exponent < 0.0:
-            raise ValueError(error_msgs['distances_exponent'])
-    except TypeError:
-        raise TypeError(error_msgs['distances_exponent'])
-
-    if not isinstance(sparsity_based, bool):
-        raise TypeError(error_msgs['sparsity_based'])
-
-    try:
-        if distribution_ratio < 0.0 or distribution_ratio > 1.0:
-            raise ValueError(error_msgs['distribution_ratio'])
-        if distribution_ratio < 1.0 and not hasattr(clusterer, 'neighbors_'):
-            raise ValueError('Clusterer does not define a neighborhood structure, i.e. attribute `neiborhood_` not found. Parameter `distribution_ratio` should be set to 1.0.')
-    except TypeError:
-        raise TypeError(error_msgs['distribution_ratio'])
-
-    # Calculate clusters density
-    clustering_labels = clusterer.labels_
-    clusters_density = _calculate_clusters_density(clustering_labels, X, y, filtering_threshold, distances_exponent)
-
-    # Calculate intracluster distribution
-    intra_distribution = _intra_distribute(clusters_density, sparsity_based, distribution_ratio)
-
-    # Calculate intercluster distribution
-    inter_distribution = _inter_distribute(clusterer, clusters_density, sparsity_based, distribution_ratio) if hasattr(clusterer, 'neighbors_') else []
-
-    return intra_distribution, inter_distribution
+        # Fitting process
+        self._calculate_clusters_density(X, y)
+        self._intra_distribute()
+        if self.neighbors is not None:
+            self._inter_distribute()
+        
+        return self
 
 
 class ExtendedBaseOverSampler(BaseOverSampler):
@@ -155,11 +199,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
                  sampling_type=None,
                  categorical_cols=None,
                  clusterer=None,
-                 distribution_function=None):
+                 distributor=None):
         super(ExtendedBaseOverSampler, self).__init__(ratio, random_state, sampling_type)
         self.categorical_cols = categorical_cols
         self.clusterer = clusterer
-        self.distribution_function = distribution_function
+        self.distributor = distributor
 
     def _validate_categorical_cols(self, max_col_index):
         """Validate categorical columns."""
@@ -172,17 +216,26 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             elif wrong_range:
                 raise ValueError(error_msg.format([0, max_col_index - 1], self.categorical_cols))
 
-    def _apply_clustering(self, X, y, **fit_params):
-        """Apply clustering on the input space."""
+    def _apply_clustering_distribution(self, X, y, **fit_params):
+        """Apply clustering on the input space and distribute generated samples."""
+        
+        # Check distributor
+        self.distributor_ = DensityDistributor() if self.distributor is None else clone(self.distributor)
+        
+        # Fit clusterer
         if self.clusterer is not None:
-            self.clusterer.fit(X, y, **fit_params)
-    
-    def _distribute_samples(self, X, y, **fit_params):
-        """Distribute the generated samples on clusters."""
-        if self.clusterer is not None:
-            self.intra_distribution_, self.inter_distribution_ = self.distribution_function_(self.clusterer, X, y, **fit_params)
-        else:
-            self.intra_distribution_, self.inter_distribution_ = [(0, 1.0)], []
+            
+            # Check clusterer
+            self.clusterer_ = clone(self.clusterer).fit(X, y, **fit_params)
+        
+            # Set labels and neighbors
+            if hasattr(self.clusterer_, 'neighbors_'):
+                self.distributor_.set_params(labels=self.clusterer_.labels_, neighbors=self.clusterer_.neighbors_)
+            else:
+                self.distributor_.set_params(labels=self.clusterer_.labels_)
+
+        # Fit distributor
+        self.distributor_.fit(X, y)
 
     def _modify_attributes(self, n_minority_samples, n_samples):
         """Modify attributes for corner cases."""
@@ -228,22 +281,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         """
         super(ExtendedBaseOverSampler, self).fit(X, y)
 
-        # Check distribution function
-        self.distribution_function_ = self.distribution_function if self.distribution_function is not None else density_distribution
-
         # Validate categorical columns
         self._validate_categorical_cols(X.shape[1])
 
-        # Split fit params
-        var_names = signature(self.distribution_function_).parameters.keys()
-        fit_params_distribute = {param: value for param, value in fit_params.items() if param in var_names}
-        fit_params_clustering = {param: value for param, value in fit_params.items() if param not in var_names}
-
-        # Cluster input space
-        self._apply_clustering(X, y, **fit_params_clustering)
-
-        # Distribute the generated samples
-        self._distribute_samples(X, y, **fit_params_distribute)
+        # Cluster input space and distribute samples
+        self._apply_clustering_distribution(X, y, **fit_params)
 
         return self
 
@@ -278,11 +320,11 @@ class ExtendedBaseOverSampler(BaseOverSampler):
         
         # Intracluster oversampling
         self.intra_ratios_ = []
-        for label, proportion in self.intra_distribution_:
+        for label, proportion in self.distributor_.intra_distribution_:
             
             # Filter data in cluster
             if self.clusterer is not None:
-                mask = (self.clusterer.labels_ == label)
+                mask = (self.clusterer_.labels_ == label)
                 X_in_cluster, y_in_cluster = X[mask], y[mask]
             else:
                 X_in_cluster, y_in_cluster = X, y
@@ -343,10 +385,10 @@ class ExtendedBaseOverSampler(BaseOverSampler):
 
         # Intercluster oversampling
         self.inter_ratios_ = []
-        for (label1, label2), proportion in self.inter_distribution_:
+        for (label1, label2), proportion in self.distributor_.inter_distribution_:
             
             # Filter data in cluster 1 and cluster 2
-            mask1, mask2 = (self.clusterer.labels_ == label1), (self.clusterer.labels_ == label2)
+            mask1, mask2 = (self.clusterer_.labels_ == label1), (self.clusterer_.labels_ == label2)
             X_in_cluster1, y_in_cluster1, X_in_cluster2, y_in_cluster2 = X[mask1], y[mask1], X[mask2], y[mask2]
 
             # Calculate ratio in the clusters
