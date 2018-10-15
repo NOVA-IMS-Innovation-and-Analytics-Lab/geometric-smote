@@ -19,7 +19,7 @@ Prerequisites
 Installation
 ============
 
-Clone the repository and activate a Python virtual environment. Then run the following commands:
+Clone the repository and activate a Python 3 virtual environment. Then run the following commands:
 
 .. code:: shell
 
