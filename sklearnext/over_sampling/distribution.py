@@ -129,9 +129,6 @@ class DensityDistributor(BaseDistributor):
         """
 
         super(DensityDistributor, self).fit(X, y)
-
-        if self.labels is None:
-            return self
     
         # Set default distribution ratio
         self.distribution_ratio_ = 1.0 if self.distribution_ratio is None else self.distribution_ratio
@@ -168,9 +165,16 @@ class DensityDistributor(BaseDistributor):
             raise TypeError(error_msgs['distribution_ratio'])
 
         # Fitting process
-        self._calculate_clusters_density(X, y)
-        self._intra_distribute()
-        if self.neighbors is not None:
-            self._inter_distribute()
+        if self.labels is not None:
+
+            # Calculate clusters density
+            self._calculate_clusters_density(X, y)
+
+            # Intra label distribution
+            self._intra_distribute()
+
+            # Inter label distribution
+            if self.neighbors is not None:
+                self._inter_distribute()
         
         return self
