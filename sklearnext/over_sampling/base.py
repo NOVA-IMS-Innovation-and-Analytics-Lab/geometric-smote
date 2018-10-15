@@ -1,5 +1,6 @@
 """
-Extended base class for oversampling.
+The :mod:`sklearnext.over_sampling._oversamplers` includes 
+the clustering base class for oversampling.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -18,7 +19,7 @@ from imblearn.utils import check_neighbors_object
 from .distribution import DensityDistributor
 
 
-class ExtendedBaseOverSampler(BaseOverSampler):
+class BaseClusterOverSampler(BaseOverSampler):
     """An extension of the base class for over-sampling algorithms to
     handle integer and categorical features as well as clustering based 
     oversampling.
@@ -34,7 +35,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
                  categorical_cols=None,
                  clusterer=None,
                  distributor=None):
-        super(ExtendedBaseOverSampler, self).__init__(ratio, random_state, sampling_type)
+        super(BaseClusterOverSampler, self).__init__(ratio, random_state, sampling_type)
         self.categorical_cols = categorical_cols
         self.clusterer = clusterer
         self.distributor = distributor
@@ -113,7 +114,7 @@ class ExtendedBaseOverSampler(BaseOverSampler):
             Return self.
 
         """
-        super(ExtendedBaseOverSampler, self).fit(X, y)
+        super(BaseClusterOverSampler, self).fit(X, y)
 
         # Validate categorical columns
         self._validate_categorical_cols(X.shape[1])

@@ -1,5 +1,5 @@
 """
-The :mod:`sklearnext.preprocessing.oversampling.cgan_oversampler`
+The :mod:`sklearnext.oversampling.cgan_oversampler`
 contains the implementation of the Conditional Generative
 Adversarial Network as an oversampling algorithm.
 """
@@ -10,14 +10,14 @@ Adversarial Network as an oversampling algorithm.
 import numpy as np
 from sklearn.utils import check_random_state
 
-from .base import ExtendedBaseOverSampler
+from .base import BaseClusterOverSampler
 
 
 class CGAN:
     pass
 
 
-class CGANOversampler(ExtendedBaseOverSampler):
+class CGANOversampler(BaseClusterOverSampler):
     """Class to perform oversampling using a
     Conditional Generative Adversarial Network as
     an oversampling algorithm.

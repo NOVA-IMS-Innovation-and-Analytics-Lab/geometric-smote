@@ -1,5 +1,6 @@
 """
-Distributor classes for clustering oversampling.
+The :mod:`sklearnext.over_sampling.distribution` includeds 
+the Distributor classes for clustering oversampling.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>

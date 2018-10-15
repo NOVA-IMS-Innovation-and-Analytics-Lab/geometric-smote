@@ -1,5 +1,7 @@
 """
-Implement standard oversamplers and monkey patch their methods.
+The :mod:`sklearnext.over_sampling._oversamplers` reimplements
+ standard oversamplers and monkey patch their methods to make them 
+ compatible with the clustering based oversampling API.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -7,7 +9,7 @@ Implement standard oversamplers and monkey patch their methods.
 
 from imblearn import over_sampling
 
-from .base import ExtendedBaseOverSampler
+from .base import BaseClusterOverSampler
 
 
 def monkey_patch_attributes(attributes_mapping):
@@ -18,7 +20,7 @@ def monkey_patch_attributes(attributes_mapping):
         patched_oversampler._basic_sample = oversampler._sample
 
 
-class RandomOverSampler(ExtendedBaseOverSampler):
+class RandomOverSampler(BaseClusterOverSampler):
 
     def __init__(self,
                  ratio='auto',
@@ -36,7 +38,7 @@ class RandomOverSampler(ExtendedBaseOverSampler):
         pass
 
 
-class SMOTE(ExtendedBaseOverSampler):
+class SMOTE(BaseClusterOverSampler):
 
     def __init__(self,
                  ratio='auto',
@@ -70,7 +72,7 @@ class SMOTE(ExtendedBaseOverSampler):
         pass
 
 
-class ADASYN(ExtendedBaseOverSampler):
+class ADASYN(BaseClusterOverSampler):
 
     def __init__(self,
                  ratio='auto',

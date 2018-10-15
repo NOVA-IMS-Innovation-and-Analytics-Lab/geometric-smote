@@ -1,6 +1,6 @@
 """
-The :mod:`sklearnext.preprocessing.oversampling.geometric_smote`
-contains the implementation of the Geometric SMOTE oversampler.
+The :mod:`sklearnext.oversampling.geometric_smote` contains 
+the implementation of the Geometric SMOTE oversampler.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -11,7 +11,7 @@ from numpy.linalg import norm
 from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
 
-from .base import ExtendedBaseOverSampler
+from .base import BaseClusterOverSampler
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
@@ -50,7 +50,7 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     return point
 
 
-class GeometricSMOTE(ExtendedBaseOverSampler):
+class GeometricSMOTE(BaseClusterOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
     Parameters

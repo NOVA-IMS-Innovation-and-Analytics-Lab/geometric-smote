@@ -14,10 +14,10 @@ from sklearn.model_selection._search import _check_param_grid
 from imblearn.pipeline import Pipeline
 from imblearn.over_sampling.base import BaseOverSampler
 
-from ..over_sampling.base import ExtendedBaseOverSampler
+from ..over_sampling.base import BaseClusterOverSampler
 
 
-class _TrivialOversampler(ExtendedBaseOverSampler):
+class _TrivialOversampler(BaseClusterOverSampler):
     """A class that implements no oversampling.
     """
 
@@ -166,5 +166,3 @@ def check_estimator_type(estimators):
     if len(estimator_types) > 1:
         raise ValueError('Both classifiers and regressors were found. A single estimator type should be included.')
     return estimator_types.pop()
-
-
