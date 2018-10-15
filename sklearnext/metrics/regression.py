@@ -1,5 +1,5 @@
 """
-The :mod:`sklearnext.metrics.regressio` contains
+The :mod:`sklearnext.metrics.regression` contains
 various metrics for regression tasks.
 """
 

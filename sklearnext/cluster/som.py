@@ -1,5 +1,6 @@
 """
-Self-Organizing Map (SOM) clustering.
+The :mod:`sklearnext.cluster.som` contains the 
+implementation of Self-Organizing Map (SOM) clusterer.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -93,15 +94,6 @@ class SOM(BaseEstimator, ClusterMixin):
         self.std_coeff = std_coeff
         self.initialization = initialization
         self.verbose = verbose
-
-    def __getattribute__(self, name):
-        if name in SOM._attributes: 
-            raise AttributeError("'SOM' object has no attribute '%s'" % name)
-        else:
-            return super(SOM, self).__getattribute__(name)
-
-    def __dir__(self):
-        return sorted(list(set(dir(self.__class__)).union(set(self.__dict__.keys())).difference(set(SOM._attributes))))
 
     def _generate_labels_mapping(self ,grid_labels):
         """Generate a mapping between grid labels and cluster labels."""
