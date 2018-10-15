@@ -15,7 +15,6 @@ from ...cluster import SOM
 from ...utils.validation import _TrivialOversampler
 from ..distribution import DensityDistributor
 
-
 X = np.array(list(product(range(5), range(4))))
 y = np.array([0] * 10 + [1] * 6 + [2] * 4)
 LABELS = np.array([0, 1, 1, 1, 0, 2, 2, 2, 0, 2, 2, 2, 0, 3, 3, 3, 0, 3, 3, 3])
