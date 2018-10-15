@@ -86,11 +86,9 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
         in each cluster defined by the ``labels_`` attribute and between 
         the clusters if the ``neighbors_`` attribute is defined.
 
-    distribution_function : callable, optional (default=None)
+    distributor : Distributor object, optional (default=None)
         Determines the the strategy to distribute generated 
-        samples across the clusters. The signature is 
-        ``distribution_function(clusterer, X, y, **kwargs)`` where 
-        the optional arguments are passed to the ``fit`` method.
+        samples across the clusters.
 
     truncation_factor : float, optional (default=0.0)
         The type of truncation. The values should be in the [-1.0, 1.0] range.
@@ -117,7 +115,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  random_state=None,
                  categorical_cols=None,
                  clusterer=None,
-                 distribution_function=None,
+                 distributor=None,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
@@ -125,7 +123,7 @@ class GeometricSMOTE(ExtendedBaseOverSampler):
                  n_jobs=1):
         super(GeometricSMOTE, self).__init__(ratio=ratio, random_state=random_state, 
                                              categorical_cols=categorical_cols, clusterer=clusterer,
-                                             distribution_function=distribution_function)
+                                             distributor=distributor)
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy

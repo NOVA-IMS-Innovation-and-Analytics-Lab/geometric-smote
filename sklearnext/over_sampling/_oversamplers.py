@@ -25,12 +25,12 @@ class RandomOverSampler(ExtendedBaseOverSampler):
                  random_state=None,
                  categorical_cols=None,
                  clusterer=None,
-                 distribution_function=None):
+                 distributor=None):
         super().__init__(ratio=ratio,
                          random_state=random_state,
                          categorical_cols=categorical_cols,
                          clusterer=clusterer,
-                         distribution_function=distribution_function)
+                         distributor=distributor)
     
     def _basic_sample(self, X, y):
         pass
@@ -43,7 +43,7 @@ class SMOTE(ExtendedBaseOverSampler):
                  random_state=None,
                  categorical_cols=None,
                  clusterer=None,
-                 distribution_function=None,
+                 distributor=None,
                  k=None,
                  k_neighbors=5,
                  m=None,
@@ -56,7 +56,7 @@ class SMOTE(ExtendedBaseOverSampler):
                          random_state=random_state,
                          categorical_cols=categorical_cols,
                          clusterer=clusterer,
-                         distribution_function=distribution_function)
+                         distributor=distributor)
         self.kind = kind
         self.k = k
         self.k_neighbors = k_neighbors
@@ -77,7 +77,7 @@ class ADASYN(ExtendedBaseOverSampler):
                  random_state=None,
                  categorical_cols=None,
                  clusterer=None,
-                 distribution_function=None,
+                 distributor=None,
                  k=None,
                  n_neighbors=5,
                  n_jobs=1):
@@ -85,7 +85,7 @@ class ADASYN(ExtendedBaseOverSampler):
                          random_state=random_state,
                          categorical_cols=categorical_cols,
                          clusterer=clusterer,
-                         distribution_function=distribution_function)
+                         distributor=distributor)
         self.k = k
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
@@ -103,4 +103,3 @@ ATTRIBUTES_MAPPING = {
 
 # Apply monkey patching
 monkey_patch_attributes(ATTRIBUTES_MAPPING)
-    

@@ -44,11 +44,9 @@ class CGANOversampler(ExtendedBaseOverSampler):
         in each cluster defined by the ``labels_`` attribute and between 
         the clusters if the ``neighbors_`` attribute is defined.
 
-    distribution_function : callable, optional (default=None)
+    distributor : Distributor object, optional (default=None)
         Determines the the strategy to distribute generated 
-        samples across the clusters. The signature is 
-        ``distribution_function(clusterer, X, y, **kwargs)`` where 
-        the optional arguments are passed to the ``fit`` method.
+        samples across the clusters.
 
     n_Z_features : int
         Number of features of the Z noise space.
@@ -91,6 +89,9 @@ class CGANOversampler(ExtendedBaseOverSampler):
     def __init__(self,
                  ratio='auto',
                  random_state=None,
+                 categorical_cols=None, 
+                 clusterer=None,
+                 distributor=None,
                  n_Z_features=None,
                  discriminator_hidden_layers=None,
                  generator_hidden_layers=None,
@@ -101,9 +102,8 @@ class CGANOversampler(ExtendedBaseOverSampler):
                  nb_epoch=None,
                  batch_size=None,
                  discriminator_steps=1):
-        super(CGANOversampler, self).__init__(ratio=ratio, random_state=random_state, 
-                                              categorical_cols=categorical_cols, clusterer=clusterer,
-                                              distribution_function=distribution_function)
+        super(CGANOversampler, self).__init__(ratio=ratio, random_state=random_state, categorical_cols=categorical_cols, 
+                                              clusterer=clusterer, distributor=distributor)
         self.n_Z_features = n_Z_features
         self.discriminator_hidden_layers = discriminator_hidden_layers
         self.generator_hidden_layers = generator_hidden_layers
