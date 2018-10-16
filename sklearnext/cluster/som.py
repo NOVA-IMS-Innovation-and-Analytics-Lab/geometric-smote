@@ -95,7 +95,8 @@ class SOM(BaseEstimator, ClusterMixin):
         self.initialization = initialization
         self.verbose = verbose
 
-    def _generate_labels_mapping(self ,grid_labels):
+    @staticmethod
+    def _generate_labels_mapping(grid_labels):
         """Generate a mapping between grid labels and cluster labels."""
 
         # Identify unique grid labels
@@ -118,7 +119,8 @@ class SOM(BaseEstimator, ClusterMixin):
             topological_neighbors += [(col - offset, row - offset), (col - offset, row + offset)]
 
         # Apply constraints
-        topological_neighbors = [(col, row) for col, row in topological_neighbors if 0 <= col < self.n_columns and 0 <= row < self.n_rows and [col, row] in self.som_.bmus.tolist()]
+        topological_neighbors = [(col, row) for col, row in topological_neighbors if 0 <= col < self.n_columns and 0 <= row < self.n_rows and [col, row] in self.algorithm_.bmus.tolist()]
+        
         return topological_neighbors
     
     def _generate_neighbors(self, grid_labels, labels_mapping):
@@ -143,7 +145,7 @@ class SOM(BaseEstimator, ClusterMixin):
         return neighbors
 
     def fit(self, X, y=None, **fit_params):
-        """Apply SOM clustering.
+        """Train the self-organizing map.
 
         Parameters
         ----------
@@ -157,19 +159,19 @@ class SOM(BaseEstimator, ClusterMixin):
         X = minmax_scale(check_array(X, dtype=np.float32))
         
         # Initialize Somoclu object
-        if not hasattr(self, 'labels_'):
+        if not hasattr(self, 'algorithm_'):
 
-            self.som_ = Somoclu(n_columns=self.n_columns, n_rows=self.n_rows, initialcodebook=self.initialcodebook,
+            self.algorithm_ = Somoclu(n_columns=self.n_columns, n_rows=self.n_rows, initialcodebook=self.initialcodebook,
                                 kerneltype=self.kerneltype, maptype=self.maptype, gridtype=self.gridtype,
                                 compactsupport=self.compactsupport, neighborhood=self.neighborhood, 
                                 std_coeff=self.std_coeff, initialization=self.initialization, data=None, 
                                 verbose=self.verbose)
         
         # Fit Somoclu
-        self.som_.train(data=X, **fit_params)
+        self.algorithm_.train(data=X, **fit_params)
 
         # Grid labels
-        grid_labels = [tuple(grid_label) for grid_label in self.som_.bmus]
+        grid_labels = [tuple(grid_label) for grid_label in self.algorithm_.bmus]
 
         # Generate labels mapping
         labels_mapping = self._generate_labels_mapping(grid_labels)
@@ -181,3 +183,20 @@ class SOM(BaseEstimator, ClusterMixin):
         self.neighbors_ = self._generate_neighbors(grid_labels, labels_mapping)
 
         return self
+
+    def fit_predict(self, X, y=None):
+        """Train the self-organizing map and assign a cluster label to each sample.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        u : Ignored
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        return self.fit(X).labels_
