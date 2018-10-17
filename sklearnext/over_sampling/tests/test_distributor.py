@@ -27,7 +27,7 @@ def test_calculate_clusters_density(filtering_threshold, distances_exponent):
     distributor = DensityDistributor(labels=labels, filtering_threshold=filtering_threshold, distances_exponent=distances_exponent)
     distributor.fit(X, y)
     if filtering_threshold == 1.0:
-        assert distributor.clusters_density_ == {}
+        assert distributor.clusters_density_ == {1: 1.0}
     elif filtering_threshold == 2.0 and distances_exponent == 0:
         assert distributor.clusters_density_ == {1: 2.0, 2: 2.0}
     elif filtering_threshold == 1.0 and distances_exponent == 1:

@@ -78,7 +78,7 @@ class DensityDistributor(BaseDistributor):
             IR = n_majority_samples / n_minority_samples if n_minority_samples > 0 else np.inf
 
             # Identify filtered clusters
-            if IR < self.filtering_threshold:
+            if IR <= self.filtering_threshold:
                 mask = [label == cluster_label and not is_majority for label, is_majority in multi_labels]
                 sum_distances = np.triu(euclidean_distances(X[mask])).sum()
                 self.clusters_density_[cluster_label] =  n_minority_samples / (sum_distances ** self.distances_exponent) if sum_distances > 0 else np.inf
