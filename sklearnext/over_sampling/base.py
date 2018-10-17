@@ -174,6 +174,10 @@ class BaseClusterOverSampler(BaseOverSampler):
             # Resample data
             for class_label, n_samples in cluster_ratio.items():
 
+                # Continue for no samples
+                if n_samples == 0:
+                    continue
+
                 # Modify ratio
                 self.ratio_ = {class_label: n_samples}
                 
