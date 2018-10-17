@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearnext.cluster import KMeans
 
 from ...over_sampling import RandomOverSampler, SMOTE, GeometricSMOTE
 from ...cluster import SOM
