@@ -313,8 +313,8 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
 
     # Define experiment parameters
     datasets_names, _ = zip(*datasets)
-    oversamplers_names, _ = zip(*oversamplers)
-    classifiers_names, _ = zip(*classifiers)
+    oversamplers_names, *_ = zip(*oversamplers)
+    classifiers_names, *_ = zip(*classifiers)
     scoring, scoring_cols, estimator_type = _define_binary_experiment_parameters(mscv)
 
     # Results
@@ -334,4 +334,4 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
             'ranking': _format_metrics(ranking_results),
             'mean_ranking': _format_metrics(mean_ranking_results),
             'friedman_test': _format_metrics(friedman_test_results),
-            'adjusted_pvalues': -_format_metrics(adjusted_pvalues_results)}
+            'adjusted_pvalues': _format_metrics(adjusted_pvalues_results)}
