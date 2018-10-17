@@ -267,7 +267,7 @@ class ModelSearchCV(GridSearchCV):
                  cv=None,
                  error_score='raise',
                  return_train_score=_RETURN_TRAIN_SCORE_DEFAULT,
-                 scheduler=None,
+                 scheduler='multiprocessing',
                  n_jobs=-1,
                  cache_cv=True,
                  verbose=True):
