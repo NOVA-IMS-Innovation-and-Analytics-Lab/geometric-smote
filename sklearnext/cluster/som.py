@@ -169,7 +169,6 @@ class SOM(BaseEstimator, ClusterMixin):
             # Set number of columns and rows from number of clusters
             if self.n_clusters is not None:
                 self.n_columns_ = self.n_rows_ = int(self.n_clusters * (np.sqrt(len(X)) - 2) + 2)
-                print(self.n_columns_, self.n_rows_)
             else:
                 self.n_columns_, self.n_rows_ = self.n_columns, self.n_rows
 
