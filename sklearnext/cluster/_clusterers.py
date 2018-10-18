@@ -24,3 +24,57 @@ class KMeans(cluster.KMeans):
         self.set_params(n_clusters=n_clusters)
         
         return self
+
+
+class AgglomerativeClustering(cluster.AgglomerativeClustering):
+
+    def fit(self, X, y=None):
+        
+        # Modify number of clusters
+        n_clusters = self.n_clusters
+        if isinstance(self.n_clusters, float) and self.n_clusters <= 1.0:
+            self.n_clusters_ = self.n_clusters = int(self.n_clusters * (len(X) - 1) + 1)
+
+        # Call superclass method
+        super(AgglomerativeClustering, self).fit(X, y)
+
+        # Restore number of clusters
+        self.set_params(n_clusters=n_clusters)
+        
+        return self
+
+
+class Birch(cluster.Birch):
+
+    def fit(self, X, y=None):
+        
+        # Modify number of clusters
+        n_clusters = self.n_clusters
+        if isinstance(self.n_clusters, float) and self.n_clusters <= 1.0:
+            self.n_clusters_ = self.n_clusters = int(self.n_clusters * (len(X) - 1) + 1)
+
+        # Call superclass method
+        super(Birch, self).fit(X, y)
+
+        # Restore number of clusters
+        self.set_params(n_clusters=n_clusters)
+        
+        return self
+
+
+class SpectralClustering(cluster.SpectralClustering):
+
+    def fit(self, X, y=None):
+        
+        # Modify number of clusters
+        n_clusters = self.n_clusters
+        if isinstance(self.n_clusters, float) and self.n_clusters <= 1.0:
+            self.n_clusters_ = self.n_clusters = int(self.n_clusters * (len(X) - 1) + 1)
+
+        # Call superclass method
+        super(SpectralClustering, self).fit(X, y)
+
+        # Restore number of clusters
+        self.set_params(n_clusters=n_clusters)
+        
+        return self

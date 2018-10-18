@@ -27,6 +27,10 @@ class SOM(BaseEstimator, ClusterMixin):
     n_rows : int, default: 5
         The number of rows in the map.
 
+    n_clusters : float, default: None
+        The proportion of clusters relative to the number of samples of the input 
+        space. If this is not None then `n_columns` and `n_rows` are ignored.
+
     initialcodebook : 2D numpy.array of float32 or None, default: None
         Define the codebook to start the training.
 
@@ -78,13 +82,14 @@ class SOM(BaseEstimator, ClusterMixin):
 
     _attributes = ['train', 'codebook', 'bmus']
 
-    def __init__(self, n_columns=5, n_rows=5, initialcodebook=None,
+    def __init__(self, n_columns=5, n_rows=5, n_clusters=None, initialcodebook=None,
                  kerneltype=0, maptype="planar", gridtype="rectangular",
                  compactsupport=True, neighborhood="gaussian", std_coeff=0.5,
                  initialization=None, verbose=0):
 
         self.n_columns = n_columns
         self.n_rows = n_rows
+        self.n_clusters = n_clusters
         self.initialcodebook = initialcodebook
         self.kerneltype = kerneltype
         self.maptype = maptype
@@ -119,7 +124,7 @@ class SOM(BaseEstimator, ClusterMixin):
             topological_neighbors += [(col - offset, row - offset), (col - offset, row + offset)]
 
         # Apply constraints
-        topological_neighbors = [(col, row) for col, row in topological_neighbors if 0 <= col < self.n_columns and 0 <= row < self.n_rows and [col, row] in self.algorithm_.bmus.tolist()]
+        topological_neighbors = [(col, row) for col, row in topological_neighbors if 0 <= col < self.n_columns_ and 0 <= row < self.n_rows_ and [col, row] in self.algorithm_.bmus.tolist()]
         
         return topological_neighbors
     
@@ -161,7 +166,15 @@ class SOM(BaseEstimator, ClusterMixin):
         # Initialize Somoclu object
         if not hasattr(self, 'algorithm_'):
 
-            self.algorithm_ = Somoclu(n_columns=self.n_columns, n_rows=self.n_rows, initialcodebook=self.initialcodebook,
+            # Set number of columns and rows from number of clusters
+            if self.n_clusters is not None:
+                self.n_columns_ = self.n_rows_ = int(self.n_clusters * (np.sqrt(len(X)) - 2) + 2)
+                print(self.n_columns_, self.n_rows_)
+            else:
+                self.n_columns_, self.n_rows_ = self.n_columns, self.n_rows
+
+            # Create object
+            self.algorithm_ = Somoclu(n_columns=self.n_columns_, n_rows=self.n_rows_, initialcodebook=self.initialcodebook,
                                 kerneltype=self.kerneltype, maptype=self.maptype, gridtype=self.gridtype,
                                 compactsupport=self.compactsupport, neighborhood=self.neighborhood, 
                                 std_coeff=self.std_coeff, initialization=self.initialization, data=None, 
