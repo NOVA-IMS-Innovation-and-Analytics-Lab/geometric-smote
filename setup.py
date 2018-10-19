@@ -12,7 +12,6 @@ setup(
         'scikit-learn',
         'imbalanced-learn',
         'dask_ml',
-        'somoclu',
         'progressbar2'
     ]
 )
