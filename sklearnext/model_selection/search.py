@@ -93,7 +93,7 @@ return_train_score : boolean, default=True
     deprecated, and a warning will be raised when accessing train score results
     without explicitly asking for train scores.
 
-scheduler : string, callable, Client, or None, default='multiprocessing'
+scheduler : string, callable, Client, or None, default=None
     The dask scheduler to use. Default is to use the global scheduler if set,
     and fallback to the threaded scheduler otherwise. To use a different
     scheduler either specify it by name (either "threading", "multiprocessing",
@@ -267,7 +267,7 @@ class ModelSearchCV(GridSearchCV):
                  cv=None,
                  error_score='raise',
                  return_train_score=_RETURN_TRAIN_SCORE_DEFAULT,
-                 scheduler='multiprocessing',
+                 scheduler=None,
                  n_jobs=-1,
                  cache_cv=True,
                  verbose=True):
