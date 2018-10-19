@@ -93,7 +93,7 @@ return_train_score : boolean, default=True
     deprecated, and a warning will be raised when accessing train score results
     without explicitly asking for train scores.
 
-scheduler : string, callable, Client, or None, default=None
+scheduler : string, callable, Client, or None, default='multiprocessing'
     The dask scheduler to use. Default is to use the global scheduler if set,
     and fallback to the threaded scheduler otherwise. To use a different
     scheduler either specify it by name (either "threading", "multiprocessing",
