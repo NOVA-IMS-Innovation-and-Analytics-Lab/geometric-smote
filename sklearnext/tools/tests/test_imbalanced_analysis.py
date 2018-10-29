@@ -6,8 +6,8 @@ import pytest
 import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import StratifiedKFold, ParameterGrid
 from imblearn.over_sampling import RandomOverSampler, SMOTE, ADASYN
 
@@ -28,8 +28,8 @@ OVERSAMPLERS = [
     ('adasyn', ADASYN(), {'n_neighbors': [2, 3, 4]})
 ]
 CLASSIFIERS = [
-    ('lr', LogisticRegression()),
-    ('svc', SVC(), {'C': [0.1, 1.0]})
+    ('knn', KNeighborsClassifier()),
+    ('dtc', DecisionTreeClassifier(), {'max_depth': [3, 5]})
 ]
 N_RUNS = 3
 ESTIMATORS, PARAM_GRIDS = check_oversamplers_classifiers(OVERSAMPLERS, CLASSIFIERS, n_runs=N_RUNS, random_state=0).values()

@@ -4,8 +4,8 @@ Test the model_analysis module.
 
 import pytest
 from numpy.testing import assert_array_equal
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.datasets import make_classification
@@ -15,11 +15,11 @@ from ...model_selection import ModelSearchCV
 
 X_clf, y_clf = make_classification()
 CLASSIFIERS = [
-    ('logr', LogisticRegression()),
-    ('svc', SVC()),
-    ('clf_pip', Pipeline([('scaler', MinMaxScaler()), ('lr', LogisticRegression())]))
+    ('knn', KNeighborsClassifier()),
+    ('dtc', DecisionTreeClassifier()),
+    ('pip', Pipeline([('scaler', MinMaxScaler()), ('knn', KNeighborsClassifier())]))
 ]
-CLASSIFIERS_PARAM_GRIDS = {'svc__C': [0.01, 0.1, 1.0], 'svc__kernel': ['rbf', 'linear']}
+CLASSIFIERS_PARAM_GRIDS = {'dtc__max_depth': [2, 5], 'pip__knn__n_neighbors': [3, 5]}
 BASIC_COLUMNS = ['models', 'params', 'mean_fit_time']
 
 
