@@ -4,7 +4,7 @@ Test the estimators module.
 
 import pytest
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from sklearn.svm import SVR, SVC
+from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.datasets import make_regression, make_classification
@@ -16,20 +16,20 @@ X_reg, y_reg = make_regression()
 X_clf, y_clf = make_classification()
 REGRESSORS = [
     ('linr', LinearRegression()),
-    ('svr', SVR()),
+    ('dtr', DecisionTreeRegressor()),
     ('reg_pip', Pipeline([('scaler', MinMaxScaler()), ('lr', LinearRegression())]))
 ]
 CLASSIFIERS = [
     ('logr', LogisticRegression()),
-    ('svc', SVC()),
+    ('dtc', DecisionTreeClassifier()),
     ('clf_pip', Pipeline([('scaler', MinMaxScaler()), ('lr', LogisticRegression())]))
 ]
 REGRESSORS_PARAM_GRIDS = [
     {'linr__normalize': [True, False], 'linr__fit_intercept': [True, False]},
-    {'svr__C': [0.01, 0.1, 1.0], 'svr__kernel': ['rbf', 'linear']},
+    {'dtr__max_depth': [3, 5]},
     {'reg_pip__scaler__feature_range': [(0, 1), (0, 10)], 'reg_pip__lr__normalize': [True, False]}
 ]
-CLASSIFIERS_PARAM_GRIDS = {'svc__C': [0.01, 0.1, 1.0], 'svc__kernel': ['rbf', 'linear']}
+CLASSIFIERS_PARAM_GRIDS = {'dtc__max_depth': [3, 5]}
 
 
 def _generate_expected_params(estimators):
@@ -45,7 +45,7 @@ def _generate_expected_params(estimators):
 @pytest.mark.parametrize('estimators', [
     (None),
     ([]),
-    ([('est', LinearRegression()), ('est', SVR())])
+    ([('est', LinearRegression()), ('est', DecisionTreeRegressor())])
 ])
 def test_parametrized_estimators_initialization(estimators):
     """Test the initialization of parametrized estimators class."""
@@ -55,7 +55,7 @@ def test_parametrized_estimators_initialization(estimators):
 
 @pytest.mark.parametrize('estimators,updated_params', [
     (REGRESSORS, {'linr': LinearRegression(fit_intercept=False)}),
-    (REGRESSORS, {'svr': SVR(C=2.0)}),
+    (REGRESSORS, {'dtr': DecisionTreeRegressor(max_depth=6)}),
 ])
 def test_parametrized_estimators_params_methods(estimators, updated_params):
     """Test the set and get parameters methods."""
@@ -66,9 +66,9 @@ def test_parametrized_estimators_params_methods(estimators, updated_params):
 
 @pytest.mark.parametrize('estimators,est_name,X,y', [
     (REGRESSORS, 'linr', X_reg, y_reg),
-    (REGRESSORS, 'svr', X_reg, y_reg),
+    (REGRESSORS, 'dtr', X_reg, y_reg),
     (REGRESSORS, 'reg_pip', X_reg, y_reg),
-    (CLASSIFIERS, 'svc', X_clf, y_clf),
+    (CLASSIFIERS, 'dtc', X_clf, y_clf),
 ])
 def test_parametrized_estimators_fitting(estimators, est_name, X, y):
     """Test parametrized estimators fitting process."""
