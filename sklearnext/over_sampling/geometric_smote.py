@@ -8,8 +8,9 @@ the implementation of the Geometric SMOTE oversampler.
 
 import numpy as np
 from numpy.linalg import norm
-from imblearn.utils import check_neighbors_object
 from sklearn.utils import check_random_state, safe_indexing
+from imblearn.utils import check_neighbors_object, Substitution
+from imblearn.utils._docstring import _random_state_docstring
 
 from .base import BaseClusterOverSampler
 
@@ -50,36 +51,17 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     return point
 
 
+@Substitution(
+    sampling_strategy=BaseClusterOverSampler._sampling_strategy_docstring,
+    random_state=_random_state_docstring)
 class GeometricSMOTE(BaseClusterOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
     Parameters
     ----------
-    ratio : str, dict, or callable, optional (default='auto')
-        Ratio to use for resampling the data set.
+    {sampling_strategy}
 
-        - If ``str``, has to be one of: (i) ``'minority'``: resample the
-          minority class; (ii) ``'majority'``: resample the majority class,
-          (iii) ``'not minority'``: resample all classes apart of the minority
-          class, (iv) ``'all'``: resample all classes, and (v) ``'auto'``:
-          correspond to ``'all'`` with for over-sampling methods and ``'not
-          minority'`` for under-sampling methods. The classes targeted will be
-          over-sampled or under-sampled to achieve an equal number of sample
-          with the majority or minority class.
-        - If ``dict``, the keys correspond to the targeted classes. The values
-          correspond to the desired number of samples.
-        - If callable, function taking ``y`` and returns a ``dict``. The keys
-          correspond to the targeted classes. The values correspond to the
-          desired number of samples.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, ``random_state`` is the seed used by the random number
-        generator; If ``RandomState`` instance, random_state is the random
-        number generator; If ``None``, the random number generator is the
-        ``RandomState`` instance used by ``np.random``.
-    
-    categorical_cols : list, optional (default=None)
-        The indices of categorical columns.
+    {random_state}
 
     clusterer : Clusterer object, optional (default=None)
         A clustering algorithm that is used to generate new samples 
@@ -111,19 +93,17 @@ class GeometricSMOTE(BaseClusterOverSampler):
     """
 
     def __init__(self,
-                 ratio='auto',
-                 random_state=None,
-                 categorical_cols=None,
+                 sampling_strategy='auto',
                  clusterer=None,
                  distributor=None,
+                 random_state=None,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
                  k_neighbors=5,
                  n_jobs=1):
-        super(GeometricSMOTE, self).__init__(ratio=ratio, random_state=random_state, 
-                                             categorical_cols=categorical_cols, clusterer=clusterer,
-                                             distributor=distributor)
+        super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy, clusterer=clusterer, distributor=distributor)
+        self.random_state = random_state
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
@@ -241,7 +221,7 @@ class GeometricSMOTE(BaseClusterOverSampler):
         X_resampled, y_resampled = X.copy(), y.copy()
 
         # Resample data
-        for class_label, n_samples in self.ratio_.items():
+        for class_label, n_samples in self.sampling_strategy_.items():
             
             # Apply gsmote mechanism
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)

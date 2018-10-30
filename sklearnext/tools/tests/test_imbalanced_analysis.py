@@ -24,7 +24,7 @@ X2, y2 = make_classification(weights=[0.80, 0.20], n_samples=100, n_features=10,
 DATASETS = [('A',(X1, y1)), ('B', (X2, y2))]
 OVERSAMPLERS = [
     ('random', RandomOverSampler()),
-    ('smote', SMOTE(), {'k_neighbors': [2, 3], 'kind': ['regular', 'borderline1']}),
+    ('smote', SMOTE(), {'k_neighbors': [2, 3]}),
     ('adasyn', ADASYN(), {'n_neighbors': [2, 3, 4]})
 ]
 CLASSIFIERS = [

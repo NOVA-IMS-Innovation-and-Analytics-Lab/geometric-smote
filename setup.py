@@ -8,10 +8,11 @@ setup(
     install_requires=[
         'scipy==1.1.0',
         'statsmodels==0.8.0',
-        'numpy==1.14.5',
-        'pandas==0.23.1',
-        'scikit-learn==0.19.1',
-        'imbalanced-learn==0.3.3',
+        'numpy==1.15.3',
+        'pandas==0.23.4',
+        'scikit-learn==0.20.0',
+        'imbalanced-learn==0.4.2',
+        'somoclu==1.7.5',
         'dask-searchcv==0.2.0',
         'progressbar2==3.38.0'
     ]

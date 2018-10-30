@@ -7,7 +7,7 @@ the clustering base class for oversampling.
 # License: BSD 3 clause
 
 from abc import abstractmethod
-from collections import Counter
+from collections import Counter, OrderedDict
 
 import numpy as np
 from sklearn.base import clone
@@ -21,35 +21,20 @@ from .distribution import DensityDistributor
 
 class BaseClusterOverSampler(BaseOverSampler):
     """An extension of the base class for over-sampling algorithms to
-    handle integer and categorical features as well as clustering based 
-    oversampling.
+    handle clustering based oversampling.
 
     Warning: This class should not be used directly. Use the derive classes
     instead.
     """
 
     def __init__(self,
-                 ratio='auto',
-                 random_state=None,
-                 sampling_type=None,
-                 categorical_cols=None,
+                 sampling_strategy='auto',
                  clusterer=None,
-                 distributor=None):
-        super(BaseClusterOverSampler, self).__init__(ratio, random_state, sampling_type)
-        self.categorical_cols = categorical_cols
+                 distributor=None,
+                 ratio=None):
+        super(BaseClusterOverSampler, self).__init__(sampling_strategy, ratio)
         self.clusterer = clusterer
         self.distributor = distributor
-
-    def _validate_categorical_cols(self, max_col_index):
-        """Validate categorical columns."""
-        if self.categorical_cols is not None:
-            wrong_type = not isinstance(self.categorical_cols, (list, tuple)) or len(self.categorical_cols) == 0              
-            wrong_range = not set(range(max_col_index)).issuperset(self.categorical_cols)
-            error_msg = 'Selected categorical columns should be in the {} range. Got {} instead.'
-            if wrong_type:    
-                raise TypeError(error_msg.format([0, max_col_index - 1], self.categorical_cols))
-            elif wrong_range:
-                raise ValueError(error_msg.format([0, max_col_index - 1], self.categorical_cols))
 
     def _apply_clustering_distribution(self, X, y, **fit_params):
         """Apply clustering on the input space and distribute generated samples."""
@@ -81,8 +66,8 @@ class BaseClusterOverSampler(BaseOverSampler):
         if n_minority_samples == 1:
             initial_attributes['_basic_sample'] = self._basic_sample
             random_oversampler = RandomOverSampler()
-            random_oversampler.ratio_ = self.ratio_.copy()
-            self._basic_sample = random_oversampler._sample
+            random_oversampler.sampling_strategy_ = self.sampling_strategy_.copy()
+            self._basic_sample = random_oversampler._fit_resample
         
         # Decrease number of nearest neighbors
         elif hasattr(self, 'k_neighbors') and n_minority_samples <= self.k_neighbors:
@@ -91,38 +76,11 @@ class BaseClusterOverSampler(BaseOverSampler):
         elif hasattr(self, 'n_neighbors') and n_minority_samples <= self.n_neighbors:
             initial_attributes['n_neighbors'] = self.n_neighbors
             self.n_neighbors = n_minority_samples - 1
-        if n_minority_samples > 1 and hasattr(self, 'm_neighbors') and n_samples <= self.m_neighbors:
+        if n_minority_samples > 1 and hasattr(self, 'm_neighbors') and self.m_neighbors != 'deprecated' and n_samples <= self.m_neighbors:
             initial_attributes['m_neighbors'] = self.m_neighbors
             self.m_neighbors = n_samples - 1
 
         return initial_attributes
-
-    def fit(self, X, y, **fit_params):
-        """Find the classes statistics before to perform sampling.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-
-        y : array-like, shape (n_samples,)
-            Corresponding label for each sample in X.
-
-        Returns
-        -------
-        self : object,
-            Return self.
-
-        """
-        super(BaseClusterOverSampler, self).fit(X, y)
-
-        # Validate categorical columns
-        self._validate_categorical_cols(X.shape[1])
-
-        # Cluster input space and distribute samples
-        self._apply_clustering_distribution(X, y, **fit_params)
-
-        return self
 
     @abstractmethod
     def _basic_sample(self, X, y):
@@ -146,7 +104,7 @@ class BaseClusterOverSampler(BaseOverSampler):
         """
         pass
 
-    def _intra_sample(self, X, y, initial_ratio):
+    def _intra_sample(self, X, y, initial_sampling_strategy):
         """Intracluster resampling."""
 
         # Initialize arrays of new data
@@ -154,7 +112,7 @@ class BaseClusterOverSampler(BaseOverSampler):
         y_new = np.array([], dtype=y.dtype)
         
         # Intracluster oversampling
-        self.intra_ratios_ = []
+        self.intra_sampling_strategies_ = []
         for label, proportion in self.distributor_.intra_distribution_:
             
             # Filter data in cluster
@@ -164,22 +122,26 @@ class BaseClusterOverSampler(BaseOverSampler):
             else:
                 X_in_cluster, y_in_cluster = X, y
 
-            # Calculate ratio in the cluster
-            cluster_ratio = {class_label: (round(n_samples * proportion) if class_label in y_in_cluster else 0)
-                             for class_label, n_samples in initial_ratio.items()}
-
+            # Calculate sampling strategy in the cluster
+            cluster_sampling_strategy = OrderedDict(
+                {
+                    class_label: (int(n_samples * proportion) if class_label in y_in_cluster else 0) 
+                    for class_label, n_samples in initial_sampling_strategy.items()
+                }
+            )
+            
             # Count in cluster target variable
             y_cluster_count = Counter(y_in_cluster)
 
             # Resample data
-            for class_label, n_samples in cluster_ratio.items():
+            for class_label, n_samples in cluster_sampling_strategy.items():
 
                 # Continue for no samples
                 if n_samples == 0:
                     continue
 
-                # Modify ratio
-                self.ratio_ = {class_label: n_samples}
+                # Modify sampling strategy
+                self.sampling_strategy_ = OrderedDict({class_label: n_samples})
                 
                 # Number of samples
                 n_minority_samples = y_cluster_count[class_label]
@@ -196,19 +158,19 @@ class BaseClusterOverSampler(BaseOverSampler):
                 for attribute, value in initial_attributes.items():
                     setattr(self, attribute, value)
             
-            # Append intracluster ratio
-            self.intra_ratios_.append((label, self.ratio_.copy()))
+            # Append intracluster sampling strategy
+            self.intra_sampling_strategies_.append((label, self.sampling_strategy_.copy()))
         
-        # Restore initial ratio
-        self.ratio_ = initial_ratio
+        # Restore initial sampling strategy
+        self.sampling_strategy_ = initial_sampling_strategy
 
         return X_new, y_new
 
-    def _inter_sample(self, X, y, initial_ratio):
+    def _inter_sample(self, X, y, initial_sampling_strategy):
         """Intercluster resampling."""
 
         # Random state
-        random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state if hasattr(self, 'random_state') else None)
 
         # Initialize arrays of new data
         X_new = np.array([], dtype=X.dtype).reshape(0, X.shape[1])
@@ -223,23 +185,26 @@ class BaseClusterOverSampler(BaseOverSampler):
             return X_new, y_new
 
         # Intercluster oversampling
-        self.inter_ratios_ = []
+        self.inter_sampling_strategies_ = []
         for (label1, label2), proportion in self.distributor_.inter_distribution_:
             
             # Filter data in cluster 1 and cluster 2
             mask1, mask2 = (self.clusterer_.labels_ == label1), (self.clusterer_.labels_ == label2)
             X_in_cluster1, y_in_cluster1, X_in_cluster2, y_in_cluster2 = X[mask1], y[mask1], X[mask2], y[mask2]
 
-            # Calculate ratio in the clusters
-            clusters_ratio = {class_label: (round(n_samples * proportion) 
-                              if class_label in y_in_cluster1 and class_label in y_in_cluster2 else 0)
-                              for class_label, n_samples in initial_ratio.items()}
+            # Calculate sampling strategy in the clusters
+            clusters_sampling_strategy = OrderedDict(
+                {
+                    class_label: (int(n_samples * proportion) if class_label in y_in_cluster1 and class_label in y_in_cluster2 else 0)
+                    for class_label, n_samples in initial_sampling_strategy.items()
+                }
+            )
 
             # Resample data
-            for class_label, n_samples in clusters_ratio.items():
+            for class_label, n_samples in clusters_sampling_strategy.items():
 
-                # Modify ratio
-                self.ratio_ = {class_label: 1}
+                # Modify sampling strategy
+                self.sampling_strategy_ = {class_label: 1}
 
                 for _ in range(n_samples):
                     
@@ -277,13 +242,13 @@ class BaseClusterOverSampler(BaseOverSampler):
                     for attribute, value in initial_attributes.items():
                         setattr(self, attribute, value)
 
-        # Restore initial ratio
-        self.ratio_ = initial_ratio
+        # Restore initial sampling strategy
+        self.sampling_strategy_ = initial_sampling_strategy
 
         return X_new, y_new
 
 
-    def _sample(self, X, y):
+    def _fit_resample(self, X, y, **fit_params):
         """Resample the dataset.
 
         Parameters
@@ -303,14 +268,17 @@ class BaseClusterOverSampler(BaseOverSampler):
             The corresponding label of `X_resampled`
         """
 
-        # Inital ratio
-        initial_ratio = self.ratio_.copy()
+        # Cluster input space and distribute samples
+        self._apply_clustering_distribution(X, y, **fit_params)
+
+        # Inital sampling strategy
+        initial_sampling_strategy = self.sampling_strategy_.copy()
 
         # Intracluster oversampling
-        X_intra_new, y_intra_new = self._intra_sample(X, y, initial_ratio)
+        X_intra_new, y_intra_new = self._intra_sample(X, y, initial_sampling_strategy)
         
         # Intercluster oversampling
-        X_inter_new, y_inter_new = self._inter_sample(X, y, initial_ratio)
+        X_inter_new, y_inter_new = self._inter_sample(X, y, initial_sampling_strategy)
 
         # Stack resampled data
         X_resampled, y_resampled = np.vstack((X, X_intra_new, X_inter_new)), np.hstack((y, y_intra_new, y_inter_new))

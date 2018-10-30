@@ -10,8 +10,7 @@ import numpy as np
 from sklearn.utils import indices_to_mask
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_array, check_random_state
 from sklearn.feature_selection.univariate_selection import _BaseFilter
-from imblearn.base import SamplerMixin
-from imblearn.utils import hash_X_y
+from imblearn.base import BaseSampler
 
 
 def _generate_zero_scores(X, y):
@@ -47,59 +46,38 @@ class FeatureSelector(_BaseFilter):
         return mask
 
 
-class RowSelector(SamplerMixin):
+class RowSelector(BaseSampler):
     """Select rows according to a defined percentage.
 
         Parameters
         ----------
         ratio : float, optional (default=None)
             The ratio of samples to keep. The values should be in the [0.0, 1.0] range.
-        random_state : str, int, RandomState instance or None, optional (default=None)
+        selection_strategy : str, int, RandomState instance or None, optional (default=None)
             If str, valid choices are 'head' or 'tail' where the first or last samples
             are used respectively. If int, ``random_state`` is the seed used by
             the random number generator; If ``RandomState`` instance, random_state
             is the random number generator; If ``None``, the random number generator
             is the ``RandomState`` instance used by ``np.random``.
         """
+    
+    _sampling_type = 'under-sampling'
 
-    def __init__(self, ratio=None, random_state=None):
-        self.ratio = ratio
-        self.random_state = random_state
+    def __init__(self, sampling_strategy=None, selection_strategy=None, ratio=None):
+        super().__init__(sampling_strategy=sampling_strategy, ratio=ratio)
+        self.selection_strategy = selection_strategy
 
-    def fit(self, X, y=None):
-        """Save the initial input matrix and the number of samples
-        to be removed.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-
-        y : array-like, shape (n_samples,)
-            Corresponding label for each sample in X.
-
-        Returns
-        -------
-        self : object,
-            Return self.
-        """
-        
-        # Check input data
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
-
-        # Calculate the number of samples to keep
-        if self.ratio is not None and self.ratio != 1.0:
-            self.ratio_ = self.ratio
-            self.n_samples_ = int(self.ratio_ * len(X))
-        else:
-            self.ratio_ = None
-
-        # Calculate hash values for input data
-        self.X_hash_, self.y_hash_ = hash_X_y(X, y)
-
+    def fit(self, X, y):
+        X, y = check_X_y(X, y, dtype=None)
         return self
 
-    def _sample(self, X, y):
+    def fit_resample(self, X, y):
+        return self._fit_resample(X, y)
+    
+    #  define an alias for back-compatibility
+    fit_sample = fit_resample
+
+    def _fit_resample(self, X, y):
         """Remove samples from input matrix.
 
         Parameters
@@ -119,28 +97,29 @@ class RowSelector(SamplerMixin):
             The corresponding rows of `X_resampled`
         """
 
-        # Return the initial input data
-        if self.ratio_ is None:
-            return X.copy(), y.copy()
+        self.fit(X, y)
+
+        # Calculate the number of samples to keep
+        if self.sampling_strategy is not None and self.sampling_strategy != 1.0:
+            self.sampling_strategy_ = self.sampling_strategy
+            self.n_samples_ = int(self.sampling_strategy_ * len(X))
+        else:
+            return X.copy(), y.copy()    
         
         # Return the first rows
-        if self.random_state == 'head':
+        if self.selection_strategy == 'head':
             X_resampled = X[:self.n_samples_].copy()
             y_resampled = y[:self.n_samples_].copy()
 
         # Return the last rows
-        elif self.random_state == 'tail':
+        elif self.selection_strategy == 'tail':
             X_resampled = X[-self.n_samples_:].copy()
             y_resampled = y[-self.n_samples_:].copy()
 
         # Return rows randomly
         else:
-            indices = check_random_state(self.random_state).randint(0, len(X), self.n_samples_)
+            indices = check_random_state(self.selection_strategy).randint(0, len(X), self.n_samples_)
             X_resampled = X[indices].copy()
             y_resampled = y[indices].copy()
             
         return X_resampled, y_resampled
-
-
-
-

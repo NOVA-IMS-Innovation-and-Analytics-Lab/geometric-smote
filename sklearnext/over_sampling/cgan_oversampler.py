@@ -9,6 +9,8 @@ Adversarial Network as an oversampling algorithm.
 
 import numpy as np
 from sklearn.utils import check_random_state
+from imblearn.utils import Substitution
+from imblearn.utils._docstring import _random_state_docstring
 
 from .base import BaseClusterOverSampler
 
@@ -17,6 +19,9 @@ class CGAN:
     pass
 
 
+@Substitution(
+    sampling_strategy=BaseClusterOverSampler._sampling_strategy_docstring,
+    random_state=_random_state_docstring)
 class CGANOversampler(BaseClusterOverSampler):
     """Class to perform oversampling using a
     Conditional Generative Adversarial Network as
@@ -24,20 +29,9 @@ class CGANOversampler(BaseClusterOverSampler):
 
     Parameters
     ----------
-    ratio : str or float, optional (default='auto')
-        If 'auto', the ratio will be defined automatically to balance
-        the dataset. Otherwise, the ratio is defined as the number
-        of samples in the minority class over the the number of samples
-        in the majority class.
+    {sampling_strategy}
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by np.random.
-
-    categorical_cols : list, optional (default=None)
-        The indices of categorical columns.
+    {random_state}
 
     clusterer : Clusterer object, optional (default=None)
         A clustering algorithm that is used to generate new samples 
@@ -87,9 +81,8 @@ class CGANOversampler(BaseClusterOverSampler):
     """
 
     def __init__(self,
-                 ratio='auto',
-                 random_state=None,
-                 categorical_cols=None, 
+                 sampling_strategy='auto',
+                 random_state=None, 
                  clusterer=None,
                  distributor=None,
                  n_Z_features=None,
@@ -102,8 +95,9 @@ class CGANOversampler(BaseClusterOverSampler):
                  nb_epoch=None,
                  batch_size=None,
                  discriminator_steps=1):
-        super(CGANOversampler, self).__init__(ratio=ratio, random_state=random_state, categorical_cols=categorical_cols, 
+        super(CGANOversampler, self).__init__(sampling_strategy=sampling_strategy, 
                                               clusterer=clusterer, distributor=distributor)
+        self.random_state = random_state
         self.n_Z_features = n_Z_features
         self.discriminator_hidden_layers = discriminator_hidden_layers
         self.generator_hidden_layers = generator_hidden_layers
