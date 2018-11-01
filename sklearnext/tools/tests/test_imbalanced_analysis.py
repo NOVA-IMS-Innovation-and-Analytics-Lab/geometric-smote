@@ -35,7 +35,7 @@ N_RUNS = 3
 ESTIMATORS, PARAM_GRIDS = check_oversamplers_classifiers(OVERSAMPLERS, CLASSIFIERS, n_runs=N_RUNS, random_state=0).values()
 MSCV = ModelSearchCV(ESTIMATORS, PARAM_GRIDS, scoring=None, iid=True, refit=False,
                     cv=StratifiedKFold(n_splits=3, shuffle=True, random_state=0), error_score='raise',
-                    return_train_score=False, scheduler=None, n_jobs=-1, cache_cv=True, verbose=False)
+                    return_train_score=False, n_jobs=-1)
 
 
 def test_summarize_binary_datasets():

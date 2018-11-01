@@ -10,7 +10,6 @@ from .validation import (
     check_estimator_type,
     check_oversamplers_classifiers
 )
-from .estimators import _ParametrizedClassifiers, _ParametrizedRegressors
 
 __all__ = [
     'check_param_grids',
@@ -19,6 +18,4 @@ __all__ = [
     'check_estimators',
     'check_estimator_type',
     'check_oversamplers_classifiers',
-    '_ParametrizedClassifiers',
-    '_ParametrizedRegressors'
 ]

@@ -18,7 +18,6 @@ from statsmodels.stats.multitest import multipletests
 from sklearn.model_selection import StratifiedKFold
 
 from ..utils import check_datasets, check_oversamplers_classifiers
-from ..utils.estimators import _ParametrizedEstimatorsMixin
 from ..metrics import SCORERS
 from ..model_selection import ModelSearchCV
 
@@ -99,12 +98,6 @@ def _define_binary_experiment_parameters(model_search_cv):
     return scoring, scoring_cols, estimator_type
 
 
-def _set_verbose_attributes(ind, dataset_name, datasets):
-    """Set attributes used when experimental procedure is verbose."""
-    for attribute, value in zip(['ind', 'dataset_name', 'n_datasets'], [ind, dataset_name, len(datasets)]):
-        setattr(_ParametrizedEstimatorsMixin, attribute, value)
-
-
 def _calculate_results(model_search_cv, datasets, scoring_cols, verbose):
     """Calculates the results of binary imbalanced experiments."""
 
@@ -113,10 +106,6 @@ def _calculate_results(model_search_cv, datasets, scoring_cols, verbose):
 
     # Populate results table
     for ind, (dataset_name, (X, y)) in enumerate(datasets):
-
-        # set verbose attributes
-        if verbose:
-            _set_verbose_attributes(ind, dataset_name, datasets)
         
         # Fit model search
         model_search_cv.fit(X, y)
@@ -294,7 +283,7 @@ def _format_metrics(results):
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
                                            control_oversampler=None, n_splits=3, n_runs=3, random_state=None,
-                                           verbose=True, scheduler=None, n_jobs=-1, cache_cv=True):
+                                           verbose=0, n_jobs=-1):
 
     # Extract estimators and parameter grids
     estimators, param_grids = check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_state).values()
@@ -304,11 +293,8 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
                          iid=True,
                          refit=False,
                          cv=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state),
-                         error_score='raise',
                          return_train_score=False,
-                         scheduler=scheduler,
                          n_jobs=n_jobs,
-                         cache_cv=cache_cv,
                          verbose=verbose)
 
     # Define experiment parameters
