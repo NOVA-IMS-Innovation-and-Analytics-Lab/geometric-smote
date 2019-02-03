@@ -193,9 +193,10 @@ def _calculate_wide_optimal_results(optimal_results, scoring, estimator_type):
     else:
         wide_optimal_results['Metric'] = 'accuracy' if estimator_type == 'classifier' else 'r2'
 
-    # Cast to categorical
+    # Cast column
     wide_optimal_results['Metric'] = pd.Categorical(wide_optimal_results['Metric'],
                                                     categories=scoring if isinstance(scoring, list) else None)
+
     return wide_optimal_results
 
 
@@ -220,7 +221,7 @@ def _calculate_ranking_results(wide_optimal_results):
     """Calculate the ranking of oversamplers for
     any combination of datasets, classifiers and
     metrics."""
-    ranking_results = wide_optimal_results.apply(lambda row: _return_row_ranking(row[3:], SCORERS[row[2]]._sign), axis=1)
+    ranking_results = wide_optimal_results.apply(lambda row: _return_row_ranking(row[3:], SCORERS[row[2].replace(' ', '_').lower()]._sign), axis=1)
     ranking_results = pd.concat([wide_optimal_results.iloc[:, :3], ranking_results], axis=1)
     return ranking_results
 
@@ -233,7 +234,7 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
     if len(ranking_results.columns) < 6:
         raise ValueError('Friedman test can not be applied. More than two oversampling methods are needed.')
 
-    # DEfine function that calculate p-value
+    # Define function that calculate p-value
     extract_pvalue = lambda df: friedmanchisquare(*df.iloc[:, 3:].transpose().values.tolist()).pvalue
     
     # Calculate p-values
@@ -242,6 +243,9 @@ def _calculate_friedman_test_results(ranking_results, alpha=0.05):
     
     # Compare p-values to significance level
     friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
+
+    # Format p-value
+    friedman_test_results['p-value'] = friedman_test_results['p-value'].apply(lambda p_value: '%.1e' % p_value)
 
     return friedman_test_results
 
@@ -268,17 +272,17 @@ def _calculate_adjusted_pvalues_results(wide_optimal_results, control_oversample
             lambda df: ttest_rel(df[name], df[control_oversampler])[1])
         pvalues_pair = pd.DataFrame(pvalues_pair, columns=[name])
         pvalues = pd.concat([pvalues, pvalues_pair], axis=1)
+    
+    # Corrected p-values
     corrected_pvalues = pd.DataFrame(pvalues.apply(
         lambda col: multipletests(col, method='holm')[1], axis=1).values.tolist(), columns=oversamplers_names)
     corrected_pvalues = corrected_pvalues.set_index(pvalues.index).reset_index()
     
+    # Format p-values
+    for name in oversamplers_names:
+        corrected_pvalues[name] = corrected_pvalues[name].apply(lambda pvalue: '%.1e' % pvalue)
+    
     return corrected_pvalues
-
-
-def _format_metrics(results):
-    """Pretty format the metric names."""
-    results['Metric'] = results['Metric'].replace('_', ' ', regex=True).apply(lambda metric: metric.upper())
-    return results
 
 
 def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, scoring=None, alpha=0.05,
@@ -316,8 +320,8 @@ def evaluate_binary_imbalanced_experiments(datasets, oversamplers, classifiers, 
 
     return {'aggregated': aggregated_results,
             'optimal': optimal_results,
-            'wide_optimal': _format_metrics(wide_optimal_results),
-            'ranking': _format_metrics(ranking_results),
-            'mean_ranking': _format_metrics(mean_ranking_results),
-            'friedman_test': _format_metrics(friedman_test_results),
-            'adjusted_pvalues': _format_metrics(adjusted_pvalues_results)}
+            'wide_optimal': wide_optimal_results,
+            'ranking': ranking_results,
+            'mean_ranking': mean_ranking_results,
+            'friedman_test': friedman_test_results,
+            'adjusted_pvalues': adjusted_pvalues_results}
