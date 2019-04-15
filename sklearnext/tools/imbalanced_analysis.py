@@ -24,25 +24,6 @@ from ..model_selection import ModelSearchCV
 GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
 
 
-def read_csv_dir(dirpath):
-    "Reads a directory of csv files and returns a dictionary of dataset-name:(X,y) pairs."
-    
-    # Define empty datasets list to return
-    datasets = []
-
-    # Read csv filenames
-    csv_files = [csv_file for csv_file in listdir(dirpath) if match('^.+\.csv$', csv_file)]
-    
-    # Populate datasets list
-    for csv_file in csv_files:
-        dataset = pd.read_csv(join(dirpath, csv_file))
-        X, y = dataset.iloc[:, :-1], dataset.iloc[:, -1]
-        dataset_name = sub(".csv", "", csv_file)
-        datasets.append((dataset_name, (X, y)))
-
-    return datasets
-
-
 def summarize_binary_datasets(datasets):
     """Creates a summary of the binary class
     imbalanced datasets."""
