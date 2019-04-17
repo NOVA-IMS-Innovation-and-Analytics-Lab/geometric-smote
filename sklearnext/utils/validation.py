@@ -113,7 +113,7 @@ def check_oversamplers_classifiers(oversamplers, classifiers, n_runs, random_sta
     # Populate parameters grids
     param_grids = []
     est_names, _ = zip(*estimators)
-    for (oversampler_param_grid , classifier_param_grid, run_id), random_state, est_name in \
+    for (oversampler_param_grid , classifier_param_grid, _), random_state, est_name in \
             zip(param_grids_products, random_states, est_names):
         param_grid = {}
         param_grid.update(oversampler_param_grid)
