@@ -27,11 +27,11 @@ GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
 class BinaryExperiment:
     """Define an experiment for binary classification on imbalanced datasets."""
 
-    def __init__(self, name, oversamplers, classifiers, datasets, scoring, n_splits, n_runs, random_state):
+    def __init__(self, name, datasets, oversamplers, classifiers, scoring, n_splits, n_runs, random_state):
         self.name = name
+        self.datasets = datasets
         self.oversamplers = oversamplers
         self.classifiers = classifiers
-        self.datasets = datasets
         self.scoring = scoring
         self.n_splits = n_splits
         self.n_runs = n_runs

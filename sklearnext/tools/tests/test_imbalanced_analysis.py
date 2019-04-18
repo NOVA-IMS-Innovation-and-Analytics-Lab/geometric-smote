@@ -31,7 +31,7 @@ CLASSIFIERS = [
     ('knn', KNeighborsClassifier()),
     ('dtc', DecisionTreeClassifier(), {'max_depth': [3, 5]})
 ]
-EXPERIMENT = BinaryExperiment('test_experiment', OVERSAMPLERS, CLASSIFIERS, DATASETS, 
+EXPERIMENT = BinaryExperiment('test_experiment', DATASETS, OVERSAMPLERS, CLASSIFIERS, 
                               scoring=None, n_splits=3, n_runs=3, random_state=0)
 
 
@@ -42,7 +42,7 @@ EXPERIMENT = BinaryExperiment('test_experiment', OVERSAMPLERS, CLASSIFIERS, DATA
 ])
 def test_experiment_initialization(scoring, n_runs):
     """Test the initialization of experiment's parameters."""
-    experiment = BinaryExperiment('test_experiment', OVERSAMPLERS, CLASSIFIERS, DATASETS, 
+    experiment = BinaryExperiment('test_experiment', DATASETS, OVERSAMPLERS, CLASSIFIERS, 
                                   scoring=scoring, n_splits=3, n_runs=n_runs, random_state=0)
     experiment._initialize(1, 0)
     if not isinstance(scoring, list):
@@ -57,7 +57,7 @@ def test_experiment_initialization(scoring, n_runs):
 
 def test_datasets_summary():
     """Test the dataset's summary."""
-    EXPERIMENT = BinaryExperiment('test_experiment', OVERSAMPLERS, CLASSIFIERS, DATASETS, 
+    EXPERIMENT = BinaryExperiment('test_experiment', DATASETS, OVERSAMPLERS, CLASSIFIERS, 
                                   scoring=None, n_splits=3, n_runs=3, random_state=0)
     EXPERIMENT.summarize_datasets()
     expected_datasets_summary = pd.DataFrame(
