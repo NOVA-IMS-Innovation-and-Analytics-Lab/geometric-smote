@@ -123,6 +123,8 @@ class BinaryExperiment:
         # Calculate aggregated mean and standard deviation
         scoring_mapping = {scorer_name: [np.mean, np.std] for scorer_name in self.scoring_cols_}
         self.results_ = results.groupby(GROUP_KEYS).agg(scoring_mapping)
+
+        return self
     
     def calculate_optimal_results(self):
         """"Calculate optimal results across hyperparameters for any combination of datasets, overamplers, classifiers and metrics."""
