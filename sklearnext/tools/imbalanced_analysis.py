@@ -217,8 +217,8 @@ class BinaryExperiment:
         ranking_results = self.wide_optimal_results_.apply(lambda row: self._return_row_ranking(row[3:], SCORERS[row[2].replace(' ', '_').lower()]._sign), axis=1)
         self.ranking_results_ = pd.concat([self.wide_optimal_results_.iloc[:, :3], ranking_results], axis=1)
     
-    def calculate_mean_ranking_results(self):
-        """Calculate the mean ranking of oversamplers 
+    def calculate_mean_std_ranking_results(self):
+        """Calculate the mean and std ranking of oversamplers 
         across datasets for any combination of classifiers 
         and metrics."""
 
@@ -227,7 +227,40 @@ class BinaryExperiment:
         if not hasattr(self, 'ranking_results_'):
             self.calculate_ranking_results()
 
-        self.mean_ranking_results_ = self.ranking_results_.groupby(['Classifier', 'Metric'], as_index=False).mean()
+        self.mean_ranking_results_ = self.ranking_results_.groupby(['Classifier', 'Metric']).mean().reset_index()
+        self.std_ranking_results_ = self.ranking_results_.groupby(['Classifier', 'Metric']).std().reset_index()
+
+    def calculate_mean_std_scores(self):
+        """Calculate mean and std scores across datasets."""
+
+        # Checks
+        self._check_results()
+        if not hasattr(self, 'wide_optimal_results_'):
+            self.calculate_wide_optimal_results()
+
+        # Calculate mean and std score
+        self.mean_scores_ = self.wide_optimal_results_.groupby(['Classifier', 'Metric']).mean().reset_index()
+        self.std_scores_ = self.wide_optimal_results_.groupby(['Classifier', 'Metric']).std().reset_index()
+
+    def calculate_perc_diff_mean_std_scores(self, oversamplers=None):
+        """Calculate percentage difference of mean scores"""
+
+        # Checks
+        self._check_results()
+        if not hasattr(self, 'mean_scores_'):
+            self.calculate_wide_optimal_results()
+        
+        # Extract oversamplers
+        basic, control, test = oversamplers if oversamplers is not None else self.mean_scores_.columns[-3:]
+
+        # Calculate percentage difference
+        scores = self.wide_optimal_results_[self.wide_optimal_results_[basic] > 0]
+        perc_diff_scores = pd.DataFrame((100 * (scores[test] - scores[control]) / scores[basic]), columns=['Difference %'])
+        perc_diff_scores = pd.concat([scores.iloc[:, :3], perc_diff_scores], axis=1)
+
+        # Calulate mean and std percentage difference
+        self.mean_perc_diff_scores_ = perc_diff_scores.groupby(['Classifier', 'Metric']).mean().reset_index()
+        self.std_perc_diff_scores_ = perc_diff_scores.groupby(['Classifier', 'Metric']).std().reset_index()
 
     def calculate_friedman_test_results(self, alpha=0.05):
         """Calculate the Friedman test across datasets for every

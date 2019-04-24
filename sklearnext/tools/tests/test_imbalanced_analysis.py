@@ -115,10 +115,13 @@ def test_ranking_results():
 
 def test_mean_ranking_results():
     """Test the mean_ranking results of experiment."""
-    EXPERIMENT.calculate_mean_ranking_results()
+    EXPERIMENT.calculate_mean_std_ranking_results()
     assert set(EXPERIMENT.mean_ranking_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert set(EXPERIMENT.std_ranking_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
     assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.mean_ranking_results_.columns)
+    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.std_ranking_results_.columns)
     assert len(EXPERIMENT.mean_ranking_results_) == len(CLASSIFIERS)
+    assert len(EXPERIMENT.std_ranking_results_) == len(CLASSIFIERS)
 
 
 def test_friedman_test_results():
