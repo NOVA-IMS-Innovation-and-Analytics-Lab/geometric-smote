@@ -285,9 +285,6 @@ class BinaryExperiment:
         # Compare p-values to significance level
         friedman_test_results['Significance'] = friedman_test_results['p-value'] < alpha
 
-        # Format p-value
-        friedman_test_results['p-value'] = friedman_test_results['p-value'].apply(lambda p_value: '%.1e' % p_value)
-
         self.friedman_test_results_ = friedman_test_results
 
     def calculate_adjusted_pvalues_results(self, control_oversampler=None):
@@ -322,10 +319,6 @@ class BinaryExperiment:
         corrected_pvalues = pd.DataFrame(pvalues.apply(
             lambda col: multipletests(col, method='holm')[1], axis=1).values.tolist(), columns=oversamplers_names)
         corrected_pvalues = corrected_pvalues.set_index(pvalues.index).reset_index()
-    
-        # Format p-values
-        for name in oversamplers_names:
-            corrected_pvalues[name] = corrected_pvalues[name].apply(lambda pvalue: '%.1e' % pvalue)
     
         self.adjusted_pvalues_results_ = corrected_pvalues
     
