@@ -236,7 +236,7 @@ class BinaryExperiment:
             self.calculate_ranking()
 
         self.mean_ranking_ = self.ranking_.groupby(['Classifier', 'Metric']).mean().reset_index()
-        self.sem_ranking_ = self.ranking_.groupby(['Classifier', 'Metric']).sem().reset_index()
+        self.sem_ranking_ = self.ranking_.drop(columns='Dataset').groupby(['Classifier', 'Metric']).sem().reset_index()
 
         return self
 
@@ -250,7 +250,7 @@ class BinaryExperiment:
 
         # Calculate mean and std score
         self.mean_scores_ = self.wide_optimal_.groupby(['Classifier', 'Metric']).mean().reset_index()
-        self.sem_scores_ = self.wide_optimal_.groupby(['Classifier', 'Metric']).sem().reset_index()
+        self.sem_scores_ = self.wide_optimal_.drop(columns='Dataset').groupby(['Classifier', 'Metric']).sem().reset_index()
 
     def calculate_mean_sem_perc_diff_scores(self, oversamplers=None):
         """Calculate mean and standard error scores' percentage difference."""
@@ -270,7 +270,7 @@ class BinaryExperiment:
 
         # Calulate mean and std percentage difference
         self.mean_perc_diff_scores_ = perc_diff_scores.groupby(['Classifier', 'Metric']).mean().reset_index()
-        self.sem_perc_diff_scores_ = perc_diff_scores.groupby(['Classifier', 'Metric']).sem().reset_index()
+        self.sem_perc_diff_scores_ = perc_diff_scores.drop(columns='Dataset').groupby(['Classifier', 'Metric']).sem().reset_index()
 
         return self
 
