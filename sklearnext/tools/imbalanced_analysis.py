@@ -251,11 +251,11 @@ class BinaryExperiment:
             self.calculate_wide_optimal_results()
         
         # Extract oversamplers
-        basic, control, test = oversamplers if oversamplers is not None else self.mean_scores_.columns[-3:]
+        control, test = oversamplers if oversamplers is not None else self.mean_scores_.columns[-2:]
 
         # Calculate percentage difference
         scores = self.wide_optimal_results_[self.wide_optimal_results_[basic] > 0]
-        perc_diff_scores = pd.DataFrame((100 * (scores[test] - scores[control]) / scores[basic]), columns=['Difference %'])
+        perc_diff_scores = pd.DataFrame((100 * (scores[test] - scores[control]) / scores[control]), columns=['Difference'])
         perc_diff_scores = pd.concat([scores.iloc[:, :3], perc_diff_scores], axis=1)
 
         # Calulate mean and std percentage difference
