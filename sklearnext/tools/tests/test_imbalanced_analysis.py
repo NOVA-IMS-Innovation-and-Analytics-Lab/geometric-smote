@@ -87,48 +87,48 @@ def test_results():
     assert len(EXPERIMENT.results_) == len(DATASETS) * len(ParameterGrid(EXPERIMENT.param_grids_)) // EXPERIMENT.n_runs
 
 
-def test_optimal_results():
+def test_optimal():
     """Test the optimal results of experiment."""
-    EXPERIMENT.calculate_optimal_results()
-    assert set(EXPERIMENT.optimal_results_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
-    assert set(EXPERIMENT.optimal_results_.Oversampler.unique()) == set(EXPERIMENT.oversamplers_names_)
-    assert set(EXPERIMENT.optimal_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert len(EXPERIMENT.optimal_results_) == len(DATASETS) * len(OVERSAMPLERS) * len(CLASSIFIERS)
+    EXPERIMENT.calculate_optimal()
+    assert set(EXPERIMENT.optimal_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
+    assert set(EXPERIMENT.optimal_.Oversampler.unique()) == set(EXPERIMENT.oversamplers_names_)
+    assert set(EXPERIMENT.optimal_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert len(EXPERIMENT.optimal_) == len(DATASETS) * len(OVERSAMPLERS) * len(CLASSIFIERS)
 
 
-def test_wide_optimal_results():
+def test_wide_optimal():
     """Test the wide optimal results of experiment."""
-    EXPERIMENT.calculate_wide_optimal_results()
-    assert set(EXPERIMENT.wide_optimal_results_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
-    assert set(EXPERIMENT.wide_optimal_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.wide_optimal_results_.columns)
-    assert len(EXPERIMENT.wide_optimal_results_) == len(DATASETS) * len(CLASSIFIERS)
+    EXPERIMENT.calculate_wide_optimal()
+    assert set(EXPERIMENT.wide_optimal_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
+    assert set(EXPERIMENT.wide_optimal_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.wide_optimal_.columns)
+    assert len(EXPERIMENT.wide_optimal_) == len(DATASETS) * len(CLASSIFIERS)
 
 
 def test_ranking_results():
     """Test the ranking results of experiment."""
-    EXPERIMENT.calculate_ranking_results()
-    assert set(EXPERIMENT.ranking_results_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
-    assert set(EXPERIMENT.ranking_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.ranking_results_.columns)
-    assert len(EXPERIMENT.ranking_results_) == len(DATASETS) * len(CLASSIFIERS)
+    EXPERIMENT.calculate_ranking()
+    assert set(EXPERIMENT.ranking_.Dataset.unique()) == set(EXPERIMENT.datasets_names_)
+    assert set(EXPERIMENT.ranking_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.ranking_.columns)
+    assert len(EXPERIMENT.ranking_) == len(DATASETS) * len(CLASSIFIERS)
 
-def test_mean_ranking_results():
+def test_mean_sem_ranking():
     """Test the mean_ranking results of experiment."""
-    EXPERIMENT.calculate_mean_std_ranking_results()
-    assert set(EXPERIMENT.mean_ranking_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert set(EXPERIMENT.std_ranking_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.mean_ranking_results_.columns)
-    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.std_ranking_results_.columns)
-    assert len(EXPERIMENT.mean_ranking_results_) == len(CLASSIFIERS)
-    assert len(EXPERIMENT.std_ranking_results_) == len(CLASSIFIERS)
+    EXPERIMENT.calculate_mean_sem_ranking()
+    assert set(EXPERIMENT.mean_ranking_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert set(EXPERIMENT.sem_ranking_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.mean_ranking_.columns)
+    assert set(EXPERIMENT.oversamplers_names_).issubset(EXPERIMENT.sem_ranking_.columns)
+    assert len(EXPERIMENT.mean_ranking_) == len(CLASSIFIERS)
+    assert len(EXPERIMENT.sem_ranking_) == len(CLASSIFIERS)
 
 
-def test_friedman_test_results():
+def test_friedman_test():
     """Test the results of friedman test."""
-    EXPERIMENT.calculate_friedman_test_results()
-    assert set(EXPERIMENT.friedman_test_results_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
-    assert len(EXPERIMENT.friedman_test_results_) == len(CLASSIFIERS)
+    EXPERIMENT.calculate_friedman_test()
+    assert set(EXPERIMENT.friedman_test_.Classifier.unique()) == set(EXPERIMENT.classifiers_names_)
+    assert len(EXPERIMENT.friedman_test_) == len(CLASSIFIERS)
 
 
 def test_dump():
@@ -137,6 +137,6 @@ def test_dump():
     file_name = f'{EXPERIMENT.name}.pkl'
     with open(file_name, 'rb') as file:
         experiment = load(file)
-    for attr in ('results_', 'optimal_results_', 'wide_optimal_results_', 'ranking_results_', 'mean_ranking_results_', 'friedman_test_results_'):
+    for attr in ('results_', 'optimal_', 'wide_optimal_', 'ranking_', 'mean_ranking_', 'friedman_test_'):
         pd.testing.assert_frame_equal(getattr(EXPERIMENT, attr), getattr(experiment, attr))
     remove(file_name)
