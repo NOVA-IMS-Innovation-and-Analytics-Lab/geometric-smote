@@ -8,7 +8,7 @@ various metrics for regression tasks.
 
 import numpy as np
 from sklearn.metrics.regression import _check_reg_targets, check_consistent_length
-from sklearn.externals.six import string_types
+from six import string_types
 
 
 def weighted_mean_squared_error(y_true,
