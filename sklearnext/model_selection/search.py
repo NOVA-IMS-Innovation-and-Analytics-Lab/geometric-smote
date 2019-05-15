@@ -134,13 +134,6 @@ class ModelSearchCV(GridSearchCV):
 
         If None, a default scorer is used.
 
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-
-        .. deprecated:: 0.19
-           ``fit_params`` as a constructor argument is deprecated. Pass fit 
-           parameters to the ``fit`` method instead.
-
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -356,7 +349,7 @@ class ModelSearchCV(GridSearchCV):
 
     """
 
-    def __init__(self, estimators, param_grids, scoring=None, fit_params=None,
+    def __init__(self, estimators, param_grids, scoring=None,
                  n_jobs=None, iid=True, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=True):
@@ -368,7 +361,6 @@ class ModelSearchCV(GridSearchCV):
         super(ModelSearchCV, self).__init__(estimator=estimator,
                                             param_grid=check_param_grids(param_grids, estimators),
                                             scoring=scoring,
-                                            fit_params=fit_params,
                                             n_jobs=n_jobs,
                                             iid=iid,
                                             refit=refit,
