@@ -15,8 +15,15 @@ Over-sampling Comparison Example
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors.classification import KNeighborsClassifier
 from sklearn.datasets import make_classification
-from sklearnext.tools import evaluate_binary_imbalanced_experiments, summarize_binary_datasets
+from sklearnext.tools import BinaryExperiment
 from sklearnext.over_sampling import SMOTE, GeometricSMOTE
+
+# Generate datasets
+datasets = [
+    ('A', make_classification(random_state=1, weights=[0.80, 0.20], n_features=10)),
+    ('B', make_classification(random_state=1, weights=[0.85, 0.15], n_features=10)),
+    ('C', make_classification(random_state=1, weights=[0.90, 0.10], n_features=10))
+]
 
 # Oversamplers and classifiers
 oversamplers = [
@@ -34,34 +41,27 @@ classifiers = [
     ('KNN', KNeighborsClassifier(), {'n_neighbors':[3, 5]}),
 ]
 
-# Generate datasets
-imbalanced_datasets = [
-    ('A', make_classification(random_state=1, weights=[0.80, 0.20], n_features=10)),
-    ('B', make_classification(random_state=1, weights=[0.85, 0.15], n_features=10)),
-    ('C', make_classification(random_state=1, weights=[0.90, 0.10], n_features=10))
-]
+# Define experiment
+experiment = BinaryExperiment(
+    name='example', 
+    datasets=datasets, 
+    oversamplers=oversamplers, 
+    classifiers=classifiers, 
+    scoring=['roc_auc', 'geometric_mean_score'], 
+    n_splits=5, 
+    n_runs=2,
+    random_state=0
+)
 
-# Summarize datasets
-imbalanced_datasets_summary = summarize_binary_datasets(imbalanced_datasets)
-
-# Compare oversamplers and classifiers
-results = evaluate_binary_imbalanced_experiments(datasets=imbalanced_datasets,
-                                                 oversamplers=oversamplers,
-                                                 classifiers=classifiers,
-                                                 scoring=['roc_auc', 'f1', 'geometric_mean_score'],
-                                                 n_splits=5,
-                                                 n_runs=2,
-                                                 random_state=5)
+# Run experiment
+experiment.run()
 
 # Extract results
-scores, ranking = results['wide_optimal'], results['mean_ranking']
+experiment.summarize_datasets().calculate_wide_optimal().calculate_mean_sem_ranking()
 
-# Print datasets summary
-print('\n\nSummary of datasets:')
-print(imbalanced_datasets_summary)
-
-# Print experiment results
-print('\nScores for all combinations of datasets, oversamplers and classifiers:')
-print(scores)
-print('\nMean ranking of oversamplers across datasets:') 
-print(ranking)
+# Print results
+print(__doc__, 
+      '\nSummary of datasets:\n\n', experiment.datasets_summary_, 
+      '\n\nScores for all combinations of datasets, oversamplers and classifiers:\n\n', experiment.wide_optimal_,
+      '\n\nMean ranking of oversamplers across datasets:\n\n', experiment.mean_ranking_, 
+)
