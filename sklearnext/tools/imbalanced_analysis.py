@@ -23,8 +23,28 @@ from ..metrics import SCORERS
 from ..model_selection import ModelSearchCV
 
 GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
-ATTR_NAMES = ['datasets_summary_', 'results_', 'optimal_', 'wide_optimal_', 'ranking_', 'mean_ranking_', 'sem_ranking_', 
-              'mean_scores_', 'sem_scores_', 'mean_perc_diff_scores_', 'sem_perc_diff_scores_', 'friedman_test_', 'holms_test_']
+
+
+def combine_experiments(name, *experiments):
+    """Combines the results of multiple experiments into a single one."""
+
+    # Check experiments compatibility
+    if len(set([experiment.datasets_names_ for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different datasets are used.')
+    if len(set([experiment.classifiers_names_ for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different classifiers are used.')
+    if len(set([tuple(experiment.scoring_cols_) for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different scorings are used.')
+    if len(set([experiment.n_splits for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different number of splits is used.')
+    if len(set([experiment.n_runs for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different number of runs is used.')
+    if len(set([experiment.random_state for experiment in experiments])) > 1:
+        raise ValueError('Experiments not compatible. Different random state is used.')
+    
+    # Combine results
+    experiment = BinaryExperiment(name, experiments[0].datasets, None, None, experiments[0].scoring, experiments[0].n_splits, experiments[0].n_runs, experiments[0].random_state) 
+    return pd.concat([experiment.results_ for epxeriment in experiments])
 
 
 class BinaryExperiment:
@@ -355,7 +375,5 @@ class BinaryExperiment:
     
     def dump(self, path='.'):
         """Dump the experiment object."""
-        for attr_name in ('oversamplers', 'classifiers', 'estimators_', 'mscv_'):
-            delattr(self, attr_name)
         with open(join(path, f'{self.name}.pkl'), 'wb') as file:
             dump(self, file)

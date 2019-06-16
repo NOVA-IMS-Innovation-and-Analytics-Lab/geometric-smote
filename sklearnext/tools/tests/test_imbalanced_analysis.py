@@ -18,7 +18,7 @@ from imblearn.pipeline import Pipeline
 
 from ...model_selection import ModelSearchCV
 from ...utils.validation import check_oversamplers_classifiers
-from ...tools.imbalanced_analysis import BinaryExperiment, GROUP_KEYS, ATTR_NAMES
+from ...tools.imbalanced_analysis import BinaryExperiment, GROUP_KEYS
 
 X1, y1 = make_classification(weights=[0.90, 0.10], n_samples=100, random_state=0)
 X2, y2 = make_classification(weights=[0.80, 0.20], n_samples=100, n_features=10, random_state=1)
@@ -166,6 +166,9 @@ def test_dump():
     file_name = f'{EXPERIMENT.name}.pkl'
     with open(file_name, 'rb') as file:
         experiment = load(file)
-        for attr_name in ATTR_NAMES:
-            pd.testing.assert_frame_equal(getattr(EXPERIMENT, attr_name), getattr(experiment, attr_name))
+        attr_names = [attr_name for attr_name in vars(EXPERIMENT).keys() if attr_name[-1] == '_']
+        for attr_name in attr_names:
+            attr1, attr2 = getattr(EXPERIMENT, attr_name), getattr(experiment, attr_name)
+            if isinstance(attr1, pd.core.frame.DataFrame): 
+                pd.testing.assert_frame_equal(attr1, attr2)
     remove(file_name)
