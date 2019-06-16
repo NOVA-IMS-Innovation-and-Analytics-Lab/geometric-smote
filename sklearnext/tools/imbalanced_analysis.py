@@ -11,6 +11,7 @@ from re import sub
 from os.path import join
 from pickle import dump
 
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from scipy.stats import friedmanchisquare, ttest_rel
@@ -22,6 +23,8 @@ from ..metrics import SCORERS
 from ..model_selection import ModelSearchCV
 
 GROUP_KEYS = ['Dataset', 'Oversampler', 'Classifier', 'params']
+ATTR_NAMES = ['datasets_summary_', 'results_', 'optimal_', 'wide_optimal_', 'ranking_', 'mean_ranking_', 'sem_ranking_', 
+              'mean_scores_', 'sem_scores_', 'mean_perc_diff_scores_', 'sem_perc_diff_scores_', 'friedman_test_', 'holms_test_']
 
 
 class BinaryExperiment:
@@ -37,7 +40,7 @@ class BinaryExperiment:
         self.n_runs = n_runs
         self.random_state = random_state
 
-    def summarize_datasets(self):
+    def _summarize_datasets(self):
         """Creates a summary of the binary class
         imbalanced datasets."""
 
@@ -101,7 +104,7 @@ class BinaryExperiment:
         results = pd.DataFrame()
 
         # Populate results table
-        for dataset_name, (X, y) in self.datasets:
+        for dataset_name, (X, y) in tqdm(self.datasets, desc='Datasets'):
         
             # Fit model search
             self.mscv_.fit(X, y)
@@ -128,7 +131,7 @@ class BinaryExperiment:
 
         return self
     
-    def calculate_optimal(self):
+    def _calculate_optimal(self):
         """"Calculate optimal results across hyperparameters for any combination of datasets, overamplers, classifiers and metrics."""
 
         # Checks
@@ -161,13 +164,13 @@ class BinaryExperiment:
 
         return self
 
-    def calculate_wide_optimal(self):
+    def _calculate_wide_optimal(self):
         """Calculate optimal results in wide format."""
 
         # Checks
         self._check_results()
         if not hasattr(self, 'optimal_'):
-            self.calculate_optimal()
+            self._calculate_optimal()
 
         # Format as wide table
         wide_optimal = self.optimal_.pivot_table(index=['Dataset', 'Classifier', 'Metric'],
@@ -209,7 +212,7 @@ class BinaryExperiment:
 
         return ranking.size - ranking
 
-    def calculate_ranking(self):
+    def _calculate_ranking(self):
         """Calculate the ranking of oversamplers for
         any combination of datasets, classifiers and
         metrics."""
@@ -217,7 +220,7 @@ class BinaryExperiment:
         # Checks
         self._check_results()
         if not hasattr(self, 'wide_optimal_results_'):
-            self.calculate_wide_optimal()
+            self._calculate_wide_optimal()
 
         # Calculate ranking results
         ranking_results = self.wide_optimal_.apply(lambda row: self._return_row_ranking(row[3:], SCORERS[row[2].replace(' ', '_').lower()]._sign), axis=1)
@@ -225,7 +228,7 @@ class BinaryExperiment:
 
         return self
     
-    def calculate_mean_sem_ranking(self):
+    def _calculate_mean_sem_ranking(self):
         """Calculate the mean and standard error of oversamplers' ranking 
         across datasets for any combination of classifiers 
         and metrics."""
@@ -233,35 +236,35 @@ class BinaryExperiment:
         # Checks
         self._check_results()
         if not hasattr(self, 'ranking_'):
-            self.calculate_ranking()
+            self._calculate_ranking()
 
         self.mean_ranking_ = self.ranking_.groupby(['Classifier', 'Metric']).mean().reset_index()
         self.sem_ranking_ = self.ranking_.drop(columns='Dataset').groupby(['Classifier', 'Metric']).sem().reset_index()
 
         return self
 
-    def calculate_mean_sem_scores(self):
+    def _calculate_mean_sem_scores(self):
         """Calculate mean and standard error of scores across datasets."""
 
         # Checks
         self._check_results()
         if not hasattr(self, 'wide_optimal_'):
-            self.calculate_wide_optimal()
+            self._calculate_wide_optimal()
 
         # Calculate mean and std score
         self.mean_scores_ = self.wide_optimal_.groupby(['Classifier', 'Metric']).mean().reset_index()
         self.sem_scores_ = self.wide_optimal_.drop(columns='Dataset').groupby(['Classifier', 'Metric']).sem().reset_index()
 
-    def calculate_mean_sem_perc_diff_scores(self, oversamplers=None):
+    def _calculate_mean_sem_perc_diff_scores(self, compared_oversamplers):
         """Calculate mean and standard error scores' percentage difference."""
 
         # Checks
         self._check_results()
         if not hasattr(self, 'mean_scores_'):
-            self.calculate_wide_optimal()
+            self._calculate_wide_optimal()
         
         # Extract oversamplers
-        control, test = oversamplers if oversamplers is not None else self.mean_scores_.columns[-2:]
+        control, test = compared_oversamplers if compared_oversamplers is not None else self.mean_scores_.columns[-2:]
 
         # Calculate percentage difference
         scores = self.wide_optimal_[self.wide_optimal_[control] > 0]
@@ -274,14 +277,14 @@ class BinaryExperiment:
 
         return self
 
-    def calculate_friedman_test(self, alpha=0.05):
+    def _calculate_friedman_test(self, alpha):
         """Calculate the Friedman test across datasets for every
         combination of classifiers and metrics."""
 
         # Checks
         self._check_results()
         if not hasattr(self, 'ranking_'):
-            self.calculate_ranking()
+            self._calculate_ranking()
 
         # Raise an error when less then three oversamplers are used
         if len(self.ranking_.columns) < 6:
@@ -301,7 +304,7 @@ class BinaryExperiment:
 
         return self
 
-    def calculate_holms_test(self, control_oversampler=None):
+    def _calculate_holms_test(self, control_oversampler):
         """Use the Holm's method to adjust the p-values of a paired difference
         t-test for every combination of classifiers and metrics using a control
         oversampler."""
@@ -309,7 +312,7 @@ class BinaryExperiment:
         # Checks
         self._check_results()
         if not hasattr(self, 'wide_optimal_'):
-            self.calculate_wide_optimal()
+            self._calculate_wide_optimal()
 
         # Get the oversamplers name
         oversamplers_names = self.wide_optimal_.columns[3:].tolist()
@@ -337,9 +340,22 @@ class BinaryExperiment:
         self.holms_test_ = holms_test
 
         return self
+
+    def calculate_results(self, compared_oversamplers=None, alpha=0.05, control_oversampler=None):
+        self._summarize_datasets()
+        self._calculate_optimal()
+        self._calculate_wide_optimal()
+        self._calculate_ranking()
+        self._calculate_mean_sem_ranking()
+        self._calculate_mean_sem_scores()
+        self._calculate_mean_sem_perc_diff_scores(compared_oversamplers)
+        self._calculate_friedman_test(alpha)
+        self._calculate_holms_test(control_oversampler)
+        return self
     
     def dump(self, path='.'):
-        """Dump the object."""
+        """Dump the experiment object."""
+        for attr_name in ('oversamplers', 'classifiers', 'estimators_', 'mscv_'):
+            delattr(self, attr_name)
         with open(join(path, f'{self.name}.pkl'), 'wb') as file:
             dump(self, file)
-
