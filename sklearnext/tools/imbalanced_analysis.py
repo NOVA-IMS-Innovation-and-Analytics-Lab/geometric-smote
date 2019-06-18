@@ -10,6 +10,7 @@ from collections import Counter
 from re import sub
 from os.path import join
 from pickle import dump
+from itertools import chain
 
 from tqdm import tqdm
 import numpy as np
@@ -29,22 +30,17 @@ def combine_experiments(name, *experiments):
     """Combines the results of multiple experiments into a single one."""
 
     # Check experiments compatibility
-    if len(set([experiment.datasets_names_ for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different datasets are used.')
-    if len(set([experiment.classifiers_names_ for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different classifiers are used.')
-    if len(set([tuple(experiment.scoring_cols_) for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different scorings are used.')
-    if len(set([experiment.n_splits for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different number of splits is used.')
-    if len(set([experiment.n_runs for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different number of runs is used.')
-    if len(set([experiment.random_state for experiment in experiments])) > 1:
-        raise ValueError('Experiments not compatible. Different random state is used.')
+    for attr_name in ('datasets_names_', 'classifiers_names_', 'scoring_cols_', 'n_splits', 'n_runs', 'random_state'):
+        if len(set([(getattr(experiment, attr_name) if attr_name != 'scoring_cols_' else tuple(getattr(experiment, attr_name))) for experiment in experiments])) > 1:
+            raise ValueError(f'Experiments not compatible. Attribute `{attr_name}` differs.')
     
     # Combine results
-    experiment = BinaryExperiment(name, experiments[0].datasets, None, None, experiments[0].scoring, experiments[0].n_splits, experiments[0].n_runs, experiments[0].random_state) 
-    return pd.concat([experiment.results_ for epxeriment in experiments])
+    oversamplers = list(chain(*[experiment.oversamplers for experiment in experiments]))
+    combined_experiment = BinaryExperiment(name, experiments[0].datasets, oversamplers, experiments[0].classifiers, experiments[0].scoring, experiments[0].n_splits, experiments[0].n_runs, experiments[0].random_state) 
+    combined_experiment._initialize(-1, 0)
+    combined_experiment.results_ = pd.concat([experiment.results_ for experiment in experiments])
+    
+    return  combined_experiment
 
 
 class BinaryExperiment:

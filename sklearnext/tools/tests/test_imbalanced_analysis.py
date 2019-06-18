@@ -18,7 +18,7 @@ from imblearn.pipeline import Pipeline
 
 from ...model_selection import ModelSearchCV
 from ...utils.validation import check_oversamplers_classifiers
-from ...tools.imbalanced_analysis import BinaryExperiment, GROUP_KEYS
+from ...tools.imbalanced_analysis import combine_experiments, BinaryExperiment, GROUP_KEYS
 
 X1, y1 = make_classification(weights=[0.90, 0.10], n_samples=100, random_state=0)
 X2, y2 = make_classification(weights=[0.80, 0.20], n_samples=100, n_features=10, random_state=1)
@@ -35,6 +35,24 @@ CLASSIFIERS = [
 ]
 EXPERIMENT = BinaryExperiment('test_experiment', DATASETS, OVERSAMPLERS, CLASSIFIERS, 
                               scoring=None, n_splits=3, n_runs=3, random_state=0)
+
+
+def test_combine_experiments():
+    """Test the combination of experiments."""
+    experiment1 = BinaryExperiment('test_experiment1', DATASETS, OVERSAMPLERS[0:2], CLASSIFIERS, 
+                                   scoring=None, n_splits=3, n_runs=3, random_state=0).run()
+    experiment2 = BinaryExperiment('test_experiment2', DATASETS, OVERSAMPLERS[2:3], CLASSIFIERS, 
+                                   scoring=None, n_splits=3, n_runs=3, random_state=0).run()
+    experiment = combine_experiments('test_experiment', experiment1, experiment2)
+    assert experiment.name == 'test_experiment'
+    assert experiment.datasets_names_ == experiment1.datasets_names_ == experiment2.datasets_names_
+    assert experiment.oversamplers_names_ == tuple([name for name, *_ in OVERSAMPLERS])
+    assert experiment.classifiers_names_ == experiment1.classifiers_names_ == experiment2.classifiers_names_
+    assert experiment.scoring_cols_ == experiment1.scoring_cols_ == experiment2.scoring_cols_
+    assert experiment.n_splits == experiment1.n_splits == experiment2.n_splits
+    assert experiment.n_runs == experiment1.n_runs == experiment2.n_runs
+    assert experiment.random_state == experiment1.random_state == experiment2.random_state
+    pd.testing.assert_frame_equal(experiment.results_, pd.concat([experiment1.results_, experiment2.results_]))
 
 
 @pytest.mark.parametrize('scoring,n_runs', [
