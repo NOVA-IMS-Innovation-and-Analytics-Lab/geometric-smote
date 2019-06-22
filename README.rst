@@ -2,13 +2,13 @@ geometric-smote
 ===============
 
 Implementation of the G-SMOTE algorithm. Fully compatible with
-the Scikit-Learn and Imbalanced-Learn API.
+the scikit-learn and imbalanced-learn API.
 
 Prerequisites
 =============
-- NumPy
-- Scikit-Learn
-- Imbalanced-Learn
+- numpy
+- scikit-learn
+- imbalanced-learn
 
 Installation
 ============
