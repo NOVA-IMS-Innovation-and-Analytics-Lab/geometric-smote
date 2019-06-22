@@ -41,27 +41,3 @@ classifiers = [
     ('KNN', KNeighborsClassifier(), {'n_neighbors':[3, 5]}),
 ]
 
-# Define experiment
-experiment = BinaryExperiment(
-    name='example', 
-    datasets=datasets, 
-    oversamplers=oversamplers, 
-    classifiers=classifiers, 
-    scoring=['roc_auc', 'geometric_mean_score'], 
-    n_splits=5, 
-    n_runs=2,
-    random_state=0
-)
-
-# Run experiment
-experiment.run()
-
-# Extract results
-experiment.summarize_datasets().calculate_wide_optimal().calculate_mean_sem_ranking()
-
-# Print results
-print(__doc__, 
-      '\nSummary of datasets:\n\n', experiment.datasets_summary_, 
-      '\n\nScores for all combinations of datasets, oversamplers and classifiers:\n\n', experiment.wide_optimal_,
-      '\n\nMean ranking of oversamplers across datasets:\n\n', experiment.mean_ranking_, 
-)

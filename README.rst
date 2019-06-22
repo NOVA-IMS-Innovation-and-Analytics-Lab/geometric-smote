@@ -1,20 +1,14 @@
 scikit-learn-extensions
 =======================
 
-Extensions of scikit-learn. It includes a class to simplify the search of
-model space as well as various oversamplers and evaluation metrics.
-
-|Travis|_
-
-.. |Travis| image:: https://travis-ci.org/georgedouzas/scikit-learn-extensions.svg?branch=master
-.. _Travis: https://travis-ci.org/georgedouzas/scikit-learn-extension
+Implementation of the G-SMOTE algorithm. Fully compatible with the Scikit-Learn 
+and Imabalanced-Learn API.
 
 Prerequisites
 =============
-- Pandas
+- NumPy
 - Scikit-Learn
 - Imbalanced-Learn
-- Dask-ML
 
 Installation
 ============
@@ -23,5 +17,5 @@ Clone the repository and activate a Python 3 virtual environment. Then run the f
 
 .. code:: shell
 
-    cd scikit-learn-extensions
+    cd gsmote
     pip install .

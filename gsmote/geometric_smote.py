@@ -9,10 +9,9 @@ the implementation of the Geometric SMOTE oversampler.
 import numpy as np
 from numpy.linalg import norm
 from sklearn.utils import check_random_state, safe_indexing
+from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution
 from imblearn.utils._docstring import _random_state_docstring
-
-from .base import BaseClusterOverSampler
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
@@ -52,9 +51,9 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
 
 
 @Substitution(
-    sampling_strategy=BaseClusterOverSampler._sampling_strategy_docstring,
+    sampling_strategy=BaseOverSampler._sampling_strategy_docstring,
     random_state=_random_state_docstring)
-class GeometricSMOTE(BaseClusterOverSampler):
+class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
     Parameters
@@ -62,15 +61,6 @@ class GeometricSMOTE(BaseClusterOverSampler):
     {sampling_strategy}
 
     {random_state}
-
-    clusterer : Clusterer object, optional (default=None)
-        A clustering algorithm that is used to generate new samples 
-        in each cluster defined by the ``labels_`` attribute and between 
-        the clusters if the ``neighbors_`` attribute is defined.
-
-    distributor : Distributor object, optional (default=None)
-        Determines the the strategy to distribute generated 
-        samples across the clusters.
 
     truncation_factor : float, optional (default=0.0)
         The type of truncation. The values should be in the [-1.0, 1.0] range.
@@ -94,15 +84,13 @@ class GeometricSMOTE(BaseClusterOverSampler):
 
     def __init__(self,
                  sampling_strategy='auto',
-                 clusterer=None,
-                 distributor=None,
                  random_state=None,
                  truncation_factor=1.0,
                  deformation_factor=0.0,
                  selection_strategy='combined',
                  k_neighbors=5,
                  n_jobs=1):
-        super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy, clusterer=clusterer, distributor=distributor)
+        super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy)
         self.random_state = random_state
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
@@ -194,8 +182,8 @@ class GeometricSMOTE(BaseClusterOverSampler):
         
         return X_new, y_new
 
-    def _basic_sample(self, X, y):
-        """Basic resample of the dataset using the Geometric SMOTE algorithm.
+    def _fit_resample(self, X, y):
+        """Fit and resample of the dataset using the Geometric SMOTE algorithm.
 
         Parameters
         ----------
