@@ -2,9 +2,5 @@
 .pytest_cache
 __pycache__
 *.pyc
-.ipynb_checkpoints
-.venv
+.*venv
 *.egg-info
-*.p
-.idea
-pyenv
