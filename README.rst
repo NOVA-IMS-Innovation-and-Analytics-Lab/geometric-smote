@@ -1,3 +1,10 @@
+.. -*- mode: rst -*-
+
+|ReadTheDocs|_
+
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/geometric-smote/badge/?version=latest
+.. _ReadTheDocs: https://geometric-smote.readthedocs.io/en/latest/?badge=latest
+
 geometric-smote
 ===============
 
