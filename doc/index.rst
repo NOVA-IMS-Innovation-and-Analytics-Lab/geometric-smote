@@ -27,7 +27,7 @@ Welcome to geometric-smote documentation!
    :hidden:
    :caption: Tutorial - Examples
 
-   auto_examples/index
+   examples
 
 .. toctree::
    :maxdepth: 1
@@ -55,7 +55,7 @@ The exact API of all functions and classes, as given in the
 docstring. The API documents expected types and allowed features for
 all functions, and all parameters available for the algorithm.
 
-`Examples <auto_examples/index.html>`_
+`Examples <examples.html>`_
 --------------------------------------
 
 A set of examples illustrating the use of the G-SMOTE algorithm. It
