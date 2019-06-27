@@ -1,5 +1,5 @@
 """
-The :mod:`sklearnext.oversampling.geometric_smote` contains 
+The :mod:`sklearnext.oversampling.geometric_smote` contains
 the implementation of the Geometric SMOTE oversampler.
 """
 
@@ -24,7 +24,7 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     if np.array_equal(center, surface_point):
         return center
 
-    # Generate a point on the surface of a unit hyper-sphere 
+    # Generate a point on the surface of a unit hyper-sphere
     radius = norm(center - surface_point)
     normal_samples = random_state.normal(size=center.size)
     point_on_unit_sphere = normal_samples / norm(normal_samples)
@@ -56,6 +56,9 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
 class GeometricSMOTE(BaseOverSampler):
     """Class to perform oversampling using Geometric SMOTE algorithm.
 
+    This object is an implementation of Geometric SMOTE - a geometrically
+    enhanced drop-in replacement for SMOTE as presented in [1]_.
+
     Parameters
     ----------
     {sampling_strategy}
@@ -80,6 +83,16 @@ class GeometricSMOTE(BaseOverSampler):
 
     n_jobs : int, optional (default=1)
         The number of threads to open if possible.
+
+    Notes
+    -----
+    See the original papers: [1]_ for more details.
+
+    References
+    ----------
+    .. [1] Douzas, G., & Bacao, F. (2019). Geometric SMOTE a geometrically enhanced
+    drop-in replacement for SMOTE. Information Sciences, 501, 118–135.
+    https://doi.org/10.1016/J.INS.2019.06.007
     """
 
     def __init__(self,
@@ -103,7 +116,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Check random state
         self.random_state_ = check_random_state(self.random_state)
-        
+
         # Validate strategy
         if self.selection_strategy not in SELECTION_STRATEGY:
             error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
@@ -139,7 +152,7 @@ class GeometricSMOTE(BaseOverSampler):
             samples_indices = self.random_state_.randint(low=0, high=len(points_pos.flatten()), size=n_samples)
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
-        
+
         # Majority or combined strategy
         if self.selection_strategy_ in ('majority', 'combined'):
             X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
@@ -153,14 +166,14 @@ class GeometricSMOTE(BaseOverSampler):
         # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
         for ind, (row, col) in enumerate(zip(rows, cols)):
-            
+
             # Define center point
             center = X_pos[row]
 
             # Minority strategy
             if self.selection_strategy_ == 'minority':
                 surface_point = X_pos[points_pos[row, col]]
-            
+
             # Majority strategy
             elif self.selection_strategy_ == 'majority':
                 surface_point = X_neg[points_neg[row, col]]
@@ -172,14 +185,14 @@ class GeometricSMOTE(BaseOverSampler):
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
-            
+
             # Append new sample
             X_new[ind] = _make_geometric_sample(center, surface_point, self.truncation_factor,
                                                 self.deformation_factor, self.random_state_)
-        
+
         # Create new samples for target variable
         y_new = np.array([pos_class_label] * len(samples_indices))
-        
+
         return X_new, y_new
 
     def _fit_resample(self, X, y):
@@ -210,7 +223,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Resample data
         for class_label, n_samples in self.sampling_strategy_.items():
-            
+
             # Apply gsmote mechanism
             X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
