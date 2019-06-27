@@ -10,4 +10,4 @@ User Guide
    :numbered:
 
    introduction.rst
-
+   gsmote.rst
