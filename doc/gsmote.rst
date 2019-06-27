@@ -9,13 +9,10 @@ Geometric SMOTE
 A practical guide
 =================
 
-G-SMOTE: Geometric Synthetic Minority Over-Sampling Technique
--------------------------------------------------------------
-
 One way to fight the imbalanced learning problem is to generate
 new samples in the classes which are under-represented. Douzas
 and Bacao (2019) propose Geometric SMOTE: A geometrically enhanced
-drop-in replacement for SMOTE _[DB2019]. The
+drop-in replacement for SMOTE [DB2019]_. The
 :class:`GeometricSMOTE` is an implementation of the proposed
 oversampling strategy. It offers such scheme::
 
@@ -37,15 +34,16 @@ oversampling strategy. It offers such scheme::
    >>> print(sorted(Counter(y_resampled).items()))
    [(0, 4674), (1, 4674), (2, 4674)]
 
-The augmented data set should be used instead of the original data set to train
-a classifier::
+The augmented data set should be used instead of the original data set
+to train a classifier::
 
    >>> from sklearn.svm import LinearSVC
    >>> clf = LinearSVC()
    >>> clf.fit(X_resampled, y_resampled) # doctest : +ELLIPSIS
    LinearSVC(...)
 
-In the figure below, we compare the decision functions of a classifier trained using the over-sampled data set and the original data set.
+In the figure below, we compare the decision functions of a classifier
+trained using the over-sampled data set and the original data set.
 
 **[TODO]**
 
@@ -55,3 +53,29 @@ In the figure below, we compare the decision functions of a classifier trained u
               geometrically enhanced drop-in replacement for SMOTE.
               Information Sciences, 501, 118–135.
               https://doi.org/10.1016/J.INS.2019.06.007
+
+
+Sample generation
+=================
+
+G-SMOTE represents a modification of the original SMOTE algorithm on
+the data generation mechanism. Considering a sample :math:`x_i`, a new
+sample :math:`x_{new}` will be generated considering its k
+nearest-neighbours (corresponding to ``k_neighbors``). Although,
+instead of generating an artificial observation within a segment between
+:math:`x_i` and one of its k nearest-neighbours (note that all k
+observations belong to the minority class), G-SMOTE will randomly generate
+the new artificial observation within a geometry, subject to
+``deformation_factor`` and ``truncation_factor``. For more information
+the reader is referred to [DB2019]_.
+
+
+Multi-class management
+======================
+
+:class:`GeometricSMOTE` can be used with multiple classes as well as
+binary classes classification. It requires information regarding the
+neighbourhood of each sample used for sample generation.
+:class:`GeometricSMOTE` uses a one-vs-rest approach by selecting each
+targeted class and computing the necessary statistics against the rest
+of the data set which are grouped in a single class.
