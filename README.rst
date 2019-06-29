@@ -40,14 +40,6 @@ following:
 Additionally, to run the examples, you need matplotlib(>=2.0.0) and
 pandas(>=0.22).
 
-Clone the repository and activate a Python 3 virtual environment.
-Then run the following commands:
-
-.. code:: shell
-
-    cd gsmote
-    pip install .
-
 Installation
 ############
 
