@@ -4,10 +4,10 @@
 Introduction
 ============
 
-.. _api_imblearn:
+.. _api_gsmote:
 
-API's of imbalanced-learn samplers
-----------------------------------
+G-SMOTE API
+-----------
 
 GeometricSMOTE follows the scikit-learn API using the base estimator
 and adding a sampling functionality through the ``sample`` method:
@@ -37,7 +37,7 @@ Problem statement regarding imbalanced data sets
 The learning phase and the subsequent prediction of machine learning algorithms
 can be affected by the problem of imbalanced data set. The balancing issue
 corresponds to the difference of the number of samples in the different
-classes. With a greater imbalance ratio, the decision function favor the class with the larger
-number of samples, usually referred as the majority class. For a visual representation, the 
-reader is referred to 
+classes. With a greater imbalance ratio, the decision function favours the class
+with the larger number of samples, usually referred as the majority class. For 
+a visual representation, the reader is referred to
 :ref:`https://imbalanced-learn.readthedocs.io/en/stable/introduction.html#problem-statement-regarding-imbalanced-data-sets`.
