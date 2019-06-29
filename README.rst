@@ -12,7 +12,7 @@
 geometric-smote
 ===============
 
-Implementation of the Geometric SMOTE algorithm, a geometrically enhanced
+Implementation of the Geometric SMOTE algorithm [1]_, a geometrically enhanced
 drop-in replacement for SMOTE. It is compatible with scikit-learn_ and
 imbalanced-learn_.
 
@@ -100,20 +100,20 @@ citations to the following paper::
 Classification of imbalanced datasets is a challenging task for standard
 algorithms. Although many methods exist to address this problem in different
 ways, generating artificial data for the minority class is a more general
-approach compared to algorithmic modifications. SMOTE algorithm [1]_, as well
+approach compared to algorithmic modifications. SMOTE algorithm [2]_, as well
 as any other oversampling method based on the SMOTE mechanism, generates
 synthetic samples along line segments that join minority class instances.
-Geometric SMOTE [2]_ (G-SMOTE) is an enhancement of the SMOTE data generation
+Geometric SMOTE (G-SMOTE) is an enhancement of the SMOTE data generation
 mechanism. G-SMOTE generates synthetic samples in a geometric region of the
 input space, around each selected minority instance.
 
 References:
 -----------
 
-.. [1] : N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, “SMOTE:
-   Synthetic minority over-sampling technique,” Journal of Artificial
-   Intelligence Research, vol. 16, pp. 321-357, 2002.
-
-.. [2] : G. Douzas, F. Bacao, “Geometric SMOTE:
+.. [1] : G. Douzas, F. Bacao, “Geometric SMOTE:
    a geometrically enhanced drop-in replacement for SMOTE,”
    Information Sciences, vol. 501, pp. 118-135, 2019.
+
+.. [2] : N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, “SMOTE:
+   Synthetic minority over-sampling technique,” Journal of Artificial
+   Intelligence Research, vol. 16, pp. 321-357, 2002.
