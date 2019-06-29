@@ -65,8 +65,8 @@ nearest-neighbours (corresponding to ``k_neighbors``). Although,
 instead of generating an artificial observation within a segment between
 :math:`x_i` and one of its k nearest-neighbours (note that all k
 observations belong to the minority class), G-SMOTE will randomly generate
-the new artificial observation within a geometry, subject to
-``deformation_factor`` and ``truncation_factor``. For more information
+the new artificial observation within a geometry, whose shape is determined
+by the ``deformation_factor`` and ``truncation_factor``. For more information
 the reader is referred to [DB2019]_.
 
 
