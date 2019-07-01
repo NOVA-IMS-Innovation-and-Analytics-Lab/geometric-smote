@@ -2,14 +2,18 @@
 Test the geometric_smote module.
 """
 
+from collections import Counter
+
 import pytest
 import numpy as np
 from numpy.linalg import norm
 from sklearn.utils import check_random_state
+from sklearn.datasets import make_classification
 
 from ..geometric_smote import _make_geometric_sample, GeometricSMOTE
 
-RANDOM_STATE = check_random_state(0)
+RND_SEED = 0
+RANDOM_STATE = check_random_state(RND_SEED)
 
 
 @pytest.mark.parametrize('center,surface_point', [
@@ -65,3 +69,78 @@ def test_make_geometric_sample_line_segment(center, surface_point, truncation_fa
     np.testing.assert_array_less(0.0, norm(rel_surface_point) - norm(rel_point))
     dot_product = np.abs(dot_product) if truncation_factor == 0.0 else (-1) * dot_product
     np.testing.assert_allclose(np.abs(dot_product) / norms_product, 1.0)
+
+
+def test_gsmote_default_init():
+    """Test the intialization with default parameters."""
+    gsmote = GeometricSMOTE()
+    assert gsmote.sampling_strategy == 'auto'
+    assert gsmote.random_state is None
+    assert gsmote.truncation_factor == 1.0
+    assert gsmote.deformation_factor == 0.0
+    assert gsmote.selection_strategy == 'combined'
+    assert gsmote.k_neighbors == 5
+    assert gsmote.n_jobs == 1
+
+
+def test_gsmote_fit():
+    """Test fit method."""
+    n_samples, weights = 200, [0.6, 0.4]
+    X, y = make_classification(random_state=RND_SEED, n_samples=n_samples, weights=weights)
+    gsmote = GeometricSMOTE(random_state=RANDOM_STATE).fit(X, y)
+    assert gsmote.sampling_strategy_ == {1:40}
+
+
+def test_gsmote_invalid_selection_strategy():
+    """Test invalid selection strategy."""
+    n_samples, weights = 200, [0.6, 0.4]
+    X, y = make_classification(random_state=RND_SEED, n_samples=n_samples, weights=weights)
+    gsmote = GeometricSMOTE(random_state=RANDOM_STATE, selection_strategy='Minority')
+    with pytest.raises(ValueError):
+        gsmote.fit_resample(X, y)
+
+
+@pytest.mark.parametrize('selection_strategy', [
+    'combined', 'minority', 'majority'
+])
+def test_gsmote_nn(selection_strategy):
+    """Test nearest neighbors object."""
+    n_samples, weights = 200, [0.6, 0.4]
+    X, y = make_classification(random_state=RND_SEED, n_samples=n_samples, weights=weights)
+    gsmote = GeometricSMOTE(random_state=RANDOM_STATE, selection_strategy=selection_strategy)
+    gsmote.fit_resample(X, y)
+    if selection_strategy in ('minority', 'combined'):
+        assert gsmote.nns_pos_.n_neighbors == gsmote.k_neighbors + 1
+    if selection_strategy in ('majority', 'combined'):
+        assert gsmote.nn_neg_.n_neighbors == 1
+
+
+@pytest.mark.parametrize('selection_strategy, truncation_factor, deformation_factor', [
+    ('combined', 0.0, 0.0), 
+    ('minority', 0.0, 0.0), 
+    ('majority', 0.0, 0.0),
+    ('combined', -0.5, 0.0), 
+    ('minority', -0.5, 0.0), 
+    ('majority', -0.5, 0.0),
+    ('combined', 0.0, 0.5), 
+    ('minority', 0.0, 0.5), 
+    ('majority', 0.0, 0.5),
+    ('combined', 0.5, 0.0), 
+    ('minority', 0.5, 0.0), 
+    ('majority', 0.5, 0.0),
+    ('combined', 0.0, 1.0), 
+    ('minority', 0.0, 1.0), 
+    ('majority', 0.0, 1.0)
+])
+def test_gsmote_fit_resample(selection_strategy, truncation_factor, deformation_factor):
+    """Test fit and sample."""
+    n_maj, n_min, step, min_coor, max_coor = 12, 5, 0.5, 0.0, 8.5
+    X = np.repeat(np.arange(min_coor, max_coor, step), 2).reshape(-1, 2)
+    y = np.concatenate([np.repeat(0, n_maj), np.repeat(1, n_min)])
+    radius = np.sqrt(0.5) * step
+    k_neighbors = 1
+    gsmote = GeometricSMOTE('auto', RANDOM_STATE, truncation_factor, deformation_factor, selection_strategy, k_neighbors)
+    X_resampled, y_resampled = gsmote.fit_resample(X, y)
+    assert gsmote.sampling_strategy_ == {1:(n_maj - n_min)}
+    assert y_resampled.sum() == n_maj
+    np.testing.assert_array_less(X[n_maj - 1] - radius, X_resampled[n_maj + n_min])
