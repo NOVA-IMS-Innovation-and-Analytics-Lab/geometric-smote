@@ -24,11 +24,8 @@ documentation_.
 
 .. _documentation: https://geometric-smote.readthedocs.io/en/latest/
 
-Installation, Dependencies & Testing
-------------------------------------
-
 Dependencies
-############
+------------
 
 geometric-smote is tested to work under Python 3.6+. The dependencies are the
 following:
@@ -41,7 +38,7 @@ Additionally, to run the examples, you need matplotlib(>=2.0.0) and
 pandas(>=0.22).
 
 Installation
-############
+------------
 
 geometric-smote is currently available on the PyPi's repository and you can
 install it via `pip`::
@@ -64,7 +61,7 @@ Or install using pip and GitHub::
   pip install -U git+https://github.com/IMS-ML-Lab/geometric-smote.git
 
 Testing
-#######
+-------
 
 After installation, you can use `pytest` to run the test suite::
 
