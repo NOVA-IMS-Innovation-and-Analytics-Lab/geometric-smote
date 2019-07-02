@@ -7,7 +7,6 @@ User Guide
 ==========
 
 .. toctree::
-   :numbered:
 
    introduction.rst
    gsmote.rst
