@@ -9,6 +9,12 @@ master_doc = 'index'
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_static_path = ['_static']
+extensions = [
+    'sphinx.ext.autodoc', 
+    'sphinx.ext.autosummary',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx'
+]
 
 # Project information
 project = 'geometric-smote'

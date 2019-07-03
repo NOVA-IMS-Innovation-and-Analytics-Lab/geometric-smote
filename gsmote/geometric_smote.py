@@ -75,7 +75,7 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     sampling_strategy=BaseOverSampler._sampling_strategy_docstring,
     random_state=_random_state_docstring)
 class GeometricSMOTE(BaseOverSampler):
-    """Oversampling using Geometric SMOTE.
+    """Class to to perform over-sampling using Geometric SMOTE.
 
     This algorithm is an implementation of Geometric SMOTE, a geometrically
     enhanced drop-in replacement for SMOTE as presented in [1]_.
