@@ -1,12 +1,12 @@
-# https://imbalanced-learn.readthedocs.io/en/stable/auto_examples/combine/plot_comparison_combine.html#sphx-glr-auto-examples-combine-plot-comparison-combine-py
-
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
-================================
-G-SMOTE Visualization Example
-================================
+===============================================================
+Customized sampler to implement an outlier rejections estimator
+===============================================================
+
+This example illustrates the use of a custom sampler to implement an outlier
+rejections estimator. It can be used easily within a pipeline in which the
+number of samples can vary during training, which usually is a limitation of
+the current scikit-learn pipeline.
 
 """
 
