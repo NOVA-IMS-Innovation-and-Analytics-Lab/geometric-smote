@@ -1,7 +1,4 @@
-"""
-The :mod:`sklearnext.oversampling.geometric_smote` contains
-the implementation of the Geometric SMOTE oversampler.
-"""
+"""Class to perform over-sampling using Geometric SMOTE."""
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
