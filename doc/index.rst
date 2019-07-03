@@ -1,6 +1,6 @@
-#########################################
+=========================================
 Welcome to geometric-smote documentation!
-#########################################
+=========================================
 
 .. toctree::
    :maxdepth: 1
@@ -27,9 +27,9 @@ Welcome to geometric-smote documentation!
 .. toctree::
    :maxdepth: 1
    :hidden:
-   :caption: Addtional Information
+   :caption: Additional Information
 
-   additional-information/whats_new
+   additional-information/release_history
    additional-information/about
 
 Getting Started

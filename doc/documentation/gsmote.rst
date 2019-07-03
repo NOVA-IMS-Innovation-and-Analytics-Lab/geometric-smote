@@ -7,7 +7,7 @@ Geometric SMOTE
 .. currentmodule:: gsmote
 
 A practical guide
-=================
+-----------------
 
 One way to fight the imbalanced learning problem is to generate
 new samples in the classes which are under-represented. Douzas
@@ -56,7 +56,7 @@ trained using the over-sampled data set and the original data set.
 
 
 Sample generation
-=================
+-----------------
 
 G-SMOTE represents a modification of the original SMOTE algorithm on
 the data generation mechanism. Considering a sample :math:`x_i`, a new
@@ -71,7 +71,7 @@ the reader is referred to [DB2019]_.
 
 
 Multi-class management
-======================
+----------------------
 
 :class:`GeometricSMOTE` can be used with multiple classes as well as
 binary classes classification. It requires information regarding the

@@ -1,5 +1,5 @@
 :mod:`{{module}}`.{{objname}}
-{{ underline }}==============
+{{ underline }}--------------
 
 .. currentmodule:: {{ module }}
 
@@ -8,8 +8,6 @@
    {% block methods %}
    .. automethod:: __init__
    {% endblock %}
-
-.. include:: {{module}}.{{objname}}.examples
 
 .. raw:: html
 

@@ -28,7 +28,6 @@ else:
     extensions.append('sphinx.ext.imgmath')
 autodoc_default_flags = ['members', 'inherited-members']
 source_suffix = '.rst'
-plot_gallery = True
 master_doc = 'index'
 project = 'geometric-smote'
 copyright = '2019, G. Douzas'
@@ -38,9 +37,6 @@ release = '0.1'
 add_function_parentheses = False
 pygments_style = 'sphinx'
 
-html_theme = 'sphinx_rtd_theme'
-
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_static_path = ['_static']
 
 htmlhelp_basename = 'geometric-smote-doc'
@@ -86,16 +82,16 @@ issues_github_path = 'AlgoWit/geometric-smote'
 issues_user_uri = 'https://github.com/{user}'
 
 
-linkcode_resolve = make_linkcode_resolve('imblearn',
-                                         'https://github.com/scikit-learn-contrib/'
-                                         'imbalanced-learn/blob/{revision}/'
+linkcode_resolve = make_linkcode_resolve('gsmote',
+                                         'https://github.com/AlgoWit/'
+                                         'geometric-smote/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
 
-# on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-# if not on_rtd:
-#     import sphinx_theme
-#     html_theme = 'stanford_theme'
-#     html_theme_path = [sphinx_theme.get_html_theme_path('stanford_theme')]
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if not on_rtd:
+    import sphinx_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 autosummary_generate = True
