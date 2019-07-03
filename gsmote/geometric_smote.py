@@ -17,8 +17,32 @@ SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
 
 def _make_geometric_sample(center, surface_point, truncation_factor, deformation_factor, random_state):
-    """Returns a generated point based on a center point ,a surface_point
-    and three geometric transformations."""
+    """A support function that returns an artificial point inside 
+    the geometric region defined by the center and surface points.
+    
+    Parameters
+    ----------
+    center : ndarray, shape (n_features, )
+        Center point of the geometric region.
+
+    surface_point : ndarray, shape (n_features, )
+        Surface point of the geometric region.
+
+    truncation_factor : float, optional (default=0.0)
+        The type of truncation. The values should be in the [-1.0, 1.0] range.
+
+    deformation_factor : float, optional (default=0.0)
+        The type of geometry. The values should be in the [0.0, 1.0] range.
+    
+    random_state : int, RandomState instance or None
+        Control the randomization of the algorithm.
+
+    Returns
+    -------
+    point : ndarray, shape (n_features, )
+            Synthetically generated sample.
+
+    """
 
     # Zero radius case
     if np.array_equal(center, surface_point):
@@ -54,10 +78,12 @@ def _make_geometric_sample(center, surface_point, truncation_factor, deformation
     sampling_strategy=BaseOverSampler._sampling_strategy_docstring,
     random_state=_random_state_docstring)
 class GeometricSMOTE(BaseOverSampler):
-    """Class to perform oversampling using Geometric SMOTE algorithm.
+    """Oversampling using Geometric SMOTE.
 
-    This object is an implementation of Geometric SMOTE - a geometrically
+    This algorithm is an implementation of Geometric SMOTE, a geometrically
     enhanced drop-in replacement for SMOTE as presented in [1]_.
+
+    Read more in the :ref:`User Guide`.
 
     Parameters
     ----------
@@ -86,13 +112,37 @@ class GeometricSMOTE(BaseOverSampler):
 
     Notes
     -----
-    See the original papers: [1]_ for more details.
+    See the original paper: [1]_ for more details.
+
+    Supports multi-class resampling. A one-vs.-rest scheme is used as
+    originally proposed in [2]_.
 
     References
     ----------
-    .. [1] Douzas, G., & Bacao, F. (2019). Geometric SMOTE a geometrically enhanced
-    drop-in replacement for SMOTE. Information Sciences, 501, 118–135.
-    https://doi.org/10.1016/J.INS.2019.06.007
+    .. [1] : G. Douzas, F. Bacao, "Geometric SMOTE: 
+    a geometrically enhanced drop-in replacement for SMOTE", 
+    Information Sciences, vol. 501, pp. 118-135, 2019.
+
+    .. [2] : N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, "SMOTE: 
+    Synthetic minority over-sampling technique", Journal of Artificial 
+    Intelligence Research, vol. 16, pp. 321-357, 2002.
+
+    Examples
+    --------
+
+    >>> from collections import Counter
+    >>> from sklearn.datasets import make_classification
+    >>> from gsmote import GeometricSMOTE
+    >>> X, y = make_classification(n_classes=2, class_sep=2,
+    ... weights=[0.1, 0.9], n_informative=3, n_redundant=1, flip_y=0,
+    ... n_features=20, n_clusters_per_class=1, n_samples=1000, random_state=10)
+    >>> print('Original dataset shape %s' % Counter(y))
+    Original dataset shape Counter({{1: 900, 0: 100}})
+    >>> gsmote = GeometricSMOTE(random_state=1)
+    >>> X_res, y_res = gsmote.fit_resample(X, y)
+    >>> print('Resampled dataset shape %s' % Counter(y_res))
+    Resampled dataset shape Counter({{0: 900, 1: 900}})
+
     """
 
     def __init__(self,
@@ -112,7 +162,7 @@ class GeometricSMOTE(BaseOverSampler):
         self.n_jobs = n_jobs
 
     def _validate_estimator(self):
-        """Create the necessary objects for Geometric SMOTE."""
+        """Create the necessary attributes for Geometric SMOTE."""
 
         # Check random state
         self.random_state_ = check_random_state(self.random_state)
@@ -133,7 +183,28 @@ class GeometricSMOTE(BaseOverSampler):
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
-        """Generate synthetic samples based on the selection strategy."""
+        """A support function that returns an artificials samples inside 
+        the geometric region defined by nearest neighbors.
+        
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Matrix containing the data which have to be sampled.
+        y : array-like, shape (n_samples, )
+            Corresponding label for each sample in X.
+        pos_class_label : str or int
+            The minority class (positive class) target value.
+        n_samples : int
+            The number of samples to generate.
+
+        Returns
+        -------
+        X_new : ndarray, shape (n_samples_new, n_features)
+            Synthetically generated samples.
+        y_new : ndarray, shape (n_samples_new, )
+            Target values for synthetic samples.
+        
+        """
 
         # Return zero new samples
         if n_samples == 0:
@@ -196,24 +267,6 @@ class GeometricSMOTE(BaseOverSampler):
         return X_new, y_new
 
     def _fit_resample(self, X, y):
-        """Fit and resample of the dataset using the Geometric SMOTE algorithm.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Matrix containing the data which have to be sampled.
-
-        y : array-like, shape (n_samples,)
-            Corresponding label for each sample in X.
-
-        Returns
-        -------
-        X_resampled : {ndarray, sparse matrix}, shape (n_samples_new, n_features)
-            The array containing the resampled data.
-
-        y_resampled : ndarray, shape (n_samples_new,)
-            The corresponding label of `X_resampled`
-        """
 
         # Validate estimator's parameters
         self._validate_estimator()
