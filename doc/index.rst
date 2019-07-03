@@ -20,9 +20,9 @@ Welcome to geometric-smote documentation!
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Tutorial - Examples
+   :caption: Examples
 
-   tutorial-examples/examples
+   examples/examples
 
 .. toctree::
    :maxdepth: 1
@@ -32,39 +32,28 @@ Welcome to geometric-smote documentation!
    additional-information/whats_new
    additional-information/about
 
-`Getting started <getting-started/install.html>`_
--------------------------------------------------
+Getting Started
+---------------
 
 Information to install, test, and contribute to the package.
 
-`User Guide <documentation/user_guide.html>`_
----------------------------------------------
+Documentation
+-------------
 
 The main documentation. This contains an in-depth description of G-SMOTE
-algorithm and how to apply it.
+algorithm and how to apply it. It also contains the exact API of all functions
+and classes, as given in the docstring.
 
-`API Documentation <documentation/api.html>`_
----------------------------------------------
-
-The exact API of all functions and classes, as given in the
-docstring. The API documents expected types and allowed features for
-all functions, and all parameters available for the algorithm.
-
-`Examples <tutorial-exapmles/examples.html>`_
+Examples
 ---------------------------------------------
 
 A set of examples illustrating the use of the G-SMOTE algorithm. It
 complements the `User Guide <documentation/user_guide.html>`_.
 
-`What's new <additional-information/whats_new.html>`_
------------------------------------------------------
+Additional Information
+----------------------
 
-Log of the geometric-smote history.
-
-`About geometric-smote <additional-information/about.html>`_
-------------------------------------------------------------
-
-About section and history of geometric-smote.
+Release history and about section of geometric-smote.
 
 See the `README <https://github.com/IMS-ML-Lab/geometric-smote/blob/master/README.rst>`_
 for more information.
