@@ -1,31 +1,28 @@
 """
-===============================================================
-Customized sampler to implement an outlier rejections estimator
-===============================================================
+====================================
+Comparison between SMOTE and G-SMOTE
+====================================
 
-This example illustrates the use of a custom sampler to implement an outlier
-rejections estimator. It can be used easily within a pipeline in which the
-number of samples can vary during training, which usually is a limitation of
-the current scikit-learn pipeline.
+This example illustrates the use of G-SMOTE and SMOTE to
+implement an outlier rejections estimator. G-SMOTE can be used easily
+within a pipeline.
 
 """
 
-
-
 from collections import Counter
-from imblearn.pipeline import make_pipeline
-import matplotlib.pyplot as plt
+
 import numpy as np
+import matplotlib.pyplot as plt
 
-# dataset generator
+
 from sklearn.datasets import make_classification
-
-# classifier and oversamplers
 from sklearn.svm import LinearSVC
+from imblearn.pipeline import make_pipeline
 from imblearn.over_sampling import SMOTE
+
 from gsmote import GeometricSMOTE
 
-
+print(__doc__)
 
 
 def create_dataset(n_samples=1000, weights=(0.01, 0.01, 0.98),
@@ -63,6 +60,11 @@ def plot_decision_function(X, y, clf, ax):
     ax.scatter(X[:, 0], X[:, 1], alpha=0.8, c=y, edgecolor='k')
 
 
+######################################################################
+# :class:`GeometricSMOTE` allows to generate samples. However, this method
+# of over-sampling does not have any knowledge regarding the underlying
+# distribution. Therefore, some noisy samples can be generated, e.g. when
+# the different classes cannot be well separated.
 
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2,figsize=(15, 25))
 

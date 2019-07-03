@@ -9,13 +9,10 @@ This is the full API documentation of the `geometric-smote` package.
 :mod:`gsmote`: Over-sampling algorithm
 --------------------------------------
 
-.. automodule:: gsmote
-    :no-members:
-    :no-inherited-members:
-
 .. currentmodule:: gsmote
 
 .. autosummary::
-    :template: class.rst
+   :toctree: generated/
+   :template: class.rst
 
     GeometricSMOTE

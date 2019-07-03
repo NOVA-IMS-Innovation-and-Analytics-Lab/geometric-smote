@@ -1,30 +1,28 @@
 """
-===============================================================
-Customized sampler to implement an outlier rejections estimator
-===============================================================
+======================================
+Plot Geometric SMOTE decision boundary
+======================================
 
-This example illustrates the use of a custom sampler to implement an outlier
-rejections estimator. It can be used easily within a pipeline in which the
-number of samples can vary during training, which usually is a limitation of
-the current scikit-learn pipeline.
+This example illustrates the use of Geometric SMOTE and how 
+the decision boundary is modified compared to the case where 
+the initial training data are used.
+
+An example plot of :class:`gsmote.GeometricSMOTE`
 
 """
 
-
-
 from collections import Counter
-from imblearn.pipeline import make_pipeline
-import matplotlib.pyplot as plt
+
 import numpy as np
+import matplotlib.pyplot as plt
 
-# dataset generator
 from sklearn.datasets import make_classification
-
-# classifier and oversamplers
 from sklearn.svm import LinearSVC
+from imblearn.pipeline import make_pipeline
+
 from gsmote import GeometricSMOTE
 
-
+print(__doc__)
 
 
 def create_dataset(n_samples=1000, weights=(0.01, 0.01, 0.01,0.97),
@@ -44,7 +42,6 @@ def plot_resampling(X, y, sampler, ax):
         X_res, y_res = X, y
 
     ax.scatter(X_res[:, 0], X_res[:, 1], c=y_res, alpha=0.8, edgecolor='k')
-    # make nice plotting
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.get_xaxis().tick_bottom()
@@ -66,11 +63,17 @@ def plot_decision_function(X, y, clf, ax):
     ax.scatter(X[:, 0], X[:, 1], alpha=0.8, c=y, edgecolor='k')
 
 
-
-fig, (ax1, ax2) = plt.subplots(1, 2,figsize=(15, 25))
+#################################################################
+# First, a multi-class dataset with imbalanced data is generated.
 
 X, y = create_dataset(n_samples=1000, weights=(0.1, 0.1, 0.1, 0.7))
 
+
+#########################################################################
+# The decision of the classifier using the initial data and the resampled 
+# data is presented.
+
+fig, (ax1, ax2) = plt.subplots(1, 2,figsize=(15, 25))
 ax_arr = (ax1, ax2)
 for ax, sampler in zip(ax_arr, (
         None,

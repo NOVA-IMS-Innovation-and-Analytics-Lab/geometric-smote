@@ -5,4 +5,6 @@ Geometric SMOTE algorithm.
 
 from .geometric_smote import GeometricSMOTE
 
-__all__ = ['GeometricSMOTE']
+from ._version import __version__
+
+__all__ = ['GeometricSMOTE', '__version__']

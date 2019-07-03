@@ -3,34 +3,34 @@ Welcome to geometric-smote documentation!
 =========================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: Getting Started
 
-   getting-started/install
+   install
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: Documentation
 
-   documentation/user_guide
-   documentation/api
+   user_guide
+   api
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: Examples
 
-   examples/examples
+   auto_examples/index
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: Additional Information
 
-   additional-information/release_history
-   additional-information/about
+   release_history
+   about
 
 Getting Started
 ---------------

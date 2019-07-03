@@ -80,7 +80,7 @@ class GeometricSMOTE(BaseOverSampler):
     This algorithm is an implementation of Geometric SMOTE, a geometrically
     enhanced drop-in replacement for SMOTE as presented in [1]_.
 
-    Read more in the :ref:`User Guide`.
+    Read more in the :ref:`User Guide <user_guide>`.
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ class GeometricSMOTE(BaseOverSampler):
 
     Examples
     --------
-
+    
     >>> from collections import Counter
     >>> from sklearn.datasets import make_classification
     >>> from gsmote import GeometricSMOTE
