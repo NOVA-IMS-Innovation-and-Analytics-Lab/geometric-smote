@@ -231,7 +231,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', geometric-smote.tex', u'geometric-smote Documentation',
+  ('index', 'geometric-smote.tex', u'geometric-smote Documentation',
    u'Georgios Douzas', 'manual'),
 ]
 
@@ -261,8 +261,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'geometric-smote.tex', u'geometric-smote Documentation',
-     u'Georgios Douzas', 'manual')
     ('index', 'geometric-smote.tex', u'geometric-smote Documentation',
      [u'Georgios Douzas'], 1)
 ]
