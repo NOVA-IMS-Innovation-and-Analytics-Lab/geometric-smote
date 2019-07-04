@@ -211,7 +211,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'project-templatedoc'
+htmlhelp_basename = 'geometric-smotedoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -231,8 +231,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'project-template.tex', u'project-template Documentation',
-   u'Vighnesh Birodkar', 'manual'),
+  ('index', geometric-smote.tex', u'geometric-smote Documentation',
+   u'Georgios Douzas', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -261,8 +261,10 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'project-template', u'project-template Documentation',
-     [u'Vighnesh Birodkar'], 1)
+    ('index', 'geometric-smote.tex', u'geometric-smote Documentation',
+     u'Georgios Douzas', 'manual')
+    ('index', 'geometric-smote.tex', u'geometric-smote Documentation',
+     [u'Georgios Douzas'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -275,8 +277,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'project-template', u'project-template Documentation',
-   u'Vighnesh Birodkar', 'project-template', 'One line description of project.',
+  ('index', 'geometric-smote', u'geometric-smote Documentation',
+   u'Georgios Douzas', 'geometric-smote', 'Geometric SMOTE algorithm.',
    'Miscellaneous'),
 ]
 
@@ -306,10 +308,10 @@ intersphinx_mapping = {
 
 # sphinx-gallery configuration
 sphinx_gallery_conf = {
-    'doc_module': 'skltemplate',
+    'doc_module': 'gsmote',
     'backreferences_dir': os.path.join('generated'),
     'reference_url': {
-        'skltemplate': None}
+        'gsmote': None}
 }
 
 def setup(app):
