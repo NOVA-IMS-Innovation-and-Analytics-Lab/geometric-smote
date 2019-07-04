@@ -1,5 +1,5 @@
 ===============
-Release history
+Release History
 ===============
 
 Version 0.1

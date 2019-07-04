@@ -48,7 +48,7 @@ Examples
 ---------------------------------------------
 
 A set of examples illustrating the use of the G-SMOTE algorithm. It
-complements the `User Guide <documentation/user_guide.html>`_.
+complements the `User Guide <user_guide.html>`_.
 
 Additional Information
 ----------------------
