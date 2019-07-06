@@ -9,8 +9,8 @@
 .. |Travis| image:: https://travis-ci.org/AlgoWit/geometric-smote.svg?branch=master
 .. _Travis: https://travis-ci.org/AlgoWit/geometric-smote
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/c8w4xb7re4euntvi/branch/master?svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/gdouzas/geometric-smote/history
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/4u9bgk60o71kmojh/branch/master?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/georgedouzas/geometric-smote/history
 
 .. |Codecov| image:: https://codecov.io/gh/AlgoWit/geometric-smote/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/AlgoWit/geometric-smote
