@@ -15,8 +15,8 @@
 .. |Codecov| image:: https://codecov.io/gh/AlgoWit/geometric-smote/branch/master/graph/badge.svg
 .. _Codecov: https://codecov.io/gh/AlgoWit/geometric-smote
 
-.. |CircleCI| image:: https://circleci.com/gh/scikit-learn-contrib/geometric-smote.svg?style=shield&circle-token=:circle-token
-.. _CircleCI: https://circleci.com/gh/scikit-learn-contrib/geometric-smote/tree/master
+.. |CircleCI| image:: https://circleci.com/gh/AlgoWit/geometric-smote/tree/master.svg?style=svg
+.. _CircleCI: https://circleci.com/gh/AlgoWit/geometric-smote/tree/master
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/geometric-smote/badge/?version=latest
 .. _ReadTheDocs: https://geometric-smote.readthedocs.io/en/latest/?badge=latest
