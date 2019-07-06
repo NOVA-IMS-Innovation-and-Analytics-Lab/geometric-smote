@@ -1,0 +1,6 @@
+name: geometric-smote
+dependencies:
+  - numpy>=1.1
+  - scipy>=0.17
+  - scikit-learn>=0.21
+  - imbalanced-learn>=0.4.3
