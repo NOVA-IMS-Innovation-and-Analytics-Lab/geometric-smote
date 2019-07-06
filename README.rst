@@ -4,10 +4,28 @@
 
 .. _imbalanced-learn: http://imbalanced-learn.org/en/stable/
 
-|ReadTheDocs|_
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_
+
+.. |Travis| image:: https://travis-ci.org/AlgoWit/geometric-smote.svg?branch=master
+.. _Travis: https://travis-ci.org/AlgoWit/geometric-smote
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/c8w4xb7re4euntvi/branch/master?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/glemaitre/geometric-smote/history
+
+.. |Codecov| image:: https://codecov.io/gh/scikit-learn-contrib/geometric-smote/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/scikit-learn-contrib/geometric-smote
+
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn-contrib/geometric-smote.svg?style=shield&circle-token=:circle-token
+.. _CircleCI: https://circleci.com/gh/scikit-learn-contrib/geometric-smote/tree/master
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/geometric-smote/badge/?version=latest
 .. _ReadTheDocs: https://geometric-smote.readthedocs.io/en/latest/?badge=latest
+
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/geometric-smote.svg
+.. _PythonVersion: https://img.shields.io/pypi/pyversions/geometric-smote.svg
+
+.. |Pypi| image:: https://badge.fury.io/py/geometric-smote.svg
+.. _Pypi: https://badge.fury.io/py/geometric-smote
 
 ===============
 geometric-smote
