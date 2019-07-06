@@ -12,8 +12,8 @@
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/c8w4xb7re4euntvi/branch/master?svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/gdouzas/geometric-smote/history
 
-.. |Codecov| image:: https://codecov.io/gh/scikit-learn-contrib/geometric-smote/branch/master/graph/badge.svg
-.. _Codecov: https://codecov.io/gh/scikit-learn-contrib/geometric-smote
+.. |Codecov| image:: https://codecov.io/gh/AlgoWit/geometric-smote/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/AlgoWit/geometric-smote
 
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn-contrib/geometric-smote.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn-contrib/geometric-smote/tree/master
