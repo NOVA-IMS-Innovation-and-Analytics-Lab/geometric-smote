@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# project-template documentation build configuration file, created by
+# geometric-smote documentation build configuration file, created by
 # sphinx-quickstart on Mon Jan 18 14:44:12 2016.
 #
 # This file is execfile()d with the current directory set to its
@@ -120,7 +120,7 @@ exclude_patterns = ['_build', '_templates']
 pygments_style = 'sphinx'
 
 # Custom style
-html_style = 'css/project-template.css'
+html_style = 'css/geometric-smote.css'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
