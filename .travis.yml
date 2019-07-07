@@ -52,7 +52,7 @@ install:
 script:
   - mkdir for_test
   - cd for_test
-  - pytest -v --cov=gsmote --pyargs gsmote
+  - python -m pytest -v --cov=gsmote --pyargs gsmote
 
 after_success:
   - codecov
