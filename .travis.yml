@@ -17,7 +17,6 @@ addons:
 
 matrix:
   include:
-    - env: DISTRIB="ubuntu"
     - env: PYTHON_VERSION="3.6" NUMPY_VERSION="*" SCIPY_VERSION="*"
            SKLEARN_VERSION="0.21.2" IMBLEARN_VERSION="0.4.3"
     - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
@@ -52,7 +51,7 @@ install:
 script:
   - mkdir for_test
   - cd for_test
-  - python -m pytest -v --cov=gsmote --pyargs gsmote
+  - pytest -v --cov=gsmote --pyargs gsmote
 
 after_success:
   - codecov
