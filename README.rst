@@ -84,7 +84,7 @@ Testing
 
 After installation, you can use `pytest` to run the test suite::
 
-  make coverage
+  make test
 
 About
 -----
