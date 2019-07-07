@@ -64,7 +64,7 @@ install it via `pip`::
 
   pip install -U geometric-smote
 
-The package is release also in Anaconda Cloud platform::
+The package is released also in Anaconda Cloud platform::
 
   conda install -c conda-forge geometric-smote
 
