@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: false
 
 language: python
@@ -6,11 +6,20 @@ language: python
 cache:
   directories:
   - $HOME/.cache/pip
+  - $HOME/.cache/pip
+  - $HOME/download
+
+addons:
+  apt:
+    packages:
+      - python3-numpy
+      - python3-scipy
 
 matrix:
   include:
-    - env: PYTHON_VERSION="3.7" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           SKLEARN_VERSION="0.21.1" IMBLEARN_VERSION="0.4.3"
+    - env: DISTRIB="ubuntu"
+    - env: PYTHON_VERSION="3.6" NUMPY_VERSION="*" SCIPY_VERSION="*"
+           SKLEARN_VERSION="0.21.2" IMBLEARN_VERSION="0.4.3"
     - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
            SKLEARN_VERSION="*" IMBLEARN_VERSION="0.4.3"
     - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
