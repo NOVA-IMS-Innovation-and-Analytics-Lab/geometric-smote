@@ -17,8 +17,8 @@ with codecs.open('README.rst', encoding='utf-8-sig') as f:
 MAINTAINER = 'G. Douzas'
 MAINTAINER_EMAIL = 'gdouzas@icloud.com'
 URL = 'https://github.com/AlgoWit/publications'
-LICENSE = 'new BSD'
-DOWNLOAD_URL = 'https://github.com/scikit-learn-contrib/project-template'
+LICENSE = 'MIT'
+DOWNLOAD_URL = 'https://github.com/AlgoWit/geometric-smote'
 VERSION = __version__
 INSTALL_REQUIRES = ['scipy>=0.17', 'numpy>=1.1', 'scikit-learn>=0.21', 'imbalanced-learn>=0.4.3']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
@@ -31,8 +31,6 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: POSIX',
                'Operating System :: Unix',
                'Operating System :: MacOS',
-               'Programming Language :: Python :: 2.7',
-               'Programming Language :: Python :: 3.5',
                'Programming Language :: Python :: 3.6',
                'Programming Language :: Python :: 3.7']
 EXTRAS_REQUIRE = {
