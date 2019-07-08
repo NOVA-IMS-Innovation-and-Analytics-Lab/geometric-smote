@@ -127,20 +127,21 @@ class GeometricSMOTE(BaseOverSampler):
 
     References
     ----------
-    .. [1] : G. Douzas, F. Bacao, "Geometric SMOTE:
-    a geometrically enhanced drop-in replacement for SMOTE",
-    Information Sciences, vol. 501, pp. 118-135, 2019.
+   
+    .. [1] G. Douzas, F. Bacao, "Geometric SMOTE:
+       a geometrically enhanced drop-in replacement for SMOTE",
+       Information Sciences, vol. 501, pp. 118-135, 2019.
 
-    .. [2] : N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, "SMOTE:
-    Synthetic minority over-sampling technique", Journal of Artificial
-    Intelligence Research, vol. 16, pp. 321-357, 2002.
+    .. [2] N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, "SMOTE:
+       synthetic minority over-sampling technique", Journal of Artificial
+       Intelligence Research, vol. 16, pp. 321-357, 2002.
 
     Examples
     --------
 
     >>> from collections import Counter
     >>> from sklearn.datasets import make_classification
-    >>> from gsmote import GeometricSMOTE
+    >>> from gsmote import GeometricSMOTE # doctest: +NORMALIZE_WHITESPACE
     >>> X, y = make_classification(n_classes=2, class_sep=2,
     ... weights=[0.1, 0.9], n_informative=3, n_redundant=1, flip_y=0,
     ... n_features=20, n_clusters_per_class=1, n_samples=1000, random_state=10)
@@ -152,7 +153,6 @@ class GeometricSMOTE(BaseOverSampler):
     Resampled dataset shape Counter({{0: 900, 1: 900}})
 
     """
-
     def __init__(self,
                  sampling_strategy='auto',
                  random_state=None,
@@ -307,3 +307,5 @@ class GeometricSMOTE(BaseOverSampler):
                 (X_resampled, X_new)), np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
+
+from imblearn.over_sampling import SMOTE

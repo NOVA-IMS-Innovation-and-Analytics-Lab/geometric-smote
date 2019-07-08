@@ -124,10 +124,10 @@ input space, around each selected minority instance.
 References:
 -----------
 
-.. [1] : G. Douzas, F. Bacao, “Geometric SMOTE:
+.. [1] G. Douzas, F. Bacao, “Geometric SMOTE:
    a geometrically enhanced drop-in replacement for SMOTE,”
    Information Sciences, vol. 501, pp. 118-135, 2019.
 
-.. [2] : N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, “SMOTE:
-   Synthetic minority over-sampling technique,” Journal of Artificial
+.. [2] N. V. Chawla, K. W. Bowyer, L. O. Hall, W. P. Kegelmeyer, “SMOTE:
+   synthetic minority over-sampling technique,” Journal of Artificial
    Intelligence Research, vol. 16, pp. 321-357, 2002.
