@@ -28,7 +28,7 @@
 .. _Pypi: https://badge.fury.io/py/geometric-smote
 
 .. |Conda| image:: https://anaconda.org/algowit/geometric-smote/badges/installer/conda.svg   
-:: _Conda https://conda.anaconda.org/algowit
+:: _Conda: https://conda.anaconda.org/algowit
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.1016/j.ins.2019.06.007.svg
 .. _DOI: https://doi.org/10.1016/j.ins.2019.06.007
