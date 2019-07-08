@@ -3,24 +3,28 @@ package:
   version: "0.1.1"
 
 source:
-  git_rev: 0.1.1
-  git_url: https://github.com/AlgoWit/geometric-smote
+  url: "https://files.pythonhosted.org/packages/22/d7/7abe14b472b5190042a24ff91b4d4183744d1dab4f404bf0ff401df8929b/geometric-smote-0.1.1.tar.gz"
+  sha256: "b2df4fca9a74e2b71f99a2ec3add874b75f1d2d2ecb4e227627c2202a9c9897b"
 
 build:
   number: 0
   noarch: python
 
 requirements:
-  build:
-    - python
-    - setuptools
-    - scikit-learn >=0.21
+  host:
     - imbalanced-learn >=0.4.3
+    - numpy >=1.1
+    - pip
+    - python
+    - scikit-learn >=0.21
+    - scipy >=0.17
 
   run:
+    - imbalanced-learn >=0.4.3
+    - numpy >=1.1
     - python
     - scikit-learn >=0.21
-    - imbalanced-learn >=0.4.3
+    - scipy >=0.17
 
 test:
   requires:
@@ -31,6 +35,15 @@ test:
     - gsmote
 
 about:
-  home: https://github.com/AlgoWit/geometric-smote
-  license: MIT
-  license_file: LICENSE
+  home: "https://github.com/AlgoWit/geometric-smote"
+  license: "MIT"
+  license_file: ""
+
+
+
+  
+  
+
+
+
+

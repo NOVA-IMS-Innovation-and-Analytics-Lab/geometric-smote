@@ -4,7 +4,7 @@
 
 .. _imbalanced-learn: http://imbalanced-learn.org/en/stable/
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |DOI|_
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_
 
 .. |Travis| image:: https://travis-ci.org/AlgoWit/geometric-smote.svg?branch=master
 .. _Travis: https://travis-ci.org/AlgoWit/geometric-smote
@@ -26,6 +26,9 @@
 
 .. |Pypi| image:: https://badge.fury.io/py/geometric-smote.svg
 .. _Pypi: https://badge.fury.io/py/geometric-smote
+
+.. |Conda| image:: https://anaconda.org/algowit/geometric-smote/badges/installer/conda.svg   
+:: _Conda https://conda.anaconda.org/algowit
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.1016/j.ins.2019.06.007.svg
 .. _DOI: https://doi.org/10.1016/j.ins.2019.06.007
@@ -69,18 +72,18 @@ install it via `pip`::
 
 The package is released also in Anaconda Cloud platform::
 
-  conda install -c conda-forge geometric-smote
+  conda install -c algowit geometric-smote
 
 If you prefer, you can clone it and run the setup.py file. Use the following
 commands to get a copy from GitHub and install all dependencies::
 
-  git clone https://github.com/IMS-ML-Lab/geometric-smote.git
+  git clone https://github.com/AlgoWit/geometric-smote.git
   cd geometric-smote
   pip install .
 
 Or install using pip and GitHub::
 
-  pip install -U git+https://github.com/IMS-ML-Lab/geometric-smote.git
+  pip install -U git+https://github.com/AlgoWit/geometric-smote.git
 
 Testing
 -------
