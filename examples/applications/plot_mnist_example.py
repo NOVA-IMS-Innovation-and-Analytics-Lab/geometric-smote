@@ -76,7 +76,7 @@ def plot_mnist_samples(X, y, title=None):
         axes[i].set_title(str(val))
         axes[i].axis('off')
 
-    plt.show()
+
 
 plot_mnist_samples(X, y)
 
