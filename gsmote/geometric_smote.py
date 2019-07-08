@@ -307,5 +307,3 @@ class GeometricSMOTE(BaseOverSampler):
                 (X_resampled, X_new)), np.hstack((y_resampled, y_new))
 
         return X_resampled, y_resampled
-
-from imblearn.over_sampling import SMOTE
