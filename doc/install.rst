@@ -22,18 +22,18 @@ install it via `pip`::
 
 The package is release also in Anaconda Cloud platform::
 
-  conda install -c conda-forge geometric-smote
+  conda install -c algowit geometric-smote
 
 If you prefer, you can clone it and run the setup.py file. Use the following
 commands to get a copy from Github and install all dependencies::
 
-  git clone https://github.com/IMS-ML-Lab/geometric-smote.git
+  git clone https://github.com/AlgoWit/geometric-smote.git
   cd geometric-smote
   pip install .
 
 Or install using pip and GitHub::
 
-  pip install -U git+https://github.com/IMS-ML-Lab/geometric-smote.git
+  pip install -U git+https://github.com/AlgoWit/geometric-smote.git
 
 Test and coverage
 -----------------
@@ -57,4 +57,4 @@ You can contribute to this code through Pull Request on GitHub_. Please, make
 sure that your code is coming with unit tests to ensure full coverage and
 continuous integration in the API.
 
-.. _GitHub: https://github.com/IMS-ML-Lab/geometric-smote/pulls
+.. _GitHub: https://github.com/AlgoWit/geometric-smote/pulls
