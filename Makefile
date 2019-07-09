@@ -25,9 +25,6 @@ test: test-coverage test-doc
 html:
 	export SPHINXOPTS=-W; make -C doc html
 
-conda: 
-	. conda-recipe/conda_deployment.sh
-
 code-analysis:
 	flake8 gsmote | grep -v __init__
 	pylint -E gsmote/ -d E1103,E0611,E1101
