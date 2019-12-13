@@ -26,10 +26,16 @@ XLIM, YLIM = [-3.0, 3.0], [0.0, 4.0]
 RANDOM_STATE = 5
 
 
-def generate_imbalanced_data(n_maj_samples, n_min_samples, centers, cluster_std, *min_point):
+def generate_imbalanced_data(
+    n_maj_samples, n_min_samples, centers, cluster_std, *min_point
+):
     """Generate imbalanced data."""
-    X_neg, _ = make_blobs(n_samples=n_maj_samples, centers=centers, 
-                          cluster_std=cluster_std, random_state=RANDOM_STATE)
+    X_neg, _ = make_blobs(
+        n_samples=n_maj_samples,
+        centers=centers,
+        cluster_std=cluster_std,
+        random_state=RANDOM_STATE,
+    )
     X_pos = np.array(min_point)
     X = np.vstack([X_neg, X_pos])
     y_pos = np.zeros(X_neg.shape[0], dtype=np.int8)
@@ -89,8 +95,9 @@ def plot_comparison(oversamplers, X, y):
 # from the minority (positive) class are included to illustrate the Geometric
 # SMOTE data generation mechanism.
 
-X, y = generate_imbalanced_data(200, 2, [(-2.0, 2.25), (1.0, 2.0)], 
-                                0.25, [-0.7, 2.3], [-0.5, 3.1])
+X, y = generate_imbalanced_data(
+    200, 2, [(-2.0, 2.25), (1.0, 2.0)], 0.25, [-0.7, 2.3], [-0.5, 3.1]
+)
 plot_scatter(X, y, 'Imbalanced data')
 
 ###############################################################################
@@ -110,7 +117,7 @@ plot_scatter(X, y, 'Imbalanced data')
 
 ###############################################################################
 # Truncation factor
-#..............................................................................
+# ..............................................................................
 #
 # The hyperparameter ``truncation_factor`` determines the degree of truncation
 # that is applied on the initial geometric area. Selecting the values of
@@ -121,10 +128,14 @@ plot_scatter(X, y, 'Imbalanced data')
 # multi-dimensional case the corresponding area is a hypersphere. When
 # truncation factor is increased, the hypersphere is truncated and for
 # ``truncation_factor=1.0`` becomes a half-hypersphere. Negative values of
-# ``truncation_factor`` have a similar effect but on the opposite direction. 
+# ``truncation_factor`` have a similar effect but on the opposite direction.
 
-gsmote = GeometricSMOTE(k_neighbors=1, deformation_factor=0.0, 
-                        selection_strategy='minority', random_state=RANDOM_STATE)
+gsmote = GeometricSMOTE(
+    k_neighbors=1,
+    deformation_factor=0.0,
+    selection_strategy='minority',
+    random_state=RANDOM_STATE,
+)
 truncation_factors = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 n_subplots = [2, 3]
 plot_hyperparameters(gsmote, X, y, 'truncation_factor', truncation_factors, n_subplots)
@@ -132,20 +143,24 @@ plot_hyperparameters(gsmote, X, y, 'truncation_factor', -truncation_factors, n_s
 
 ###############################################################################
 # Deformation factor
-#..............................................................................
+# ..............................................................................
 #
 # When the ``deformation_factor`` is increased, the data generation area deforms
 # to an ellipsis and for ``deformation_factor=1.0`` becomes a line segment.
 
-gsmote = GeometricSMOTE(k_neighbors=1, truncation_factor=0.0,
-                        selection_strategy='minority', random_state=RANDOM_STATE)
+gsmote = GeometricSMOTE(
+    k_neighbors=1,
+    truncation_factor=0.0,
+    selection_strategy='minority',
+    random_state=RANDOM_STATE,
+)
 deformation_factors = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
 n_subplots = [2, 3]
 plot_hyperparameters(gsmote, X, y, 'deformation_factor', truncation_factors, n_subplots)
 
 ###############################################################################
 # Selection strategy
-#..............................................................................
+# ..............................................................................
 #
 # The hyperparameter ``selection_strategy`` determines the selection mechanism
 # of nearest neighbors. Initially, a minority class sample is selected randomly.
@@ -156,11 +171,17 @@ plot_hyperparameters(gsmote, X, y, 'deformation_factor', truncation_factors, n_s
 # selection mechanisms are combined and the second sample is the nearest to the
 # first between the two samples defined above.
 
-gsmote = GeometricSMOTE(k_neighbors=1, truncation_factor=0.0,
-                        deformation_factor=0.5, random_state=RANDOM_STATE)
+gsmote = GeometricSMOTE(
+    k_neighbors=1,
+    truncation_factor=0.0,
+    deformation_factor=0.5,
+    random_state=RANDOM_STATE,
+)
 selection_strategies = np.array(['minority', 'majority', 'combined'])
 n_subplots = [1, 3]
-plot_hyperparameters(gsmote, X, y, 'selection_strategy', selection_strategies, n_subplots)
+plot_hyperparameters(
+    gsmote, X, y, 'selection_strategy', selection_strategies, n_subplots
+)
 
 ###############################################################################
 # Noisy samples
@@ -178,10 +199,15 @@ plot_scatter(X_new, y_new, 'Imbalanced data')
 # When the number of ``k_neighbors`` is increased, SMOTE results to the
 # generation of noisy samples. On the other hand, Geometric SMOTE avoids this
 # scenario when the ``selection_strategy`` values are either ``combined`` or
-# ``majority``. 
+# ``majority``.
 
 oversamplers = [
     ('SMOTE', SMOTE(k_neighbors=2, random_state=RANDOM_STATE)),
-    ('Geometric SMOTE', GeometricSMOTE(k_neighbors=2, selection_strategy='combined', random_state=RANDOM_STATE))
+    (
+        'Geometric SMOTE',
+        GeometricSMOTE(
+            k_neighbors=2, selection_strategy='combined', random_state=RANDOM_STATE
+        ),
+    ),
 ]
 plot_comparison(oversamplers, X_new, y_new)
