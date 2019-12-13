@@ -1,10 +1,10 @@
 package:
   name: geometric-smote
-  version: "0.1.2"
+  version: "0.1.3"
 
 source:
-  url: "https://files.pythonhosted.org/packages/17/24/40b75ee9d6a55a01a5dd503b9c2be4492987348051184b9069c26c7dae2b/geometric-smote-0.1.2.tar.gz"
-  sha256: "cd1c20e85a16cb0663e58d2675c8d51068e11c2b25d526746b3ad159867957aa"
+  url: "https://files.pythonhosted.org/packages/88/01/9cc1937df041e5ed4023e43863b9070ed59b9d1799f75088c538e5ee057a/geometric-smote-0.1.3.tar.gz"
+  sha256: "d12be1a0704d197a154377a412e3b6702874e16b7ec275f4b9e8c447e763ebf8"
 
 build:
   number: 0
