@@ -5,7 +5,7 @@
 
 import numpy as np
 from numpy.linalg import norm
-from sklearn.utils import check_random_state, safe_indexing
+from sklearn.utils import check_random_state
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution
 from imblearn.utils._docstring import _random_state_docstring
@@ -14,11 +14,8 @@ SELECTION_STRATEGY = ('combined', 'majority', 'minority')
 
 
 def _make_geometric_sample(
-        center,
-        surface_point,
-        truncation_factor,
-        deformation_factor,
-        random_state):
+    center, surface_point, truncation_factor, deformation_factor, random_state
+):
     """A support function that returns an artificial point inside
     the geometric region defined by the center and surface points.
 
@@ -54,27 +51,30 @@ def _make_geometric_sample(
     radius = norm(center - surface_point)
     normal_samples = random_state.normal(size=center.size)
     point_on_unit_sphere = normal_samples / norm(normal_samples)
-    point = (random_state.uniform(size=1) **
-             (1 / center.size)) * point_on_unit_sphere
+    point = (random_state.uniform(size=1) ** (1 / center.size)) * point_on_unit_sphere
 
     # Parallel unit vector
-    parallel_unit_vector = (surface_point - center) / \
-        norm(surface_point - center)
+    parallel_unit_vector = (surface_point - center) / norm(surface_point - center)
 
     # Truncation
-    close_to_opposite_boundary = truncation_factor > 0 and np.dot(
-        point, parallel_unit_vector) < truncation_factor - 1
-    close_to_boundary = truncation_factor < 0 and np.dot(
-        point, parallel_unit_vector) > truncation_factor + 1
+    close_to_opposite_boundary = (
+        truncation_factor > 0
+        and np.dot(point, parallel_unit_vector) < truncation_factor - 1
+    )
+    close_to_boundary = (
+        truncation_factor < 0
+        and np.dot(point, parallel_unit_vector) > truncation_factor + 1
+    )
     if close_to_opposite_boundary or close_to_boundary:
         point -= 2 * np.dot(point, parallel_unit_vector) * parallel_unit_vector
 
     # Deformation
-    parallel_point_position = np.dot(
-        point, parallel_unit_vector) * parallel_unit_vector
+    parallel_point_position = np.dot(point, parallel_unit_vector) * parallel_unit_vector
     perpendicular_point_position = point - parallel_point_position
-    point = parallel_point_position + \
-        (1 - deformation_factor) * perpendicular_point_position
+    point = (
+        parallel_point_position
+        + (1 - deformation_factor) * perpendicular_point_position
+    )
 
     # Translation
     point = center + radius * point
@@ -84,7 +84,8 @@ def _make_geometric_sample(
 
 @Substitution(
     sampling_strategy=BaseOverSampler._sampling_strategy_docstring,
-    random_state=_random_state_docstring)
+    random_state=_random_state_docstring,
+)
 class GeometricSMOTE(BaseOverSampler):
     """Class to to perform over-sampling using Geometric SMOTE.
 
@@ -153,16 +154,18 @@ class GeometricSMOTE(BaseOverSampler):
     Resampled dataset shape Counter({{0: 900, 1: 900}})
 
     """
-    def __init__(self,
-                 sampling_strategy='auto',
-                 random_state=None,
-                 truncation_factor=1.0,
-                 deformation_factor=0.0,
-                 selection_strategy='combined',
-                 k_neighbors=5,
-                 n_jobs=1):
-        super(GeometricSMOTE, self).__init__(
-            sampling_strategy=sampling_strategy)
+
+    def __init__(
+        self,
+        sampling_strategy='auto',
+        random_state=None,
+        truncation_factor=1.0,
+        deformation_factor=0.0,
+        selection_strategy='combined',
+        k_neighbors=5,
+        n_jobs=1,
+    ):
+        super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy)
         self.random_state = random_state
         self.truncation_factor = truncation_factor
         self.deformation_factor = deformation_factor
@@ -178,14 +181,19 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Validate strategy
         if self.selection_strategy not in SELECTION_STRATEGY:
-            error_msg = 'Unknown selection_strategy for Geometric SMOTE algorithm. Choices are {}. Got {} instead.'
-            raise ValueError(error_msg.format(
-                SELECTION_STRATEGY, self.selection_strategy))
+            error_msg = (
+                'Unknown selection_strategy for Geometric SMOTE algorithm. '
+                'Choices are {}. Got {} instead.'
+            )
+            raise ValueError(
+                error_msg.format(SELECTION_STRATEGY, self.selection_strategy)
+            )
 
         # Create nearest neighbors object for positive class
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object(
-                'nns_positive', self.k_neighbors, additional_neighbor=1)
+                'nns_positive', self.k_neighbors, additional_neighbor=1
+            )
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
         # Create nearest neighbors object for negative class
@@ -219,35 +227,38 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Return zero new samples
         if n_samples == 0:
-            return np.array(
-                [], dtype=X.dtype).reshape(
-                0, X.shape[1]), np.array(
-                [], dtype=y.dtype)
+            return (
+                np.array([], dtype=X.dtype).reshape(0, X.shape[1]),
+                np.array([], dtype=y.dtype),
+            )
 
         # Select positive class samples
-        X_pos = safe_indexing(X, np.flatnonzero(y == pos_class_label))
+        X_pos = X[y == pos_class_label]
 
         # Force minority strategy if no negative class samples are present
-        self.selection_strategy_ = 'minority' if len(
-            X) == len(X_pos) else self.selection_strategy
+        self.selection_strategy_ = (
+            'minority' if len(X) == len(X_pos) else self.selection_strategy
+        )
 
         # Minority or combined strategy
         if self.selection_strategy_ in ('minority', 'combined'):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
             samples_indices = self.random_state_.randint(
-                low=0, high=len(points_pos.flatten()), size=n_samples)
+                low=0, high=len(points_pos.flatten()), size=n_samples
+            )
             rows = np.floor_divide(samples_indices, points_pos.shape[1])
             cols = np.mod(samples_indices, points_pos.shape[1])
 
         # Majority or combined strategy
         if self.selection_strategy_ in ('majority', 'combined'):
-            X_neg = safe_indexing(X, np.flatnonzero(y != pos_class_label))
+            X_neg = X[y != pos_class_label]
             self.nn_neg_.fit(X_neg)
             points_neg = self.nn_neg_.kneighbors(X_pos)[1]
             if self.selection_strategy_ == 'majority':
                 samples_indices = self.random_state_.randint(
-                    low=0, high=len(points_neg.flatten()), size=n_samples)
+                    low=0, high=len(points_neg.flatten()), size=n_samples
+                )
                 rows = np.floor_divide(samples_indices, points_neg.shape[1])
                 cols = np.mod(samples_indices, points_neg.shape[1])
 
@@ -272,7 +283,9 @@ class GeometricSMOTE(BaseOverSampler):
                 surface_point_neg = X_neg[points_neg[row, 0]]
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
-                surface_point = surface_point_neg if radius_pos > radius_neg else surface_point_pos
+                surface_point = (
+                    surface_point_neg if radius_pos > radius_neg else surface_point_pos
+                )
 
             # Append new sample
             X_new[ind] = _make_geometric_sample(
@@ -280,7 +293,8 @@ class GeometricSMOTE(BaseOverSampler):
                 surface_point,
                 self.truncation_factor,
                 self.deformation_factor,
-                self.random_state_)
+                self.random_state_,
+            )
 
         # Create new samples for target variable
         y_new = np.array([pos_class_label] * len(samples_indices))
@@ -299,11 +313,12 @@ class GeometricSMOTE(BaseOverSampler):
         for class_label, n_samples in self.sampling_strategy_.items():
 
             # Apply gsmote mechanism
-            X_new, y_new = self._make_geometric_samples(
-                X, y, class_label, n_samples)
+            X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
 
             # Append new data
-            X_resampled, y_resampled = np.vstack(
-                (X_resampled, X_new)), np.hstack((y_resampled, y_new))
+            X_resampled, y_resampled = (
+                np.vstack((X_resampled, X_new)),
+                np.hstack((y_resampled, y_new)),
+            )
 
         return X_resampled, y_resampled
