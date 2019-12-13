@@ -4,7 +4,7 @@
 
 .. _imbalanced-learn: http://imbalanced-learn.org/en/stable/
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_ |Black|_
 
 .. |Travis| image:: https://travis-ci.org/AlgoWit/geometric-smote.svg?branch=master
 .. _Travis: https://travis-ci.org/AlgoWit/geometric-smote
@@ -32,6 +32,9 @@
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.1016/j.ins.2019.06.007.svg
 .. _DOI: https://doi.org/10.1016/j.ins.2019.06.007
+
+.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. _Black: https://github.com/ambv/black
 
 ===============
 geometric-smote
