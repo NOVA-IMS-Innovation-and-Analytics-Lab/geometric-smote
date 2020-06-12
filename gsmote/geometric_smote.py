@@ -7,7 +7,7 @@ import numpy as np
 from numpy.linalg import norm
 from sklearn.utils import check_random_state
 from imblearn.over_sampling.base import BaseOverSampler
-from imblearn.utils import check_neighbors_object, Substitution
+from imblearn.utils import check_neighbors_object, Substitution, check_target_type
 from imblearn.utils._docstring import _random_state_docstring
 
 SELECTION_STRATEGY = ('combined', 'majority', 'minority')
@@ -96,6 +96,13 @@ class GeometricSMOTE(BaseOverSampler):
 
     Parameters
     ----------
+    categorical_features : ndarray of shape (n_cat_features,) or (n_features,)
+        Specified which features are categorical. Can either be:
+
+        - array of indices specifying the categorical features;
+        - mask array of shape (n_features, ) and ``bool`` dtype for which
+          ``True`` indicates the categorical features.
+
     {sampling_strategy}
 
     {random_state}
@@ -163,6 +170,7 @@ class GeometricSMOTE(BaseOverSampler):
         deformation_factor=0.0,
         selection_strategy='combined',
         k_neighbors=5,
+        categorical_features=None,
         n_jobs=1,
     ):
         super(GeometricSMOTE, self).__init__(sampling_strategy=sampling_strategy)
@@ -171,6 +179,7 @@ class GeometricSMOTE(BaseOverSampler):
         self.deformation_factor = deformation_factor
         self.selection_strategy = selection_strategy
         self.k_neighbors = k_neighbors
+        self.categorical_features = categorical_features
         self.n_jobs = n_jobs
 
     def _validate_estimator(self):
@@ -200,6 +209,50 @@ class GeometricSMOTE(BaseOverSampler):
         if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
+
+    def _validate_categorical(self):
+        """Create the necessary attributes for Geometric SMOTE
+        with categorical features"""
+
+        if self.categorical_features is None:
+            return self
+
+        categorical_features = np.asarray(self.categorical_features)
+        if categorical_features.dtype.name == "bool":
+            self.categorical_features_ = np.flatnonzero(categorical_features)
+        else:
+            if any(
+                [
+                    cat not in np.arange(self.n_features_)
+                    for cat in categorical_features
+                ]
+            ):
+                raise ValueError(
+                    "Some of the categorical indices are out of range. Indices"
+                    " should be between 0 and {}".format(self.n_features_)
+                )
+            self.categorical_features_ = categorical_features
+        self.continuous_features_ = np.setdiff1d(
+            np.arange(self.n_features_), self.categorical_features_
+        )
+
+        if self.categorical_features_.size == self.n_features_in_:
+            raise ValueError(
+                "SMOTE-NC is not designed to work only with categorical "
+                "features. It requires some numerical features."
+            )
+        return self
+
+    def _check_X_y(self, X, y):
+        """Overwrite the checking to let pass some string for categorical
+        features.
+        """
+        y, binarize_y = check_target_type(y, indicate_one_vs_all=True)
+        X, y = self._validate_data(
+            X, y, reset=True, dtype=None, accept_sparse=["csr", "csc"]
+        )
+
+        return X, y, binarize_y
 
     def _make_geometric_samples(self, X, y, pos_class_label, n_samples):
         """A support function that returns an artificials samples inside
@@ -303,8 +356,11 @@ class GeometricSMOTE(BaseOverSampler):
 
     def _fit_resample(self, X, y):
 
+        self.n_features_ = X.shape[1]
+
         # Validate estimator's parameters
-        self._validate_estimator()
+        self._validate_categorical()\
+            ._validate_estimator()
 
         # Copy data
         X_resampled, y_resampled = X.copy(), y.copy()
