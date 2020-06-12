@@ -9,6 +9,7 @@ import numpy as np
 from numpy.linalg import norm
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_classification
+from scipy import sparse
 
 from ..geometric_smote import _make_geometric_sample, GeometricSMOTE, SELECTION_STRATEGY
 
@@ -29,6 +30,71 @@ SURFACE_POINTS = [
 TRUNCATION_FACTORS = [-1.0, -0.5, 0.0, 0.5, 1.0]
 DEFORMATION_FACTORS = [0.0, 0.25, 0.5, 0.75, 1.0]
 
+
+def data_heterogeneous_ordered():
+    rng = np.random.RandomState(42)
+    X = np.empty((30, 4), dtype=object)
+    # create 2 random continuous feature
+    X[:, :2] = rng.randn(30, 2)
+    # create a categorical feature using some string
+    X[:, 2] = rng.choice(["a", "b", "c"], size=30).astype(object)
+    # create a categorical feature using some integer
+    X[:, 3] = rng.randint(3, size=30)
+    y = np.array([0] * 10 + [1] * 20)
+    # return the categories
+    return X, y, [2, 3]
+
+def data_heterogeneous_unordered():
+    rng = np.random.RandomState(42)
+    X = np.empty((30, 4), dtype=object)
+    # create 2 random continuous feature
+    X[:, [1, 2]] = rng.randn(30, 2)
+    # create a categorical feature using some string
+    X[:, 0] = rng.choice(["a", "b", "c"], size=30).astype(object)
+    # create a categorical feature using some integer
+    X[:, 3] = rng.randint(3, size=30)
+    y = np.array([0] * 10 + [1] * 20)
+    # return the categories
+    return X, y, [0, 3]
+
+def data_heterogeneous_masked():
+    rng = np.random.RandomState(42)
+    X = np.empty((30, 4), dtype=object)
+    # create 2 random continuous feature
+    X[:, [1, 2]] = rng.randn(30, 2)
+    # create a categorical feature using some string
+    X[:, 0] = rng.choice(["a", "b", "c"], size=30).astype(object)
+    # create a categorical feature using some integer
+    X[:, 3] = rng.randint(3, size=30)
+    y = np.array([0] * 10 + [1] * 20)
+    # return the categories
+    return X, y, [True, False, True]
+
+def data_heterogeneous_unordered_multiclass():
+    rng = np.random.RandomState(42)
+    X = np.empty((50, 4), dtype=object)
+    # create 2 random continuous feature
+    X[:, [1, 2]] = rng.randn(50, 2)
+    # create a categorical feature using some string
+    X[:, 0] = rng.choice(["a", "b", "c"], size=50).astype(object)
+    # create a categorical feature using some integer
+    X[:, 3] = rng.randint(3, size=50)
+    y = np.array([0] * 10 + [1] * 15 + [2] * 25)
+    # return the categories
+    return X, y, [0, 3]
+
+def data_sparse(format):
+    rng = np.random.RandomState(42)
+    X = np.empty((30, 4), dtype=np.float64)
+    # create 2 random continuous feature
+    X[:, [1, 2]] = rng.randn(30, 2)
+    # create a categorical feature using some string
+    X[:, 0] = rng.randint(3, size=30)
+    # create a categorical feature using some integer
+    X[:, 3] = rng.randint(3, size=30)
+    y = np.array([0] * 10 + [1] * 20)
+    X = sparse.csr_matrix(X) if format == "csr" else sparse.csc_matrix(X)
+    return X, y, [0, 3]
 
 @pytest.mark.parametrize(
     'center,surface_point',
@@ -100,6 +166,7 @@ def test_gsmote_default_init():
     assert gsmote.deformation_factor == 0.0
     assert gsmote.selection_strategy == 'combined'
     assert gsmote.k_neighbors == 5
+    assert gsmote.categorical_features is None
     assert gsmote.n_jobs == 1
 
 
@@ -207,3 +274,46 @@ def test_gsmote_fit_resample_multiclass(
     assert majority_label not in gsmote.sampling_strategy_.keys()
     np.testing.assert_array_equal(np.unique(y), np.unique(y_resampled))
     assert len(set(Counter(y_resampled).values())) == 1
+
+def test_categorical_error():
+    X, y, _ = data_heterogeneous_unordered()
+    categorical_features = [0, 10]
+    gsmote = GeometricSMOTE(
+            random_state=0,
+            categorical_features=categorical_features
+    )
+    with pytest.raises(ValueError, match="indices are out of range"):
+        gsmote.fit_resample(X, y)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        data_heterogeneous_ordered(),
+        data_heterogeneous_unordered(),
+        data_heterogeneous_masked(),
+        #data_sparse("csr"),
+        #data_sparse("csc"),
+    ],
+)
+def test_gsmotenc(data):
+    X, y, categorical_features = data
+    gsmote = GeometricSMOTE(
+        random_state=0,
+        categorical_features=categorical_features
+    )
+    X_resampled, y_resampled = gsmote.fit_resample(X, y)
+
+    assert X_resampled.dtype == X.dtype
+
+    categorical_features = np.array(categorical_features)
+    if categorical_features.dtype == bool:
+        categorical_features = np.flatnonzero(categorical_features)
+    for cat_idx in categorical_features:
+        if sparse.issparse(X):
+            assert set(X[:, cat_idx].data) == set(X_resampled[:, cat_idx].data)
+            assert X[:, cat_idx].dtype == X_resampled[:, cat_idx].dtype
+        else:
+            assert set(X[:, cat_idx]) == set(X_resampled[:, cat_idx])
+            assert X[:, cat_idx].dtype == X_resampled[:, cat_idx].dtype
+
