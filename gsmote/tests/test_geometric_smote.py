@@ -292,8 +292,8 @@ def test_categorical_error():
         data_heterogeneous_ordered(),
         data_heterogeneous_unordered(),
         data_heterogeneous_masked(),
-        #data_sparse("csr"),
-        #data_sparse("csc"),
+        data_sparse("csr"),
+        data_sparse("csc"),
     ],
 )
 def test_gsmotenc(data):
