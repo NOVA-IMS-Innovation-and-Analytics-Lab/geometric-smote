@@ -9,6 +9,10 @@ from collections import Counter
 from numpy.linalg import norm
 from scipy import sparse
 from sklearn.utils import check_random_state, check_array
+from sklearn.utils.sparsefuncs_fast import (
+    csr_mean_variance_axis0,
+    csc_mean_variance_axis0
+)
 from sklearn.preprocessing import OneHotEncoder
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution, check_target_type
@@ -411,7 +415,10 @@ class GeometricSMOTE(BaseOverSampler):
         X_ohe.data = (
             np.ones_like(X_ohe.data, dtype=X_ohe.dtype) * self.median_std_ / 2
         )
-        X_encoded = np.hstack([X_continuous, X_ohe.toarray()])
+        if self._issparse:
+            X_encoded = np.hstack([X_continuous.toarray(), X_ohe.toarray()])
+        else:
+            X_encoded = np.hstack([X_continuous, X_ohe.toarray()])
 
         return X_encoded
 
