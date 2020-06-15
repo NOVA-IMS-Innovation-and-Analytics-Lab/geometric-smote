@@ -3,9 +3,13 @@
 # Author: Georgios Douzas <gdouzas@icloud.com>
 # License: BSD 3 clause
 
+import math
 import numpy as np
+from collections import Counter
 from numpy.linalg import norm
-from sklearn.utils import check_random_state
+from scipy import sparse
+from sklearn.utils import check_random_state, check_array
+from sklearn.preprocessing import OneHotEncoder
 from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution, check_target_type
 from imblearn.utils._docstring import _random_state_docstring
@@ -238,7 +242,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         if self.categorical_features_.size == self.n_features_in_:
             raise ValueError(
-                "SMOTE-NC is not designed to work only with categorical "
+                "GeometricSMOTE is not designed to work only with categorical "
                 "features. It requires some numerical features."
             )
         return self
@@ -290,7 +294,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         # Force minority strategy if no negative class samples are present
         self.selection_strategy_ = (
-            'minority' if len(X) == len(X_pos) else self.selection_strategy
+            'minority' if X.shape[0] == X_pos.shape[0] else self.selection_strategy
         )
 
         # Minority or combined strategy
@@ -354,22 +358,126 @@ class GeometricSMOTE(BaseOverSampler):
 
         return X_new, y_new
 
+    def _encode_categorical(self, X, y):
+        """TODO"""
+        # compute the median of the standard deviation of the minority class
+        target_stats = Counter(y)
+        class_minority = min(target_stats, key=target_stats.get)
+
+        # Separate categorical features from continuous features
+        X_continuous = X[:,self.continuous_features_]
+        X_continuous = check_array(X_continuous, accept_sparse=["csr", "csc"])
+        X_categorical = X[:, self.categorical_features_].copy()
+        X_minority = X_continuous[np.flatnonzero(y == class_minority)]
+
+        # TODO: once sparse matrix is supported this part must be
+        # adapted accordingly
+        if sparse.issparse(X):
+            if X.format == "csr":
+                _, var = csr_mean_variance_axis0(X_minority)
+            else:
+                _, var = csc_mean_variance_axis0(X_minority)
+        else:
+            var = X_minority.var(axis=0)
+        self.median_std_ = np.median(np.sqrt(var))
+
+        if X_continuous.dtype.name != "object":
+            dtype_ohe = X_continuous.dtype
+        else:
+            dtype_ohe = np.float64
+        self.ohe_ = OneHotEncoder(
+            sparse=True, handle_unknown="ignore", dtype=dtype_ohe
+        )
+
+        # the input of the OneHotEncoder needs to be dense
+        X_ohe = self.ohe_.fit_transform(
+            X_categorical.toarray()
+            if sparse.issparse(X_categorical)
+            else X_categorical
+        )
+
+        # we can replace the 1 entries of the categorical features with the
+        # median of the standard deviation. It will ensure that whenever
+        # distance is computed between 2 samples, the difference will be equal
+        # to the median of the standard deviation as in the original paper.
+
+        # In the edge case where the median of the std is equal to 0, the 1s
+        # entries will be also nullified. In this case, we store the original
+        # categorical encoding which will be later used for inversing the OHE
+        if math.isclose(self.median_std_, 0):
+            self._X_categorical_minority_encoded = X_ohe.toarray()\
+                    [np.flatnonzero(y == class_minority)]
+
+        X_ohe.data = (
+            np.ones_like(X_ohe.data, dtype=X_ohe.dtype) * self.median_std_ / 2
+        )
+        X_encoded = np.hstack([X_continuous, X_ohe.toarray()])
+
+        return X_encoded
+
+    def _categorical_decode(self, X_resampled):
+        """Reverses the encoding of the categorical features to match
+        the dataset's original structure."""
+        X_resampled = sparse.csr_matrix(X_resampled)
+
+        X_res_cat = X_resampled[:, self.continuous_features_.size:]
+        X_res_cat.data = np.ones_like(X_res_cat.data)
+        X_res_cat_dec = self.ohe_.inverse_transform(X_res_cat)
+
+        if self._issparse:
+            X_resampled = sparse.hstack(
+                (
+                    X_resampled[:, : self.continuous_features_.size],
+                    X_res_cat_dec,
+                ),
+                format="csr",
+            )
+        else:
+            X_resampled = np.hstack(
+                (
+                    X_resampled[:, : self.continuous_features_.size].toarray(),
+                    X_res_cat_dec,
+                )
+            )
+
+        indices_reordered = np.argsort(
+            np.hstack((self.continuous_features_, self.categorical_features_))
+        )
+
+        if sparse.issparse(X_resampled):
+            col_indices = X_resampled.indices.copy()
+            for idx, col_idx in enumerate(indices_reordered):
+                mask = X_resampled.indices == col_idx
+                col_indices[mask] = idx
+            X_resampled.indices = col_indices
+        else:
+            X_resampled = X_resampled[:, indices_reordered]
+
+        return X_resampled
+
     def _fit_resample(self, X, y):
 
         self.n_features_ = X.shape[1]
+        self._issparse = sparse.issparse(X)
 
         # Validate estimator's parameters
         self._validate_categorical()\
             ._validate_estimator()
 
+        # Preprocess categorical data
+        if self.categorical_features is not None:
+            X = self._encode_categorical(X, y)
+
         # Copy data
         X_resampled, y_resampled = X.copy(), y.copy()
 
-        # Resample data
+        # Resample
         for class_label, n_samples in self.sampling_strategy_.items():
 
             # Apply gsmote mechanism
-            X_new, y_new = self._make_geometric_samples(X, y, class_label, n_samples)
+            X_new, y_new = self._make_geometric_samples(
+                X, y, class_label, n_samples
+            )
 
             # Append new data
             X_resampled, y_resampled = (
@@ -377,4 +485,9 @@ class GeometricSMOTE(BaseOverSampler):
                 np.hstack((y_resampled, y_new)),
             )
 
+        # reverse the encoding of the categorical features
+        if self.categorical_features is not None:
+            X_resampled = self._categorical_decode(X_resampled)
+
         return X_resampled, y_resampled
+
