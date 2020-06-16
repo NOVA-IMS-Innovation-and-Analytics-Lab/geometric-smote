@@ -437,6 +437,7 @@ def test_smote_nc_with_null_median_std():
     gsmote = GeometricSMOTE(
         categorical_features=[3],
         k_neighbors=1,
+        selection_strategy='minority',
         random_state=0
     )
     X_res, y_res = gsmote.fit_resample(data, labels)
