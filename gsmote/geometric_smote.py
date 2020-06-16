@@ -1,6 +1,7 @@
 """Class to perform over-sampling using Geometric SMOTE."""
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
+#         Joao Fonseca    <jpmrfonseca@gmail.com>
 # License: BSD 3 clause
 
 import math
@@ -420,18 +421,6 @@ class GeometricSMOTE(BaseOverSampler):
                         self.deformation_factor,
                         self.random_state_,
                     )
-
-                # Append new sample - categorical features
-                #if math.isclose(self.median_std_, 0):
-                #    # TODO: this will raise bugs. Needs fix.
-                #    all_neighbors[:, self.continuous_features_.size:] = (
-                #        self._X_categorical_minority_encoded
-                #    )
-                #else:
-                #    all_neighbors[:, self.continuous_features_.size:] = (
-                #        all_neighbors[:,
-                #        self.continuous_features_.size:] / self.median_std_
-                #    )
 
                 categories_size = [self.continuous_features_.size] + [
                     cat.size for cat in self.ohe_.categories_
