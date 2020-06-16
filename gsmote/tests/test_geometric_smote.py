@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.linalg import norm
 from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification
 from scipy import sparse
 
@@ -317,3 +318,128 @@ def test_gsmotenc(data):
             assert set(X[:, cat_idx]) == set(X_resampled[:, cat_idx])
             assert X[:, cat_idx].dtype == X_resampled[:, cat_idx].dtype
 
+
+# part of the common test which apply to GSMOTE-NC even if it is not default
+# constructible
+def test_smotenc_check_target_type():
+    X, _, categorical_features = data_heterogeneous_unordered()
+    y = np.linspace(0, 1, 30)
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
+    with pytest.raises(ValueError, match="Unknown label type: 'continuous'"):
+        gsmote.fit_resample(X, y)
+    rng = np.random.RandomState(42)
+    y = rng.randint(2, size=(20, 3))
+    msg = "Multilabel and multioutput targets are not supported."
+    with pytest.raises(ValueError, match=msg):
+        gsmote.fit_resample(X, y)
+
+
+def test_smotenc_samplers_one_label():
+    X, _, categorical_features = data_heterogeneous_unordered()
+    y = np.zeros(30)
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
+    with pytest.raises(ValueError, match="needs to have more than 1 class"):
+        gsmote.fit(X, y)
+
+
+def test_smotenc_fit():
+    X, y, categorical_features = data_heterogeneous_unordered()
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
+    gsmote.fit_resample(X, y)
+    assert hasattr(
+        gsmote, "sampling_strategy_"
+    ), "No fitted attribute sampling_strategy_"
+
+
+def test_smotenc_fit_resample():
+    X, y, categorical_features = data_heterogeneous_unordered()
+    target_stats = Counter(y)
+    gsmote = GeometricSMOTE(
+        categorical_features=categorical_features,
+        random_state=0
+    )
+    _, y_res = gsmote.fit_resample(X, y)
+    _ = Counter(y_res)
+    n_samples = max(target_stats.values())
+    assert all(value >= n_samples for value in Counter(y_res).values())
+
+
+def test_smotenc_fit_resample_sampling_strategy():
+    X, y, categorical_features = data_heterogeneous_unordered_multiclass()
+    expected_stat = Counter(y)[1]
+    gsmote = GeometricSMOTE(
+        categorical_features=categorical_features,
+        random_state=0
+    )
+    sampling_strategy = {2: 25, 0: 25}
+    gsmote.set_params(sampling_strategy=sampling_strategy)
+    X_res, y_res = gsmote.fit_resample(X, y)
+    assert Counter(y_res)[1] == expected_stat
+
+
+def test_smotenc_pandas():
+    pd = pytest.importorskip("pandas")
+    # Check that the samplers handle pandas dataframe and pandas series
+    X, y, categorical_features = data_heterogeneous_unordered_multiclass()
+    X_pd = pd.DataFrame(X)
+    gsmote = GeometricSMOTE(
+        categorical_features=categorical_features,
+        random_state=0
+    )
+    X_res_pd, y_res_pd = gsmote.fit_resample(X_pd, y)
+    X_res, y_res = gsmote.fit_resample(X, y)
+    assert_array_equal(X_res_pd.to_numpy(), X_res)
+    assert_allclose(y_res_pd, y_res)
+
+
+def test_smotenc_preserve_dtype():
+    X, y = make_classification(
+        n_samples=50,
+        n_classes=3,
+        n_informative=4,
+        weights=[0.2, 0.3, 0.5],
+        random_state=0,
+    )
+    # Cast X and y to not default dtype
+    X = X.astype(np.float32)
+    y = y.astype(np.int32)
+    gsmote = GeometricSMOTE(categorical_features=[1], random_state=0)
+    X_res, y_res = gsmote.fit_resample(X, y)
+    assert X.dtype == X_res.dtype, "X dtype is not preserved"
+    assert y.dtype == y_res.dtype, "y dtype is not preserved"
+
+
+@pytest.mark.parametrize(
+    "categorical_features", [[True, True, True], [0, 1, 2]]
+)
+def test_smotenc_raising_error_all_categorical(categorical_features):
+    X, y = make_classification(
+        n_features=3, n_informative=1, n_redundant=1, n_repeated=0,
+        n_clusters_per_class=1,
+    )
+    gsmote = GeometricSMOTE(categorical_features=categorical_features)
+    err_msg = "GeometricSMOTE is not designed to work only with categorical features"
+    with pytest.raises(ValueError, match=err_msg):
+        gsmote.fit_resample(X, y)
+
+
+def test_smote_nc_with_null_median_std():
+    # Non-regression test for #662
+    # https://github.com/scikit-learn-contrib/imbalanced-learn/issues/662
+    data = np.array([[1, 2, 1, 'A'],
+                     [2, 1, 2, 'A'],
+                     [1, 2, 3, 'B'],
+                     [1, 2, 4, 'C'],
+                     [1, 2, 5, 'C']], dtype="object")
+    labels = np.array(
+        ['class_1', 'class_1', 'class_1', 'class_2', 'class_2'], dtype=object
+    )
+    gsmote = GeometricSMOTE(
+        categorical_features=[3],
+        k_neighbors=1,
+        random_state=0
+    )
+    X_res, y_res = gsmote.fit_resample(data, labels)
+    # check that the categorical feature is not random but correspond to the
+    # categories seen in the minority class samples
+    assert X_res[-1, -1] == "C"
