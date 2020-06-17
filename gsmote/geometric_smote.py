@@ -12,7 +12,7 @@ from scipy import sparse
 from sklearn.utils import check_random_state, check_array
 from sklearn.utils.sparsefuncs_fast import (
     csr_mean_variance_axis0,
-    csc_mean_variance_axis0
+    csc_mean_variance_axis0,
 )
 from sklearn.preprocessing import OneHotEncoder
 from imblearn.over_sampling.base import BaseOverSampler
@@ -90,9 +90,8 @@ def _make_geometric_sample(
 
     return point
 
-def _make_categorical_sample(
-    X_new, all_neighbors, categories_size, random_state
-):
+
+def _make_categorical_sample(X_new, all_neighbors, categories_size, random_state):
     """A support function that populates categorical features' values
     in an artificial point.
 
@@ -117,8 +116,9 @@ def _make_categorical_sample(
             Synthetically generated sample.
 
     """
-    for start_idx, end_idx in zip(np.cumsum(categories_size)[:-1],
-                                  np.cumsum(categories_size)[1:]):
+    for start_idx, end_idx in zip(
+        np.cumsum(categories_size)[:-1], np.cumsum(categories_size)[1:]
+    ):
         col_maxs = all_neighbors[:, start_idx:end_idx].sum(axis=0)
         # tie breaking argmax
         is_max = np.isclose(col_maxs, col_maxs.max(axis=0))
@@ -130,6 +130,7 @@ def _make_categorical_sample(
         X_new[ys] = 1
 
     return X_new
+
 
 @Substitution(
     sampling_strategy=BaseOverSampler._sampling_strategy_docstring,
@@ -271,10 +272,7 @@ class GeometricSMOTE(BaseOverSampler):
             self.categorical_features_ = np.flatnonzero(categorical_features)
         else:
             if any(
-                [
-                    cat not in np.arange(self.n_features_)
-                    for cat in categorical_features
-                ]
+                [cat not in np.arange(self.n_features_) for cat in categorical_features]
             ):
                 raise ValueError(
                     "Some of the categorical indices are out of range. Indices"
@@ -332,7 +330,7 @@ class GeometricSMOTE(BaseOverSampler):
             return (
                 np.array([], dtype=X.dtype).reshape(0, X.shape[1]),
                 np.array([], dtype=y.dtype),
-                np.array([], dtype=X.dtype)
+                np.array([], dtype=X.dtype),
             )
 
         # Select positive class samples
@@ -369,14 +367,12 @@ class GeometricSMOTE(BaseOverSampler):
         # create non-null entry based on the encoded of OHE
         if self.categorical_features is not None:
             if math.isclose(self.median_std_, 0):
-                X[:, self.continuous_features_.size:] = (
-                    self._X_categorical_encoded
-                )
+                X[:, self.continuous_features_.size:] = self.\
+                     _X_categorical_encoded
                 # Select positive class samples
                 X_pos = X[y == pos_class_label]
                 if self.selection_strategy_ in ('majority', 'combined'):
                     X_neg = X[y != pos_class_label]
-
 
         # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
@@ -390,15 +386,19 @@ class GeometricSMOTE(BaseOverSampler):
             if self.selection_strategy_ == 'minority':
                 surface_point = X_pos[points_pos[row, col]]
                 all_neighbors = (
-                    X_pos[points_pos[row]]
-                ) if self.categorical_features is not None else None
+                    (X_pos[points_pos[row]])
+                    if self.categorical_features is not None
+                    else None
+                )
 
             # Majority strategy
             elif self.selection_strategy_ == 'majority':
                 surface_point = X_neg[points_neg[row, col]]
                 all_neighbors = (
-                    X_neg[points_neg[row]]
-                ) if self.categorical_features is not None else None
+                    (X_neg[points_neg[row]])
+                    if self.categorical_features is not None
+                    else None
+                )
 
             # Combined strategy
             else:
@@ -407,13 +407,13 @@ class GeometricSMOTE(BaseOverSampler):
                 radius_pos = norm(center - surface_point_pos)
                 radius_neg = norm(center - surface_point_neg)
                 surface_point = (
-                    surface_point_neg
-                    if radius_pos > radius_neg else surface_point_pos
+                    surface_point_neg if radius_pos > radius_neg else surface_point_pos
                 )
-                all_neighbors = np.vstack(
-                        [X_pos[points_pos[row]], X_neg[points_neg[row]]]
-                ) if self.categorical_features is not None else None
-
+                all_neighbors = (
+                    np.vstack([X_pos[points_pos[row]], X_neg[points_neg[row]]])
+                    if self.categorical_features is not None
+                    else None
+                )
 
             if self.categorical_features is not None:
                 all_neighbors_.append(all_neighbors)
@@ -432,19 +432,13 @@ class GeometricSMOTE(BaseOverSampler):
 
         return X_new, y_new, all_neighbors_
 
-    def _make_categorical_samples(
-            self, X_new, y_new, categories_size, all_neighbors_
-        ):
+    def _make_categorical_samples(self, X_new, y_new, categories_size, all_neighbors_):
         for ind, all_neighbors in enumerate(all_neighbors_):
             # Append new sample - continuous features
             X_new[ind] = _make_categorical_sample(
-                X_new[ind],
-                all_neighbors,
-                categories_size,
-                self.random_state_
+                X_new[ind], all_neighbors, categories_size, self.random_state_
             )
         return X_new, y_new
-
 
     def _encode_categorical(self, X, y):
         """TODO"""
@@ -453,7 +447,7 @@ class GeometricSMOTE(BaseOverSampler):
         class_minority = min(target_stats, key=target_stats.get)
 
         # Separate categorical features from continuous features
-        X_continuous = X[:,self.continuous_features_]
+        X_continuous = X[:, self.continuous_features_]
         X_continuous = check_array(X_continuous, accept_sparse=["csr", "csc"])
         X_categorical = X[:, self.categorical_features_].copy()
         X_minority = X_continuous[np.flatnonzero(y == class_minority)]
@@ -471,15 +465,11 @@ class GeometricSMOTE(BaseOverSampler):
             dtype_ohe = X_continuous.dtype
         else:
             dtype_ohe = np.float64
-        self.ohe_ = OneHotEncoder(
-            sparse=True, handle_unknown="ignore", dtype=dtype_ohe
-        )
+        self.ohe_ = OneHotEncoder(sparse=True, handle_unknown="ignore", dtype=dtype_ohe)
 
         # the input of the OneHotEncoder needs to be dense
         X_ohe = self.ohe_.fit_transform(
-            X_categorical.toarray()
-            if sparse.issparse(X_categorical)
-            else X_categorical
+            X_categorical.toarray() if sparse.issparse(X_categorical) else X_categorical
         )
 
         # we can replace the 1 entries of the categorical features with the
@@ -493,9 +483,9 @@ class GeometricSMOTE(BaseOverSampler):
         if math.isclose(self.median_std_, 0):
             self._X_categorical_encoded = X_ohe.toarray()
 
-        X_ohe.data = (
-            np.ones_like(X_ohe.data, dtype=X_ohe.dtype) * self.median_std_ / 2
-        )
+        X_ohe.data = np.ones_like(X_ohe.data, dtype=X_ohe.dtype) \
+            * self.median_std_ / 2
+
         if self._issparse:
             X_encoded = np.hstack([X_continuous.toarray(), X_ohe.toarray()])
         else:
@@ -508,10 +498,10 @@ class GeometricSMOTE(BaseOverSampler):
         the dataset's original structure."""
 
         if math.isclose(self.median_std_, 0):
-            X_resampled[:self._X_categorical_encoded.shape[0],
-                self.continuous_features_.size:] = (
-                    self._X_categorical_encoded
-            )
+            X_resampled[
+                :self._X_categorical_encoded.shape[0],
+                self.continuous_features_.size:
+            ] = self._X_categorical_encoded
 
         X_resampled = sparse.csr_matrix(X_resampled)
 
@@ -522,8 +512,8 @@ class GeometricSMOTE(BaseOverSampler):
         if self._issparse:
             X_resampled = sparse.hstack(
                 (
-                    X_resampled[:, : self.continuous_features_.size],
-                    X_res_cat_dec,
+                    X_resampled[:, :self.continuous_features_.size],
+                    X_res_cat_dec
                 ),
                 format="csr",
             )
@@ -558,8 +548,7 @@ class GeometricSMOTE(BaseOverSampler):
         X_dtype = X.dtype
 
         # Validate estimator's parameters
-        self._validate_categorical()\
-            ._validate_estimator()
+        self._validate_categorical()._validate_estimator()
 
         # Preprocess categorical data
         if self.categorical_features is not None:
@@ -593,9 +582,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         # reverse the encoding of the categorical features
         if self.categorical_features is not None:
-            X_resampled = self._decode_categorical(X_resampled)\
-                .astype(X_dtype)
+            X_resampled = self._decode_categorical(X_resampled).astype(X_dtype)
         else:
             X_resampled = X_resampled.astype(X_dtype)
         return X_resampled, y_resampled
-

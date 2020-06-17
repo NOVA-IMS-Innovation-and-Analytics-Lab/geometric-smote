@@ -45,6 +45,7 @@ def data_heterogeneous_ordered():
     # return the categories
     return X, y, [2, 3]
 
+
 def data_heterogeneous_unordered():
     rng = np.random.RandomState(42)
     X = np.empty((30, 4), dtype=object)
@@ -57,6 +58,7 @@ def data_heterogeneous_unordered():
     y = np.array([0] * 10 + [1] * 20)
     # return the categories
     return X, y, [0, 3]
+
 
 def data_heterogeneous_masked():
     rng = np.random.RandomState(42)
@@ -71,6 +73,7 @@ def data_heterogeneous_masked():
     # return the categories
     return X, y, [True, False, True]
 
+
 def data_heterogeneous_unordered_multiclass():
     rng = np.random.RandomState(42)
     X = np.empty((50, 4), dtype=object)
@@ -84,6 +87,7 @@ def data_heterogeneous_unordered_multiclass():
     # return the categories
     return X, y, [0, 3]
 
+
 def data_sparse(format):
     rng = np.random.RandomState(42)
     X = np.empty((30, 4), dtype=np.float64)
@@ -96,6 +100,7 @@ def data_sparse(format):
     y = np.array([0] * 10 + [1] * 20)
     X = sparse.csr_matrix(X) if format == "csr" else sparse.csc_matrix(X)
     return X, y, [0, 3]
+
 
 @pytest.mark.parametrize(
     'center,surface_point',
@@ -276,13 +281,11 @@ def test_gsmote_fit_resample_multiclass(
     np.testing.assert_array_equal(np.unique(y), np.unique(y_resampled))
     assert len(set(Counter(y_resampled).values())) == 1
 
+
 def test_categorical_error():
     X, y, _ = data_heterogeneous_unordered()
     categorical_features = [0, 10]
-    gsmote = GeometricSMOTE(
-            random_state=0,
-            categorical_features=categorical_features
-    )
+    gsmote = GeometricSMOTE(random_state=0, categorical_features=categorical_features)
     with pytest.raises(ValueError, match="indices are out of range"):
         gsmote.fit_resample(X, y)
 
@@ -299,10 +302,7 @@ def test_categorical_error():
 )
 def test_gsmotenc(data):
     X, y, categorical_features = data
-    gsmote = GeometricSMOTE(
-        random_state=0,
-        categorical_features=categorical_features
-    )
+    gsmote = GeometricSMOTE(random_state=0, categorical_features=categorical_features)
     X_resampled, y_resampled = gsmote.fit_resample(X, y)
 
     assert X_resampled.dtype == X.dtype
@@ -354,10 +354,7 @@ def test_smotenc_fit():
 def test_smotenc_fit_resample():
     X, y, categorical_features = data_heterogeneous_unordered()
     target_stats = Counter(y)
-    gsmote = GeometricSMOTE(
-        categorical_features=categorical_features,
-        random_state=0
-    )
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
     _, y_res = gsmote.fit_resample(X, y)
     _ = Counter(y_res)
     n_samples = max(target_stats.values())
@@ -367,10 +364,7 @@ def test_smotenc_fit_resample():
 def test_smotenc_fit_resample_sampling_strategy():
     X, y, categorical_features = data_heterogeneous_unordered_multiclass()
     expected_stat = Counter(y)[1]
-    gsmote = GeometricSMOTE(
-        categorical_features=categorical_features,
-        random_state=0
-    )
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
     sampling_strategy = {2: 25, 0: 25}
     gsmote.set_params(sampling_strategy=sampling_strategy)
     X_res, y_res = gsmote.fit_resample(X, y)
@@ -382,10 +376,7 @@ def test_smotenc_pandas():
     # Check that the samplers handle pandas dataframe and pandas series
     X, y, categorical_features = data_heterogeneous_unordered_multiclass()
     X_pd = pd.DataFrame(X)
-    gsmote = GeometricSMOTE(
-        categorical_features=categorical_features,
-        random_state=0
-    )
+    gsmote = GeometricSMOTE(categorical_features=categorical_features, random_state=0)
     X_res_pd, y_res_pd = gsmote.fit_resample(X_pd, y)
     X_res, y_res = gsmote.fit_resample(X, y)
     assert_array_equal(X_res_pd.to_numpy(), X_res)
@@ -409,12 +400,13 @@ def test_smotenc_preserve_dtype():
     assert y.dtype == y_res.dtype, "y dtype is not preserved"
 
 
-@pytest.mark.parametrize(
-    "categorical_features", [[True, True, True], [0, 1, 2]]
-)
+@pytest.mark.parametrize("categorical_features", [[True, True, True], [0, 1, 2]])
 def test_smotenc_raising_error_all_categorical(categorical_features):
     X, y = make_classification(
-        n_features=3, n_informative=1, n_redundant=1, n_repeated=0,
+        n_features=3,
+        n_informative=1,
+        n_redundant=1,
+        n_repeated=0,
         n_clusters_per_class=1,
     )
     gsmote = GeometricSMOTE(categorical_features=categorical_features)
@@ -426,11 +418,16 @@ def test_smotenc_raising_error_all_categorical(categorical_features):
 def test_smote_nc_with_null_median_std():
     # Non-regression test for #662
     # https://github.com/scikit-learn-contrib/imbalanced-learn/issues/662
-    data = np.array([[1, 2, 1, 'A'],
-                     [2, 1, 2, 'A'],
-                     [1, 2, 3, 'B'],
-                     [1, 2, 4, 'C'],
-                     [1, 2, 5, 'C']], dtype="object")
+    data = np.array(
+        [
+            [1, 2, 1, 'A'],
+            [2, 1, 2, 'A'],
+            [1, 2, 3, 'B'],
+            [1, 2, 4, 'C'],
+            [1, 2, 5, 'C'],
+        ],
+        dtype="object",
+    )
     labels = np.array(
         ['class_1', 'class_1', 'class_1', 'class_2', 'class_2'], dtype=object
     )
@@ -438,7 +435,7 @@ def test_smote_nc_with_null_median_std():
         categorical_features=[3],
         k_neighbors=1,
         selection_strategy='minority',
-        random_state=0
+        random_state=0,
     )
     X_res, y_res = gsmote.fit_resample(data, labels)
     # check that the categorical feature is not random but correspond to the
