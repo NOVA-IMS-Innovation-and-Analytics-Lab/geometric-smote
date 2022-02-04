@@ -367,8 +367,7 @@ class GeometricSMOTE(BaseOverSampler):
         # create non-null entry based on the encoded of OHE
         if self.categorical_features is not None:
             if math.isclose(self.median_std_, 0):
-                X[:, self.continuous_features_.size:] = self.\
-                     _X_categorical_encoded
+                X[:, self.continuous_features_.size :] = self._X_categorical_encoded
                 # Select positive class samples
                 X_pos = X[y == pos_class_label]
                 if self.selection_strategy_ in ('majority', 'combined'):
@@ -483,8 +482,7 @@ class GeometricSMOTE(BaseOverSampler):
         if math.isclose(self.median_std_, 0):
             self._X_categorical_encoded = X_ohe.toarray()
 
-        X_ohe.data = np.ones_like(X_ohe.data, dtype=X_ohe.dtype) \
-            * self.median_std_ / 2
+        X_ohe.data = np.ones_like(X_ohe.data, dtype=X_ohe.dtype) * self.median_std_ / 2
 
         if self._issparse:
             X_encoded = np.hstack([X_continuous.toarray(), X_ohe.toarray()])
@@ -499,22 +497,18 @@ class GeometricSMOTE(BaseOverSampler):
 
         if math.isclose(self.median_std_, 0):
             X_resampled[
-                :self._X_categorical_encoded.shape[0],
-                self.continuous_features_.size:
+                : self._X_categorical_encoded.shape[0], self.continuous_features_.size :
             ] = self._X_categorical_encoded
 
         X_resampled = sparse.csr_matrix(X_resampled)
 
-        X_res_cat = X_resampled[:, self.continuous_features_.size:]
+        X_res_cat = X_resampled[:, self.continuous_features_.size :]
         X_res_cat.data = np.ones_like(X_res_cat.data)
         X_res_cat_dec = self.ohe_.inverse_transform(X_res_cat)
 
         if self._issparse:
             X_resampled = sparse.hstack(
-                (
-                    X_resampled[:, :self.continuous_features_.size],
-                    X_res_cat_dec
-                ),
+                (X_resampled[:, : self.continuous_features_.size], X_res_cat_dec),
                 format="csr",
             )
         else:
