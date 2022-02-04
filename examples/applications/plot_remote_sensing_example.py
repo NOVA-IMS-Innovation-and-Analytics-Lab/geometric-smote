@@ -23,7 +23,6 @@ from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKF
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import fetch_openml, fetch_covtype
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix, make_scorer, cohen_kappa_score
 from imblearn.metrics import classification_report_imbalanced
 from imblearn.pipeline import make_pipeline, Pipeline
@@ -91,7 +90,7 @@ def plot_confusion_matrix(cm, classes):
 # The function :func:`sklearn.datasets.fetch_covtype` will load dataset. It will
 # be downloaded from the web if necessary. This dataset is clearly imbalanced.
 
-X, y, _ = fetch_covtype().values()
+X, y = fetch_covtype(return_X_y=True)
 print_class_counts(y)
 
 ###############################################################################
