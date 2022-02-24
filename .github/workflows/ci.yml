@@ -1,14 +1,5 @@
 name: Build
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
-  workflow_dispatch:
-
-
 jobs:
   linting:
     name: Linting
