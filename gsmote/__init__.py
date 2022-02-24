@@ -7,4 +7,4 @@ from .geometric_smote import GeometricSMOTE
 
 from ._version import __version__
 
-__all__ = ['GeometricSMOTE', '__version__']
+__all__ = ["GeometricSMOTE", "__version__"]
