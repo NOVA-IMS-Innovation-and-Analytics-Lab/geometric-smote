@@ -58,7 +58,7 @@ jobs:
 
       - name: Test Docs
         run: |
-          make test-docs
+          make test-doc
           cd doc
           make html
       
