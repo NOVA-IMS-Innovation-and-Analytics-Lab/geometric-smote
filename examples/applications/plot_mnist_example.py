@@ -55,25 +55,30 @@ from gsmote import GeometricSMOTE
 # from the dataset, create a balanced hold-out set and use function
 # :func:`imblearn.datasets.make_imbalance` imbalance the dataset.
 
-_X, _y = fetch_openml('mnist_784', version=1, return_X_y=True)
-selection = np.where(np.isin(_y,['1','7']))[0]
+_X, _y = fetch_openml("mnist_784", version=1, return_X_y=True)
+selection = _y.isin(["1", "7"])
 X = _X[selection]
 y = _y[selection]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.05)
-X_train, y_train = make_imbalance(X=X_train, y=y_train, sampling_strategy={
-                                        '1':2,
-                                        '7':int(Counter(y_train)['7']*.02)})
+X_train, y_train = make_imbalance(
+    X=X_train,
+    y=y_train,
+    sampling_strategy={"1": 2, "7": int(Counter(y_train)["7"] * 0.02)},
+)
 
 
-for t, _y in [('Train', y_train),('Test', y_test)]:
-    dist = Counter(_y)
-    title = f'{t.title()} set data distribution'
-    sep = '='*len(title)
-    print(f'{sep}\n{title}\n{sep}')
-    print(pd.DataFrame(dist.values(), index=dist.keys(), columns=['Count']).sort_index())
+for t, y_ in [("Train", y_train), ("Test", y_test)]:
+    dist = Counter(y_)
+    title = f"{t.title()} set data distribution"
+    sep = "=" * len(title)
+    print(f"{sep}\n{title}\n{sep}")
+    print(
+        pd.DataFrame(dist.values(), index=dist.keys(), columns=["Count"]).sort_index()
+    )
 
 ###############################################################################
 # Below is presented a random observation from each class from this dataset:
+
 
 def plot_mnist_samples(X, y, title=None, n_subplots=None):
     if not n_subplots:
@@ -83,16 +88,17 @@ def plot_mnist_samples(X, y, title=None, n_subplots=None):
     if title:
         fig.suptitle(title, fontsize=16)
     for i, val in enumerate(np.unique(y)):
-        images = np.where(y==val)[0]
-        img = X[choice(images)]
-        if len(np.unique(y))>1:
-            axes[i].imshow(np.reshape(img, (imshape,imshape)), cmap='gray')
+        images = X[y == val]
+        img = images.iloc[np.random.randint(images.shape[0])]
+        if len(np.unique(y)) > 1:
+            axes[i].imshow(np.reshape(img.values, (imshape, imshape)), cmap="gray")
             axes[i].set_title(str(val))
-            axes[i].axis('off')
+            axes[i].axis("off")
         else:
-            axes.imshow(np.reshape(img, (imshape,imshape)), cmap='gray')
+            axes.imshow(np.reshape(img.values, (imshape, imshape)), cmap="gray")
             axes.set_title(str(val))
-            axes.axis('off')
+            axes.axis("off")
+
 
 plot_mnist_samples(X_train, y_train)
 
@@ -105,35 +111,46 @@ plot_mnist_samples(X_train, y_train)
 # algorithm. The parameters `selection_strategy`, `deformation_factor` (d)
 # and `truncation_factor` (t) vary.
 
+
 def get_disjoin(X1, y1, X2, y2):
     """returns rows that do not belong to one of the two datasets"""
-    if X1.shape[-1]!=X2.shape[-1]:
-        raise ValueError('Both arrays must have equal shape on axis 1.')
+    if X1.shape[-1] != X2.shape[-1]:
+        raise ValueError("Both arrays must have equal shape on axis 1.")
 
-    if X1.shape[0]>X2.shape[0]: X_largest, y_largest, X_smallest, y_smallest = X1, y1, X2, y2
-    else:                       X_largest, y_largest, X_smallest, y_smallest = X2, y2, X1, y1
+    if X1.shape[0] > X2.shape[0]:
+        X_largest, y_largest, X_smallest, y_smallest = X1, y1, X2, y2
+    else:
+        X_largest, y_largest, X_smallest, y_smallest = X2, y2, X1, y1
 
-    intersecting_vals = np.in1d(X_largest,X_smallest).reshape(X_largest.shape)
+    intersecting_vals = np.in1d(X_largest, X_smallest).reshape(X_largest.shape)
     disjoin_indexes = np.where(~np.all(intersecting_vals, axis=1))[0]
-    return X_largest[disjoin_indexes], y_largest[disjoin_indexes]
+    return X_largest.iloc[disjoin_indexes], y_largest.iloc[disjoin_indexes]
 
 
-for strategy in ['combined', 'majority', 'minority']:
-    X_gsmote_final = np.empty(shape = (0,X_train.shape[-1]))
-    y_gsmote_final = np.empty(shape = (0))
+for strategy in ["combined", "majority", "minority"]:
+    X_gsmote_final = np.empty(shape=(0, X_train.shape[-1]))
+    y_gsmote_final = np.empty(shape=(0))
     for d in [0, 0.5, 1]:
         for t in [-1, 0, 1]:
             gsmote_sampling = GeometricSMOTE(
-                                            k_neighbors=1,
-                                            deformation_factor=d,
-                                            truncation_factor=t,
-                                            n_jobs=-1,
-                                            selection_strategy=strategy
-                                            ).fit_sample(X_train,y_train)
-            X_gsmote, _ = get_disjoin(X_train, y_train, gsmote_sampling[0], gsmote_sampling[1])
+                k_neighbors=1,
+                deformation_factor=d,
+                truncation_factor=t,
+                n_jobs=-1,
+                selection_strategy=strategy,
+            ).fit_resample(X_train, y_train)
+            X_gsmote, _ = get_disjoin(
+                X_train, y_train, gsmote_sampling[0], gsmote_sampling[1]
+            )
             X_gsmote_final = np.append(X_gsmote_final, X_gsmote, axis=0)
-            y_gsmote_final = np.append(y_gsmote_final, np.array([f't={t}, d={d}']*X_gsmote.shape[0]), axis=0)
-    plot_mnist_samples(X_gsmote_final, y_gsmote_final, f'Generated Using G-SMOTE: {strategy}')
+            y_gsmote_final = np.append(
+                y_gsmote_final, np.array([f"t={t}, d={d}"] * X_gsmote.shape[0]), axis=0
+            )
+    plot_mnist_samples(
+        pd.DataFrame(X_gsmote_final),
+        pd.Series(y_gsmote_final),
+        f"Generated Using G-SMOTE: {strategy}",
+    )
 
 ###############################################################################
 # Below is presented the generation of new samples using the SMOTE
@@ -141,14 +158,16 @@ for strategy in ['combined', 'majority', 'minority']:
 # is fixed to 1
 
 smote_sampling = SMOTE(
-                        k_neighbors=1,
-                        n_jobs=-1,
-                        ).fit_sample(X_train,y_train)
+    k_neighbors=1,
+    n_jobs=-1,
+).fit_resample(X_train, y_train)
 X_smote, _ = get_disjoin(X_train, y_train, smote_sampling[0], smote_sampling[1])
 X_smote_final = X_smote[:10]
-y_smote_final = np.array([f'Sample {n}' for n in range(10)])
+y_smote_final = np.array([f"Sample {n}" for n in range(10)])
 
-plot_mnist_samples(X_smote_final, y_smote_final, f'Generated Using SMOTE, K neighbors: 1')
+plot_mnist_samples(
+    X_smote_final, y_smote_final, f"Generated Using SMOTE, K neighbors: 1"
+)
 
 ###############################################################################
 # Classification
@@ -160,26 +179,31 @@ plot_mnist_samples(X_smote_final, y_smote_final, f'Generated Using SMOTE, K neig
 # (binary) dataset. A total of 3 pipelines are fit:
 # 3 (SMOTE, G-SMOTE, No Oversampling) * 1 (LogisticRegression).
 
+
 def model_fit(X_train, y_train, X_test, y_test):
     classifier_dict = {
-        'no_oversampling': Pipeline([
-                    ('none',None),
-                    ('lr',LogisticRegression(solver='liblinear'))
-                    ]),
-        'smote': Pipeline([
-                    ('smote',SMOTE(k_neighbors=1)),
-                    ('lr',LogisticRegression(solver='liblinear'))
-                    ]),
-        'gsmote': Pipeline([
-                    ('gsmote',GeometricSMOTE(k_neighbors=1)),
-                    ('lr',LogisticRegression(solver='liblinear'))
-                    ])
+        "no_oversampling": Pipeline(
+            [("none", None), ("lr", LogisticRegression(solver="liblinear"))]
+        ),
+        "smote": Pipeline(
+            [
+                ("smote", SMOTE(k_neighbors=1)),
+                ("lr", LogisticRegression(solver="liblinear")),
+            ]
+        ),
+        "gsmote": Pipeline(
+            [
+                ("gsmote", GeometricSMOTE(k_neighbors=1)),
+                ("lr", LogisticRegression(solver="liblinear")),
+            ]
+        ),
     }
     results = {}
     for name, estimator in classifier_dict.items():
         estimator.fit(X_train, y_train)
         results[name] = estimator.score(X_test, y_test)
-    return pd.DataFrame(data=results.values(), index=results.keys(), columns=['score'])
+    return pd.DataFrame(data=results.values(), index=results.keys(), columns=["score"])
+
 
 results = model_fit(X_train, y_train, X_test, y_test)
 print(results)
