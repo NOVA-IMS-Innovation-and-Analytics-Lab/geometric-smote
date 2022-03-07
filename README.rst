@@ -4,19 +4,13 @@
 
 .. _imbalanced-learn: http://imbalanced-learn.org/en/stable/
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_ |Black|_
+|Build|_ |Codecov|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_ |Black|_
 
-.. |Travis| image:: https://travis-ci.org/AlgoWit/geometric-smote.svg?branch=master
-.. _Travis: https://travis-ci.org/AlgoWit/geometric-smote
+.. |Build| image:: https://github.com/georgedouzas/geometric-smote/actions/workflows/ci.yml/badge.svg
+.. _Build: https://github.com/georgedouzas/geometric-smote/actions/workflows/ci.yml
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/4u9bgk60o71kmojh/branch/master?svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/georgedouzas/geometric-smote/history
-
-.. |Codecov| image:: https://codecov.io/gh/AlgoWit/geometric-smote/branch/master/graph/badge.svg
-.. _Codecov: https://codecov.io/gh/AlgoWit/geometric-smote
-
-.. |CircleCI| image:: https://circleci.com/gh/AlgoWit/geometric-smote/tree/master.svg?style=svg
-.. _CircleCI: https://circleci.com/gh/AlgoWit/geometric-smote/tree/master
+.. |Codecov| image:: https://codecov.io/gh/georgedouzas/geometric-smote/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/georgedouzas/geometric-smote
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/geometric-smote/badge/?version=latest
 .. _ReadTheDocs: https://geometric-smote.readthedocs.io/en/latest/?badge=latest
