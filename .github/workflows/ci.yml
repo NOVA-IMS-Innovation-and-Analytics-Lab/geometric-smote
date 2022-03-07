@@ -27,7 +27,7 @@ jobs:
           pip install pytest black
       - name: Run black
         run: |
-          black --check --diff .
+          black -S --check --diff gsmote examples/*.py
 
   build:
     strategy:
@@ -58,9 +58,8 @@ jobs:
 
       - name: Test Docs
         run: |
+          pip install sphinx
           make test-doc
-          cd doc
-          make html
       
       - name: Upload coverage to codecov
         uses: codecov/codecov-action@v2
