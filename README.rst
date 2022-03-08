@@ -118,6 +118,23 @@ Geometric SMOTE (G-SMOTE) is an enhancement of the SMOTE data generation
 mechanism. G-SMOTE generates synthetic samples in a geometric region of the
 input space, around each selected minority instance.
 
+Publications using Geometric-SMOTE
+----------------------------------
+
+- Fonseca, J., Douzas, G., Bacao, F. (2021). Increasing the Effectiveness of
+  Active Learning: Introducing Artificial Data Generation in Active Learning
+  for Land Use/Land Cover Classification. Remote Sensing, 13(13), 2619.
+  https://doi.org/10.3390/rs13132619
+
+- Douzas, G., Bacao, B. (2019). Geometric SMOTE: a geometrically enhanced
+  drop-in replacement for SMOTE. Information Sciences, 501, 118-135.
+  https://doi.org/10.1016/j.ins.2019.06.007
+
+- Douzas, G., Bacao, F., Fonseca, J., Khudinyan, M. (2019). Imbalanced
+  Learning in Land Cover Classification: Improving Minority Classes’
+  Prediction Accuracy Using the Geometric SMOTE Algorithm. Remote Sensing,
+  11(24), 3040. https://doi.org/10.3390/rs11243040
+
 References:
 -----------
 
