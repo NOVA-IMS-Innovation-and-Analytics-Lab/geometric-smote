@@ -20,7 +20,7 @@ URL = 'https://github.com/AlgoWit/geometric-smote'
 LICENSE = 'MIT'
 DOWNLOAD_URL = 'https://github.com/AlgoWit/geometric-smote'
 VERSION = __version__
-INSTALL_REQUIRES = ['scipy>=0.17', 'numpy>=1.1', 'scikit-learn>=0.21', 'imbalanced-learn>=0.4.3']
+INSTALL_REQUIRES = ['scipy>=0.17', 'numpy>=1.1', 'scikit-learn>=0.21', 'imbalanced-learn>=0.7.0']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -31,7 +31,7 @@ CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Operating System :: POSIX',
                'Operating System :: Unix',
                'Operating System :: MacOS',
-               'Programming Language :: Python :: 3.8'
+               'Programming Language :: Python :: 3.8',
                'Programming Language :: Python :: 3.9',
                'Programming Language :: Python :: 3.10']
 EXTRAS_REQUIRE = {
