@@ -4,7 +4,13 @@
 
 .. _imbalanced-learn: http://imbalanced-learn.org/en/stable/
 
-|ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_ |Black|_
+|Build|_ |Codecov|_ |ReadTheDocs|_ |PythonVersion|_ |Pypi|_ |Conda|_ |DOI|_ |Black|_
+
+.. |Build| image:: https://github.com/georgedouzas/geometric-smote/actions/workflows/ci.yml/badge.svg
+.. _Build: https://github.com/georgedouzas/geometric-smote/actions/workflows/ci.yml
+
+.. |Codecov| image:: https://codecov.io/gh/georgedouzas/geometric-smote/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/georgedouzas/geometric-smote
 
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/geometric-smote/badge/?version=latest
 .. _ReadTheDocs: https://geometric-smote.readthedocs.io/en/latest/?badge=latest

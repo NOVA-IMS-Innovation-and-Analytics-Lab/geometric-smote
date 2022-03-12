@@ -19,7 +19,7 @@ from imblearn.over_sampling.base import BaseOverSampler
 from imblearn.utils import check_neighbors_object, Substitution, check_target_type
 from imblearn.utils._docstring import _random_state_docstring
 
-SELECTION_STRATEGY = ('combined', 'majority', 'minority')
+SELECTION_STRATEGY = ("combined", "majority", "minority")
 
 
 def _make_geometric_sample(
@@ -176,6 +176,28 @@ class GeometricSMOTE(BaseOverSampler):
     n_jobs : int, optional (default=1)
         The number of threads to open if possible.
 
+    Attributes
+    ----------
+    sampling_strategy_ : dict
+        Dictionary containing the information to sample the dataset. The keys
+        corresponds to the class labels from which to sample and the values
+        are the number of samples to sample.
+    n_features_in_ : int
+        Number of features in the input dataset.
+    nns_pos_ : estimator object
+        Validated k-nearest neighbours created from the `k_neighbors` parameter. It is
+        used to find the nearest neighbors of the same class of a selected
+        observation.
+    nn_neg_ : estimator object
+        Validated k-nearest neighbours created from the `k_neighbors` parameter. It is
+        used to find the nearest neighbor of the remaining classes (k=1) of a selected
+        observation.
+    random_state_ : instance of RandomState
+        If the `random_state` parameter is None, it is a RandomState singleton used by
+        np.random. If `random_state` is an int, it is a RandomState instance seeded with
+        seed. If `random_state` is already a RandomState instance, it is the same
+        object.
+
     Notes
     -----
     See the original paper: [1]_ for more details.
@@ -249,15 +271,15 @@ class GeometricSMOTE(BaseOverSampler):
             )
 
         # Create nearest neighbors object for positive class
-        if self.selection_strategy in ('minority', 'combined'):
+        if self.selection_strategy in ("minority", "combined"):
             self.nns_pos_ = check_neighbors_object(
                 'nns_positive', self.k_neighbors, additional_neighbor=1
             )
             self.nns_pos_.set_params(n_jobs=self.n_jobs)
 
         # Create nearest neighbors object for negative class
-        if self.selection_strategy in ('majority', 'combined'):
-            self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
+        if self.selection_strategy in ("majority", "combined"):
+            self.nn_neg_ = check_neighbors_object("nn_negative", nn_object=1)
             self.nn_neg_.set_params(n_jobs=self.n_jobs)
 
     def _validate_categorical(self):
@@ -342,7 +364,7 @@ class GeometricSMOTE(BaseOverSampler):
         )
 
         # Minority or combined strategy
-        if self.selection_strategy_ in ('minority', 'combined'):
+        if self.selection_strategy_ in ("minority", "combined"):
             self.nns_pos_.fit(X_pos)
             points_pos = self.nns_pos_.kneighbors(X_pos)[1][:, 1:]
             samples_indices = self.random_state_.randint(
@@ -356,7 +378,7 @@ class GeometricSMOTE(BaseOverSampler):
             X_neg = X[y != pos_class_label]
             self.nn_neg_.fit(X_neg)
             points_neg = self.nn_neg_.kneighbors(X_pos)[1]
-            if self.selection_strategy_ == 'majority':
+            if self.selection_strategy_ == "majority":
                 samples_indices = self.random_state_.randint(
                     low=0, high=len(points_neg.flatten()), size=n_samples
                 )
@@ -382,7 +404,7 @@ class GeometricSMOTE(BaseOverSampler):
             center = X_pos[row]
 
             # Minority strategy
-            if self.selection_strategy_ == 'minority':
+            if self.selection_strategy_ == "minority":
                 surface_point = X_pos[points_pos[row, col]]
                 all_neighbors = (
                     (X_pos[points_pos[row]])
@@ -391,7 +413,7 @@ class GeometricSMOTE(BaseOverSampler):
                 )
 
             # Majority strategy
-            elif self.selection_strategy_ == 'majority':
+            elif self.selection_strategy_ == "majority":
                 surface_point = X_neg[points_neg[row, col]]
                 all_neighbors = (
                     (X_neg[points_neg[row]])
