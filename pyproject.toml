@@ -1,0 +1,155 @@
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
+
+[project]
+name = "geometric-smote"
+description = "Implementation of the Geometric SMOTE algorithm, a geometrically enhanced drop-in replacement for SMOTE. It is compatible with scikit-learn and imbalanced-learn."
+authors = [{name = "Georgios Douzas", email = "gdouzas@icloud.com"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10, <3.12"
+keywords = []
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Documentation",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+dependencies = [
+    "scikit-learn>=1.3.2",
+    "imbalanced-learn>=0.11.0",
+    "typing-extensions>=4.8.0",
+]
+
+[project.urls]
+Homepage = "https://georgedouzas.github.io/geometric-smote"
+Documentation = "https://georgedouzas.github.io/geometric-smote"
+Changelog = "https://georgedouzas.github.io/geometric-smote/changelog"
+Repository = "https://github.com/georgedouzas/geometric-smote"
+Issues = "https://github.com/georgedouzas/geometric-smote/issues"
+Discussions = "https://github.com/georgedouzas/geometric-smote/discussions"
+Gitter = "https://gitter.im/geometric-smote/community"
+Funding = "https://github.com/sponsors/georgedouzas"
+
+[tool.pdm]
+version = {source = "scm"}
+build = {package-dir = "src", editable-backend = "editables"}
+
+[tool.pdm.scripts]
+clean = {shell = """rm -rf .mypy_cache .pytest_cache tests/.pytest_cache build dist \
+htmlcov pip-wheel-metadata site __pycache__ docs/generated .nox .ruff_cache pdm.lock \
+&& find . -type d -name __pycache__ | xargs rm -rf \
+&& find . -name '*.rej'  -delete \
+&& find . -name '.coverage*'  -delete"""}
+docs = "nox --error-on-external-run -R -s docs -- {args:serve}"
+formatting = "nox --error-on-external-run -R -s formatting -- {args:all}"
+checks = "nox --error-on-external-run -R -s checks -- {args:all}"
+tests = "nox --error-on-external-run -R -s tests"
+changelog = "nox --error-on-external-run -R -s changelog"
+release = "nox --error-on-external-run -R -s release"
+
+[tool.pdm.dev-dependencies]
+maintenance = [
+    "nox>=2022.8.7",
+]
+docs = [
+    "mkdocs>=1.3",
+    "mkdocs-coverage>=0.2",
+    "mkdocs-gen-files>=0.3",
+    "mkdocs-literate-nav>=0.4",
+    "mkdocs-material>=7.3",
+    "mkdocs-gallery>=0.7.6",
+    "mkdocs-section-index>=0.3",
+    "mkdocstrings[python]>=0.20",
+    "markdown-callouts>=0.2",
+    "markdown-exec>=0.5",
+    'pandas>=1.5.0',
+    "matplotlib>=3.8.2",
+]
+formatting = [
+    "black>=21.10b0",
+    "docformatter>=1.5.1",
+]
+checks = [
+    "ruff>=0.0.237",
+    "safety>=2",
+    "mypy>=0.910",
+    "types-markdown>=3.3",
+    "types-toml>=0.10",
+]
+tests = [
+    "pytest>=6.2",
+    "pytest-cov>=3.0",
+    "pytest-randomly>=3.10",
+    "pytest-xdist>=2.4",
+]
+changelog = [
+    "git-changelog>=1.0.0",
+]
+release = [
+    "twine>=4.0.0",
+]
+
+[tool.black]
+line-length = 120
+extend-exclude = "(tests/fixtures|docs/generated)"
+skip-string-normalization = true
+
+[tool.ruff]
+select = ["C", "E", "F", "W", "B", "I", "D", "N", "UP", "YTT", "ANN", "S",
+"BLE", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G",
+"INP", "PIE", "T20", "PT", "Q", "RET501", "RET502", "RET503", "SIM",
+"PTH", "PD", "PGH", "PL", "TRY", "RUF", "PLE", "PLR", "PLW", "TRY", "RUF"]
+ignore = ["D202", "N806", "N803", "S101", "INP001", "Q000", "TRY002", "PLR0913", "EXE001", "EXE002"]
+fix = true
+fixable = ["C", "E", "F", "W", "B", "I", "D", "N", "UP", "YTT", "ANN", "S",
+"BLE", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G",
+"INP", "PIE", "T20", "PT", "Q", "RET501", "RET502", "RET503", "SIM",
+"PTH", "PD", "PGH", "PL", "TRY", "RUF", "PLE", "PLR", "PLW", "TRY", "RUF"]
+extend-exclude = ["docs/generated"]
+force-exclude = true
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.per-file-ignores]
+"docs/examples/*" = ["ANN", "D", "B018"]
+"docs/generated/*" = ["ANN", "D"]
+"test_*" = ["ANN"]
+
+[tool.ruff.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+ignore_missing_imports = true
+exclude = ["tests/fixtures/", "docs/examples/", "docs/generated/"]
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+addopts = "--cov"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src", "tests"]
+
+[tool.coverage.paths]
+equivalent = ["src", "__pypackages__"]
+
+[tool.coverage.report]
+precision = 2
+omit = ["src/*/__init__.py", "tests/__init__.py"]
+
+[tool.coverage.json]
+output = "htmlcov/coverage.json"
