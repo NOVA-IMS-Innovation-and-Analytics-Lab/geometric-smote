@@ -6,13 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.2.3](https://github.com/georgedouzas/geometric-smote/releases/tag/0.2.3) - 2023-12-02
+
+<small>[Compare with 0.2.2](https://github.com/georgedouzas/geometric-smote/compare/0.2.2...0.2.3)</small>
+
+### Docs
+
+- Fix scikit-learn link ([26d9c99](https://github.com/georgedouzas/geometric-smote/commit/26d9c993102677e55d134bb8eabce022188b283a) by georgedouzas).
+
 ## [0.2.2](https://github.com/georgedouzas/geometric-smote/releases/tag/0.2.2) - 2023-12-02
 
 <small>[Compare with 0.2.1](https://github.com/georgedouzas/geometric-smote/compare/0.2.1...0.2.2)</small>
 
 ### Docs
 
-- Fix typo ([65260eb](https://github.com/georgedouzas/geometric-smote/commit/65260eb18f2b5f927519d81b57883dd8d000a841) by georgedouzas).
+- Fix typo ([84f4738](https://github.com/georgedouzas/geometric-smote/commit/84f4738bcf3d28b342c7d7ddd07e0d32856d25e3) by georgedouzas).
+
+### Chore
+
+- Release 0.2.2 ([7aa8d9c](https://github.com/georgedouzas/geometric-smote/commit/7aa8d9c94372b83195b79ba357a21d74ec1aa1a6) by georgedouzas).
 
 ## [0.2.1](https://github.com/georgedouzas/geometric-smote/releases/tag/0.2.1) - 2023-12-02
 
