@@ -57,8 +57,8 @@ pdm install
 
 ## Usage
 
-All the classes included in `geometric-smote` follow the [imbalanced-learn] API using the functionality of the base
-oversampler. Using [scikit-learn] convention, the data are represented as follows:
+All the classes included in `geometric-smote` follow the [imbalanced-learn](https://imbalanced-learn.org/stable/) API using the
+functionality of the base oversampler. Using [scikit-learn] convention, the data are represented as follows:
 
 - Input data `X`: 2D array-like or sparse matrices.
 - Targets `y`: 1D array-like.
