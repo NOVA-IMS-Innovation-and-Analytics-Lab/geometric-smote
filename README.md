@@ -20,6 +20,12 @@
 [doc]: <https://github.com/georgedouzas/geometric-smote/actions?query=workflow>
 [doc badge]: <https://github.com/georgedouzas/geometric-smote/actions/workflows/doc.yml/badge.svg?branch=main>
 
+[![Project Status: Inactive – The project has reached a stable, usable state but is no longer being actively developed;
+support/maintenance will be provided as time
+allows.](https://www.repostatus.org/badges/latest/inactive.svg)](https://www.repostatus.org/#inactive)
+
+> **The project has been moved to [imbalanced-learn-extra](https://github.com/georgedouzas/imbalanced-learn-extra).**
+
 # geometric-smote
 
 [![ci][ci badge]][ci] [![doc][doc badge]][doc]
