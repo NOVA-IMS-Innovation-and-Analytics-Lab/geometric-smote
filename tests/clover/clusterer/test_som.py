@@ -1,8 +1,9 @@
 """Test the _som module."""
 
 import numpy as np
-from imblearn_extra.clover.clusterer import SOM, extract_topological_neighbors, generate_labels_mapping
 from sklearn.datasets import make_classification
+
+from imblearn_extra.clover.clusterer import SOM, extract_topological_neighbors, generate_labels_mapping
 
 RANDOM_STATE = 5
 X, _ = make_classification(random_state=RANDOM_STATE, n_samples=1000)

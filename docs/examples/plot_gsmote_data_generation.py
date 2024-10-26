@@ -13,8 +13,9 @@ hyperparameters.
 import matplotlib.pyplot as plt
 import numpy as np
 from imblearn.over_sampling import SMOTE
-from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import make_blobs
+
+from imblearn_extra.gsmote import GeometricSMOTE
 
 XLIM, YLIM = [-3.0, 3.0], [0.0, 4.0]
 RANDOM_STATE = 5

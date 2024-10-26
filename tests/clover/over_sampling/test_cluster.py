@@ -5,6 +5,13 @@ from collections import Counter, OrderedDict
 import numpy as np
 import pytest
 from imblearn.over_sampling import SMOTE, SVMSMOTE, BorderlineSMOTE, RandomOverSampler
+from sklearn.base import clone
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_classification
+from sklearn.exceptions import FitFailedWarning
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_random_state
+
 from imblearn_extra.clover.distribution import DensityDistributor
 from imblearn_extra.clover.over_sampling import (
     ClusterOverSampler,
@@ -14,12 +21,6 @@ from imblearn_extra.clover.over_sampling import (
     generate_in_cluster,
     modify_nn,
 )
-from sklearn.base import clone
-from sklearn.cluster import KMeans
-from sklearn.datasets import make_classification
-from sklearn.exceptions import FitFailedWarning
-from sklearn.neighbors import NearestNeighbors
-from sklearn.utils import check_random_state
 
 RANDOM_STATE = 1
 X, y = make_classification(

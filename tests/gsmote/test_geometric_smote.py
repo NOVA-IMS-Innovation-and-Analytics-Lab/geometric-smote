@@ -4,11 +4,12 @@ from collections import Counter
 
 import numpy as np
 import pytest
-from imblearn_extra.gsmote import SELECTION_STRATEGIES, GeometricSMOTE, make_geometric_sample
 from numpy.linalg import norm
 from scipy import sparse
 from sklearn.datasets import make_classification
 from sklearn.utils import check_random_state
+
+from imblearn_extra.gsmote import SELECTION_STRATEGIES, GeometricSMOTE, make_geometric_sample
 
 RND_SEED = 0
 RANDOM_STATE = check_random_state(RND_SEED)

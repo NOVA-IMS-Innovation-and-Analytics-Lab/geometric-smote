@@ -4,11 +4,12 @@ from collections import Counter, OrderedDict
 
 import pytest
 from imblearn.over_sampling import SMOTE
-from imblearn_extra.clover.distribution import DensityDistributor
-from imblearn_extra.clover.over_sampling import KMeansSMOTE
 from sklearn.base import clone
 from sklearn.cluster import AgglomerativeClustering, KMeans, MiniBatchKMeans
 from sklearn.datasets import make_classification
+
+from imblearn_extra.clover.distribution import DensityDistributor
+from imblearn_extra.clover.over_sampling import KMeansSMOTE
 
 RANDOM_STATE = 1
 X, y = make_classification(

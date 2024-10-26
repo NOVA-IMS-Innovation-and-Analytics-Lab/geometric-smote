@@ -13,12 +13,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import make_pipeline
-from imblearn_extra.clover.over_sampling import KMeansSMOTE
 from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
+
+from imblearn_extra.clover.over_sampling import KMeansSMOTE
 
 RANDOM_STATE = 2
 OVERSAMPLERS = [

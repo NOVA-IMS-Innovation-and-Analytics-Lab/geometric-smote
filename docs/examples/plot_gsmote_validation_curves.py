@@ -14,12 +14,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from imblearn.metrics import geometric_mean_score
 from imblearn.pipeline import make_pipeline
-from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import validation_curve
 from sklearn.tree import DecisionTreeClassifier
+
+from imblearn_extra.gsmote import GeometricSMOTE
 
 RANDOM_STATE = 10
 SCORER = make_scorer(geometric_mean_score)

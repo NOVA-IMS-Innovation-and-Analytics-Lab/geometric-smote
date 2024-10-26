@@ -5,12 +5,13 @@ from math import sqrt
 
 import pytest
 from imblearn.over_sampling import SMOTE
-from imblearn_extra.clover.clusterer import SOM
-from imblearn_extra.clover.distribution import DensityDistributor
-from imblearn_extra.clover.over_sampling import SOMO
 from sklearn.base import clone
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_classification
+
+from imblearn_extra.clover.clusterer import SOM
+from imblearn_extra.clover.distribution import DensityDistributor
+from imblearn_extra.clover.over_sampling import SOMO
 
 RANDOM_STATE = 2
 X, y = make_classification(

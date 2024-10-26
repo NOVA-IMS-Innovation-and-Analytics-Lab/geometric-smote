@@ -17,10 +17,11 @@ import pandas as pd
 from imblearn.datasets import make_imbalance
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
-from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import fetch_openml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+
+from imblearn_extra.gsmote import GeometricSMOTE
 
 
 def plot_mnist_samples(X, y, title=None, n_subplots=None):

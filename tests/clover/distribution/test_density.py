@@ -2,8 +2,9 @@
 
 import numpy as np
 import pytest
-from imblearn_extra.clover.distribution._density import DensityDistributor
 from sklearn.base import clone
+
+from imblearn_extra.clover.distribution._density import DensityDistributor
 
 X = np.array(
     [

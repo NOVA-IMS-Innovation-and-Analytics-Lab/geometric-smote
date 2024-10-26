@@ -2,8 +2,9 @@
 
 import numpy as np
 import pytest
-from imblearn_extra.clover.distribution.base import BaseDistributor
 from sklearn.datasets import make_classification
+
+from imblearn_extra.clover.distribution.base import BaseDistributor
 
 
 @pytest.mark.parametrize(("n_samples", "n_classes", "weights"), [(20, 2, [0.8, 0.2]), (10, 3, [0.6, 0.2, 0.2])])

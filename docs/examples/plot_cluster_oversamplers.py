@@ -15,13 +15,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from imblearn.over_sampling import SMOTE, BorderlineSMOTE, RandomOverSampler
 from imblearn.pipeline import make_pipeline
-from imblearn_extra.clover.over_sampling import ClusterOverSampler
 from sklearn.base import clone
 from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
+
+from imblearn_extra.clover.over_sampling import ClusterOverSampler
 
 RANDOM_STATE = 0
 OVERSAMPLERS = [
