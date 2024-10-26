@@ -99,7 +99,7 @@ def checks(session: nox.Session, file: str) -> None:
             requirements_path,
         ]
         session.run(*(args + dict(requirements_types)[file]), external=True)
-        session.run('safety', 'check', '-r', requirements_path)
+        session.run('safety', 'scan', '-r', requirements_path)
 
 
 @nox.session(python=PYTHON_VERSIONS)
