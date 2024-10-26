@@ -45,9 +45,8 @@ jobs:
       run: pdm checks types
 
     - name: Check vulnerabilities in dependencies
-      uses: pyupio/safety-action@v1
-      with:
-        api-key: ${{ secrets.SAFETY_API_KEY }}
+      env:
+        SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
       run: pdm checks dependencies
 
   tests:

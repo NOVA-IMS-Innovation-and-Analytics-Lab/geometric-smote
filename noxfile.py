@@ -99,7 +99,11 @@ def checks(session: nox.Session, file: str) -> None:
             requirements_path,
         ]
         session.run(*(args + dict(requirements_types)[file]), external=True)
-        session.run('safety', 'scan', '-r', requirements_path)
+        if os.environ.get('CI') is not None:
+            api_key = os.environ.get('SAFETY_API_KEY')
+            session.run('safety', '--key', api_key, '--stage', 'cicd', 'scan', '-r', requirements_path)
+        else:
+            session.run('safety', 'scan', '-r', requirements_path)
 
 
 @nox.session(python=PYTHON_VERSIONS)
