@@ -1,6 +1,6 @@
 """
-Data generation mechanism
-=========================
+G-SMOTE data generation
+=======================
 
 This example illustrates the Geometric SMOTE data
 generation mechanism and the usage of its
@@ -12,8 +12,8 @@ hyperparameters.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from gsmote import GeometricSMOTE
 from imblearn.over_sampling import SMOTE
+from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import make_blobs
 
 XLIM, YLIM = [-3.0, 3.0], [0.0, 4.0]
@@ -56,7 +56,7 @@ def plot_hyperparameters(oversampler, X, y, param, vals, n_subplots):
     _, ax_arr = plt.subplots(*n_subplots, figsize=(15, 7 if n_rows > 1 else 3.5))
     if n_rows > 1:
         ax_arr = [ax for axs in ax_arr for ax in axs]
-    for ax, val in zip(ax_arr, vals):
+    for ax, val in zip(ax_arr, vals, strict=True):
         oversampler.set_params(**{param: val})
         X_res, y_res = oversampler.fit_resample(X, y)
         ax.scatter(X_res[y_res == 1, 0], X_res[y_res == 1, 1], label='Positive Class')
@@ -71,7 +71,7 @@ def plot_comparison(oversamplers, X, y):
     samples.
     """
     _, ax_arr = plt.subplots(1, 2, figsize=(15, 5))
-    for ax, (name, ovs) in zip(ax_arr, oversamplers):
+    for ax, (name, ovs) in zip(ax_arr, oversamplers, strict=True):
         X_res, y_res = ovs.fit_resample(X, y)
         ax.scatter(X_res[y_res == 1, 0], X_res[y_res == 1, 1], label='Positive Class')
         ax.scatter(X_res[y_res == 0, 0], X_res[y_res == 0, 1], label='Negative Class')

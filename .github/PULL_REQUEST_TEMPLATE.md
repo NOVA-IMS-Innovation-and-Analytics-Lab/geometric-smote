@@ -4,7 +4,7 @@
 
 Please check the following:
 
-- [ ] You have checked the [Pull Request guidelines](https://github.com/georgedouzas/geometric-smote/blob/master/.github/CONTRIBUTING.md).
+- [ ] You have checked the [Pull Request guidelines](https://github.com/georgedouzas/imbalanced-learn-extra/blob/master/.github/CONTRIBUTING.md).
 - [ ] Tests for bug fixes or new features have been added.
 - [ ] Docs have been added or updated.
 

@@ -6,6 +6,7 @@
 
 import math
 from collections import Counter
+from collections.abc import Callable
 
 import numpy as np
 from imblearn.over_sampling.base import BaseOverSampler
@@ -93,6 +94,7 @@ def populate_categorical_features(
         for start_idx, end_idx in zip(
             np.cumsum(categories_size)[:-1],
             np.cumsum(categories_size)[1:],
+            strict=False,
         ):
             col_maxs = neighbors[:, start_idx:end_idx].sum(axis=0)
             is_max = np.isclose(col_maxs, col_maxs.max(axis=0))
@@ -214,7 +216,7 @@ class GeometricSMOTE(BaseOverSampler):
 
     def __init__(
         self: Self,
-        sampling_strategy: dict[int, int] | str = 'auto',
+        sampling_strategy: dict[int, int] | str | float | Callable = 'auto',
         k_neighbors: NearestNeighbors | int = 5,
         truncation_factor: float = 1.0,
         deformation_factor: float = 0.0,
@@ -386,7 +388,7 @@ class GeometricSMOTE(BaseOverSampler):
         # Generate new samples
         X_new = np.zeros((n_samples, X.shape[1]))
         all_neighbors = []
-        for ind, (row, col) in enumerate(zip(rows, cols)):
+        for ind, (row, col) in enumerate(zip(rows, cols, strict=False)):
             # Define center point
             center = X_pos[row]
 

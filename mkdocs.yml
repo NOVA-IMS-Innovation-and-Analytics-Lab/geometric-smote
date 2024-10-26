@@ -1,10 +1,10 @@
-site_name: "geometric-smote"
-site_description: "Implementation of the Geometric SMOTE algorithm, a geometrically enhanced drop-in replacement for SMOTE. It is compatible with scikit-learn and imbalanced-learn."
-site_url: "https://georgedouzas.github.io/geometric-smote"
-repo_url: "https://github.com/georgedouzas/geometric-smote"
-repo_name: "georgedouzas/geometric-smote"
+site_name: "imbalanced-learn-extra"
+site_description: "An implementation of novel oversampling algorithms."
+site_url: "https://georgedouzas.github.io/imbalanced-learn-extra"
+repo_url: "https://github.com/georgedouzas/imbalanced-learn-extra"
+repo_name: "georgedouzas/imbalanced-learn-extra"
 site_dir: "site"
-watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/gsmote]
+watch: [README.md, CONTRIBUTING.md, CHANGELOG.md, src/imblearn_extra]
 
 theme:
   name: material

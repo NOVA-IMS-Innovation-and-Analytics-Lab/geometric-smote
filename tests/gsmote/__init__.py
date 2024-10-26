@@ -1,4 +1,4 @@
-"""Tests suite for `imblearn_extra`."""
+"""Tests suite for `gsmote`."""
 
 from pathlib import Path
 

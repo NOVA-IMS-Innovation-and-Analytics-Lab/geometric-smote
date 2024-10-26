@@ -7,7 +7,7 @@ body:
   attributes:
     value: >
       **Before submitting a bug, please make sure the issue hasn't been already addressed by searching
-      through [the past issues](https://github.com/georgedouzas/geometric-smote/issues).**
+      through [the past issues](https://github.com/georgedouzas/imbalanced-learn-extra/issues).**
 - type: textarea
   attributes:
     label: Describe the bug
@@ -52,7 +52,7 @@ body:
     description: |
       Please provide the following information.
     placeholder: >
-      `geometric-smote` version
+      `imbalanced-learn-extra` version
       Python version
       OS
   validations:

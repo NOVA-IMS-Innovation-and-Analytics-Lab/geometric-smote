@@ -10,7 +10,7 @@ import nox
 
 os.environ.update({'PDM_IGNORE_SAVED_PYTHON': '1'})
 
-PYTHON_VERSIONS: list[str] = ['3.10', '3.11']
+PYTHON_VERSIONS: list[str] = ['3.10', '3.11', '3.12']
 FILES: list[str] = ['src', 'tests', 'docs', 'noxfile.py']
 CHANGELOG_ARGS: dict[str, Any] = {
     'repository': '.',
@@ -80,13 +80,13 @@ def checks(session: nox.Session, file: str) -> None:
     check_cli(session, ['all', 'quality', 'dependencies', 'types'])
     session.run('pdm', 'install', '-dG', 'checks', '--no-default', external=True)
     if session.posargs[0] in ['quality', 'all']:
-        session.run('ruff', file)
+        session.run('ruff', 'check', file)
     if session.posargs[0] in ['types', 'all']:
         session.run('mypy', file)
     if session.posargs[0] in ['dependencies', 'all']:
         requirements_path = (Path(session.create_tmp()) / 'requirements.txt').as_posix()
         args_groups = [['--prod']] + [['-dG', group] for group in ['tests', 'docs', 'maintenance']]
-        requirements_types = zip(FILES, args_groups)
+        requirements_types = zip(FILES, args_groups, strict=True)
         args = [
             'pdm',
             'export',

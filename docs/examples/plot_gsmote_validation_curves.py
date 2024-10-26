@@ -1,6 +1,6 @@
 """
-Plotting validation curves
-==========================
+G-SMOTE validation curves
+=========================
 
 In this example the impact of the Geometric SMOTE's hyperparameters is examined.
 The validation scores of a Geometric SMOTE-GBC classifier is presented for
@@ -12,9 +12,9 @@ different values of the Geometric SMOTE's hyperparameters.
 
 import matplotlib.pyplot as plt
 import numpy as np
-from gsmote import GeometricSMOTE
 from imblearn.metrics import geometric_mean_score
 from imblearn.pipeline import make_pipeline
+from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import make_scorer

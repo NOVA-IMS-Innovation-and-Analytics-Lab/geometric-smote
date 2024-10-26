@@ -1,18 +1,16 @@
-_commit: 0.8.0
-_src_path: gh:georgedouzas/copier-pdm-nox.git
+_commit: 0.8.2
+_src_path: gh:georgedouzas/copier-pdm-nox
 author_email: gdouzas@icloud.com
 author_fullname: Georgios Douzas
 author_username: georgedouzas
-copyright_date: '2019'
+copyright_date: '2021'
 copyright_holder: Georgios Douzas
 copyright_holder_email: gdouzas@icloud.com
 copyright_license: MIT License
-project_description: Implementation of the Geometric SMOTE algorithm, a geometrically
-    enhanced drop-in replacement for SMOTE. It is compatible with scikit-learn and
-    imbalanced-learn.
-python_package_distribution_name: geometric-smote
-python_package_import_name: gsmote
-python_versions: '>=3.9, <3.12'
-repository_name: geometric-smote
+project_description: An implementation of novel oversampling algorithms.
+python_package_distribution_name: imbalanced-learn-extra
+python_package_import_name: imblearn_extra
+python_versions: '>=3.10, <3.13'
+repository_name: imbalanced-learn-extra
 repository_namespace: georgedouzas
 

@@ -4,7 +4,7 @@ from collections import Counter
 
 import numpy as np
 import pytest
-from gsmote import SELECTION_STRATEGIES, GeometricSMOTE, make_geometric_sample
+from imblearn_extra.gsmote import SELECTION_STRATEGIES, GeometricSMOTE, make_geometric_sample
 from numpy.linalg import norm
 from scipy import sparse
 from sklearn.datasets import make_classification
@@ -123,7 +123,7 @@ def test_make_geometric_sample_half_hypersphere(surface_point, deformation_facto
     ('center', 'surface_point', 'truncation_factor'),
     [
         (center, surface_point, truncation_factor)
-        for center, surface_point in zip(CENTERS, SURFACE_POINTS)
+        for center, surface_point in zip(CENTERS, SURFACE_POINTS, strict=False)
         for truncation_factor in TRUNCATION_FACTORS
     ],
 )

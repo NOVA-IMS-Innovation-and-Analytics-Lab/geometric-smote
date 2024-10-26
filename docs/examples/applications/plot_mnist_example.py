@@ -14,10 +14,10 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from gsmote import GeometricSMOTE
 from imblearn.datasets import make_imbalance
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
+from imblearn_extra.gsmote import GeometricSMOTE
 from sklearn.datasets import fetch_openml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
