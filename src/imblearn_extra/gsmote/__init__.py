@@ -1,7 +1,6 @@
 """Implementation of the Geometric SMOTE algorithm.
 
-A geometrically enhanced drop-in replacement for SMOTE. It is compatible
-with scikit-learn and imbalanced-learn.
+A geometrically enhanced drop-in replacement for SMOTE. It is compatible with scikit-learn and imbalanced-learn.
 """
 
 from __future__ import annotations

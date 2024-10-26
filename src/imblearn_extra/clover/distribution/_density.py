@@ -269,8 +269,7 @@ class DensityDistributor(BaseDistributor):
     ) -> Self:
         """In the clusters distribution.
 
-        Distribute the generated samples in each cluster based on their
-        density.
+        Distribute the generated samples in each cluster based on their density.
         """
 
         # Calculate weights based on density
@@ -302,8 +301,7 @@ class DensityDistributor(BaseDistributor):
     ) -> Self:
         """Between the clusters distribution.
 
-        Distribute the generated samples between clusters based on their
-        density.
+        Distribute the generated samples between clusters based on their density.
         """
 
         # Identify filtered neighboring clusters

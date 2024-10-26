@@ -1,7 +1,6 @@
 """This module includes classes for clustering-based oversampling.
 
-A general class for clustering-based oversampling as well as specific
-clustering-based oversamplers are provided.
+A general class for clustering-based oversampling as well as specific clustering-based oversamplers are provided.
 """
 
 from ._cluster import (

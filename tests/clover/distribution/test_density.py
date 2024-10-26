@@ -309,8 +309,7 @@ def test_fit_binary_intra_inter():
 def test_fit_multiclass_intra_inter():
     """Test fit method.
 
-    Multiclass, intra-cluster generation and inter-cluster generation
-    case.
+    Multiclass, intra-cluster generation and inter-cluster generation case.
     """
     distributor = (
         clone(DISTRIBUTOR)
@@ -334,8 +333,7 @@ def test_fit_multiclass_intra_inter():
 def test_fit_multiclass_intra_inter_partial_tie():
     """Test fit method.
 
-    Multiclass, intra-cluster generation, inter-cluster generation case
-    and partial tie case.
+    Multiclass, intra-cluster generation, inter-cluster generation case and partial tie case.
     """
     distributor = (
         clone(DISTRIBUTOR)

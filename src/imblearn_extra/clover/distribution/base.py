@@ -19,9 +19,8 @@ from .. import InputData, InterDistribution, IntraDistribution, Labels, Neighbor
 class BaseDistributor(BaseEstimator):
     """The base class for distributors.
 
-    A distributor sets the proportion of samples to be generated inside
-    each cluster and between clusters. Warning: This class should not be
-    used directly. Use the derive classes instead.
+    A distributor sets the proportion of samples to be generated inside each cluster and between clusters. Warning: This
+    class should not be used directly. Use the derive classes instead.
     """
 
     def _intra_distribute(
