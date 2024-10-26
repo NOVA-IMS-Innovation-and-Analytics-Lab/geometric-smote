@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
-from minisom import MiniSom, asymptotic_decay
+from minisom import MiniSom
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_array, check_random_state
@@ -85,6 +85,8 @@ class SOM(BaseEstimator, ClusterMixin):
 
         decay_function:
             Function that reduces learning_rate and sigma at each iteration.
+            Possible values: 'inverse_decay_to_zero', 'linear_decay_to_zero',
+            'asymptotic_decay' or callable.
 
         neighborhood_function:
             Function that weights the neighborhood of a position in the map.
@@ -94,8 +96,9 @@ class SOM(BaseEstimator, ClusterMixin):
             Topology of the map. Possible values: 'rectangular', 'hexagonal'.
 
         activation_distance:
-            Distance used to activate the map. Possible values: 'euclidean',
-            'cosine', 'manhattan', 'chebyshev'.
+            Distance used to activate the map.
+            Possible values: 'euclidean', 'cosine', 'manhattan', 'chebyshev'
+            or callable.
 
         random_state:
             Control the randomization of the algorithm.
@@ -114,7 +117,7 @@ class SOM(BaseEstimator, ClusterMixin):
         n_rows: int | None = None,
         sigma: float = 1.0,
         learning_rate: float = 0.5,
-        decay_function: Callable = asymptotic_decay,
+        decay_function: str | Callable = 'inverse_decay_to_zero',
         neighborhood_function: str = 'gaussian',
         topology: str = 'rectangular',
         activation_distance: str | Callable = 'euclidean',

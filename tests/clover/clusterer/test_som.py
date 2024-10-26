@@ -16,7 +16,7 @@ def test_generate_labels_mapping():
     assert generate_labels_mapping(grid_labels) == labels_mapping
 
 
-def test_return_topological_neighbors_rectangular():
+def test_extract_topological_neighbors_rectangular():
     """Test the topological neighbors of a neuron for rectangular grid type."""
     som = SOM(random_state=RANDOM_STATE).fit(X)
     labels_coords_unique = list({(int(i), int(j)) for i, j in [som.algorithm_.winner(x) for x in X]})
@@ -28,11 +28,10 @@ def test_return_topological_neighbors_rectangular():
         (0, 1),
         (2, 1),
         (1, 0),
-        (1, 2),
     ]
 
 
-def test_return_topological_neighbors_hexagonal():
+def test_extract_topological_neighbors_hexagonal():
     """Test the topological neighbors of a neuron for hexagonal grid type."""
     som = SOM(random_state=RANDOM_STATE, topology='hexagonal').fit(X)
     labels_coords_unique = list({(int(i), int(j)) for i, j in [som.algorithm_.winner(x) for x in X]})
@@ -44,7 +43,6 @@ def test_return_topological_neighbors_hexagonal():
         (0, 1),
         (2, 1),
         (1, 0),
-        (1, 2),
         (2, 2),
         (2, 0),
     ]
@@ -67,7 +65,8 @@ def test_fit():
     n_columns = 3
     som = SOM(n_rows=n_rows, n_columns=n_columns, random_state=RANDOM_STATE)
     som.fit(X)
-    assert np.array_equal(np.unique(som.labels_), np.arange(0, n_rows * n_columns))
+    assert all(np.unique(som.labels_) >= 0)
+    assert all(np.unique(som.labels_) < n_rows * n_columns)
     assert som.n_rows_ == n_rows
     assert som.n_columns_ == n_columns
     assert hasattr(som, 'neighbors_')
