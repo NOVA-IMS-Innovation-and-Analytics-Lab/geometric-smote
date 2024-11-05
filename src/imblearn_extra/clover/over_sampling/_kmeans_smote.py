@@ -132,8 +132,8 @@ class KMeansSMOTE(ClusterOverSampler):
         clusterer_ (sklearn.cluster.KMeans | sklearn.cluster.MiniBatchKMeans):
             A fitted `sklearn.cluster.KMeans` or `sklearn.cluster.MiniBatchKMeans` instance.
 
-        distributor_ (clover.distribution.DensityDistributor):
-            A fitted `clover.distribution.DensityDistributor` instance.
+        distributor_ (imblearn_extra.clover.distribution.DensityDistributor):
+            A fitted `imblearn_extra.clover.distribution.DensityDistributor` instance.
 
         labels_ (Labels):
             Cluster labels of each sample.
@@ -149,7 +149,7 @@ class KMeansSMOTE(ClusterOverSampler):
 
     Examples:
         >>> import numpy as np
-        >>> from clover.over_sampling import KMeansSMOTE
+        >>> from imblearn_extra.clover.over_sampling import KMeansSMOTE
         >>> from sklearn.datasets import make_blobs
         >>> blobs = [100, 800, 100]
         >>> X, y  = make_blobs(blobs, centers=[(-10, 0), (0,0), (10, 0)])

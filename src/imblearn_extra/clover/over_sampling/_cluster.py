@@ -319,7 +319,7 @@ class ClusterOverSampler(BaseOverSampler):
             A fitted clone of the `clusterer` parameter or `None` when a
             clusterer is not given.
 
-        distributor_ (clover.distribution.base.BaseDistributor):
+        distributor_ (imblearn_extra.clover.distribution.base.BaseDistributor):
             A fitted clone of the `distributor` parameter or a fitted instance of
             the `DensityDistributor` when a distributor is not given.
 
@@ -338,20 +338,22 @@ class ClusterOverSampler(BaseOverSampler):
             Actual sampling strategy.
 
     Examples:
+        >>> import numpy as np
         >>> from collections import Counter
-        >>> from clover.over_sampling import ClusterOverSampler
+        >>> from imblearn_extra.clover.over_sampling import ClusterOverSampler
         >>> from sklearn.datasets import make_classification
         >>> from sklearn.cluster import KMeans
         >>> from imblearn.over_sampling import SMOTE
+        >>> np.set_printoptions(legacy='1.25')
         >>> X, y = make_classification(random_state=0, n_classes=2, weights=[0.9, 0.1])
         >>> print('Original dataset shape %s' % Counter(y))
-        Original dataset shape Counter({{0: 90, 1: 10}})
+        Original dataset shape Counter({0: 90, 1: 10})
         >>> cluster_oversampler = ClusterOverSampler(
         ... oversampler=SMOTE(random_state=5),
         ... clusterer=KMeans(random_state=10, n_init='auto'))
         >>> X_res, y_res = cluster_oversampler.fit_resample(X, y)
         >>> print('Resampled dataset shape %s' % Counter(y_res))
-        Resampled dataset shape Counter({{0: 90, 1: 90}})
+        Resampled dataset shape Counter({0: 90, 1: 90})
     """
 
     def __init__(

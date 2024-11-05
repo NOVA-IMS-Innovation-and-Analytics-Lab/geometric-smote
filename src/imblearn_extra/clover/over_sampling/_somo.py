@@ -78,7 +78,7 @@ class SOMO(ClusterOverSampler):
             - If `None`, `SOM` is used which
             tends to be better with large number of samples.
 
-            - If SOM object, then it is a `clover.clusterer.SOM` instance.
+            - If SOM object, then it is a `imblearn_extra.clover.clusterer.SOM` instance.
 
             - If `int`, the number of clusters to be used.
 
@@ -111,11 +111,11 @@ class SOMO(ClusterOverSampler):
         oversampler_ (imblearn.over_sampling.SMOTE):
             A fitted `imblearn.over_sampling.SMOTE` instance.
 
-        clusterer_ (clover.clusterer.SOM):
-            A fitted `clover.clusterer.SOM` instance.
+        clusterer_ (imblearn_extra.clover.clusterer.SOM):
+            A fitted `imblearn_extra.clover.clusterer.SOM` instance.
 
-        distributor_ (clover.distribution.DensityDistributor):
-            A fitted `clover.distribution.DensityDistributor` instance.
+        distributor_ (imblearn_extra.clover.distribution.DensityDistributor):
+            A fitted `imblearn_extra.clover.distribution.DensityDistributor` instance.
 
         labels_ (Labels):
             Cluster labels of each sample.
@@ -132,7 +132,7 @@ class SOMO(ClusterOverSampler):
 
     Examples:
         >>> import numpy as np
-        >>> from clover.over_sampling import SOMO # doctest: +SKIP
+        >>> from imblearn_extra.clover.over_sampling import SOMO # doctest: +SKIP
         >>> from sklearn.datasets import make_blobs
         >>> blobs = [100, 800, 100]
         >>> X, y  = make_blobs(blobs, centers=[(-10, 0), (0,0), (10, 0)])
