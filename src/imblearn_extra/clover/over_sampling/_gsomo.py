@@ -86,9 +86,9 @@ class GeometricSOMO(ClusterOverSampler):
         som_estimator:
             Defines the SOM clusterer applied to the input space.
 
-            - If `None`, a `clover.clusterer.SOM` instance with default parameters is used.
+            - If `None`, a `imblearn_extra.clover.clusterer.SOM` instance with default parameters is used.
 
-            - If `clover.clusterer.SOM` object then is used with the given parameters.
+            - If `imblearn_extra.clover.clusterer.SOM` object then is used with the given parameters.
 
             - If `int`, the number of clusters to be used.
 
@@ -150,8 +150,8 @@ class GeometricSOMO(ClusterOverSampler):
         clusterer_ (SOM):
             A fitted `clovar.clusterer.SOM` instance.
 
-        distributor_ (clover.distribution.DensityDistributor):
-            A fitted `clover.distribution.DensityDistributor` instance.
+        distributor_ (imblearn_extra.clover.distribution.DensityDistributor):
+            A fitted `imblearn_extra.clover.distribution.DensityDistributor` instance.
 
         labels_ (Labels):
             Labels of each sample.
@@ -168,7 +168,7 @@ class GeometricSOMO(ClusterOverSampler):
 
     Examples:
         >>> import numpy as np
-        >>> from clover.over_sampling import GeometricSOMO # doctest: +SKIP
+        >>> from imblearn_extra.clover.over_sampling import GeometricSOMO # doctest: +SKIP
         >>> from sklearn.datasets import make_blobs
         >>> blobs = [100, 800, 100]
         >>> X, y  = make_blobs(blobs, centers=[(-10, 0), (0,0), (10, 0)])

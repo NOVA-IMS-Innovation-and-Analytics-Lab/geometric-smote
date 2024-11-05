@@ -118,10 +118,12 @@ class DensityDistributor(BaseDistributor):
             An array of unique cluster labels.
 
     Examples:
-        >>> from clover.distribution import DensityDistributor
+        >>> import numpy as np
+        >>> from imblearn_extra.clover.distribution import DensityDistributor
         >>> from sklearn.datasets import load_iris
         >>> from sklearn.cluster import KMeans
         >>> from imblearn.datasets import make_imbalance
+        >>> np.set_printoptions(legacy='1.25')
         >>> X, y = make_imbalance(
         ...     *load_iris(return_X_y=True),
         ...     sampling_strategy={0:50, 1:40, 2:30},
@@ -132,7 +134,7 @@ class DensityDistributor(BaseDistributor):
         >>> density_distributor.filtered_clusters_
         [(6, 1), (0, 1), (3, 1), (7, 1), (5, 2), (2, 2), (3, 2), (6, 2), (0, 2)]
         >>> density_distributor.intra_distribution_
-        {(6, 1): 0.50604609281056... (0, 1): 0.143311766542165...}
+        {(6, 1): 0.50604609281055... (0, 1): 0.143311766542168...}
         >>> density_distributor.inter_distribution_
         {}
     """
