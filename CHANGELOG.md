@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.2.5](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.5) - 2024-11-07
+
+<small>[Compare with 0.2.4](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.4...0.2.5)</small>
+
+### Docs
+
+- Modified docstring ([bcd88cf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/bcd88cf1ab0728d25b8f0a6c31c39ad5465d0eed) by georgedouzas).
+
+### Chore
+
+- Update MiniSom to fix breaking API changes ([6e88faf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6e88faf3ddd5deae25deb0baaf37b25a49c2a059) by georgedouzas).
+
 ## [0.2.4](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.4) - 2024-10-26
 
 <small>[Compare with 0.2.3](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.3...0.2.4)</small>
@@ -24,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Chore
 
+- Release 0.2.4 ([4de18cc](https://github.com/georgedouzas/imbalanced-learn-extra/commit/4de18ccf72b0fe786c25184412e5caf2a04df4e3) by georgedouzas).
 - Modify GitHub actions workflow and add dependencies ([8aa7f97](https://github.com/georgedouzas/imbalanced-learn-extra/commit/8aa7f97a6355f090837a9e2ceba8611df7112632) by georgedouzas).
 - Use new safety API ([3e883b0](https://github.com/georgedouzas/imbalanced-learn-extra/commit/3e883b06e69d60ee956bf98177afb26117b5e899) by georgedouzas).
 - Update copier template to v0.11.0 ([9c2be6b](https://github.com/georgedouzas/imbalanced-learn-extra/commit/9c2be6b3bd118555cab4b6c54e9021dde2619b4e) by georgedouzas).
