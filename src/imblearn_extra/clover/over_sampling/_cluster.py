@@ -73,7 +73,8 @@ def clone_modify(oversampler: BaseOverSampler, class_label: int, y_in_cluster: T
         return oversampler
 
     # Select and modify oversampler
-    n_minority_samples = Counter(y_in_cluster)[class_label]
+    y_in_cluster_count: dict[int, int] = dict(Counter(y_in_cluster))
+    n_minority_samples = y_in_cluster_count[class_label]
     if n_minority_samples == 1:
         oversampler = RandomOverSampler()
     else:
@@ -432,7 +433,12 @@ class ClusterOverSampler(BaseOverSampler):
         X: InputData,
         y: Targets,
     ) -> tuple[InputData, Targets] | None:
-        generated_data = Parallel(n_jobs=self.n_jobs)(
+        n_jobs = None
+        if hasattr(self, 'n_jobs'):
+            n_jobs = self.n_jobs
+        if hasattr(self, 'k_neighbors') and isinstance(self.k_neighbors, NearestNeighbors):
+            n_jobs = self.k_neighbors.n_jobs
+        generated_data = Parallel(n_jobs=n_jobs)(
             delayed(generate_in_cluster)(self.oversampler_, self.transformer_, *data) for data in clusters_data
         )
         if generated_data:

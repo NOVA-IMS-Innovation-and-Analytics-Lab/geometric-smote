@@ -136,13 +136,6 @@ class GeometricSOMO(ClusterOverSampler):
 
             - If `False`, it displays a warning.
 
-        n_jobs:
-            Number of CPU cores used.
-
-            - If `None`, it means `1` unless in a `joblib.parallel_backend` context.
-
-            - If `-1` means using all processors.
-
     Attributes:
         oversampler_ (gsmote.GeometricSMOTE):
             A fitted `gsmote.GeometricSMOTE` instance.
@@ -205,7 +198,6 @@ class GeometricSOMO(ClusterOverSampler):
         distances_exponent: float | str = 'auto',
         distribution_ratio: float = 0.8,
         raise_error: bool = True,
-        n_jobs: int | None = None,
     ) -> None:
         self.sampling_strategy = sampling_strategy
         self.random_state = random_state
@@ -218,7 +210,6 @@ class GeometricSOMO(ClusterOverSampler):
         self.imbalance_ratio_threshold = imbalance_ratio_threshold
         self.distances_exponent = distances_exponent
         self.raise_error = raise_error
-        self.n_jobs = n_jobs
 
     def _check_estimators(self: Self, X: InputData, y: Targets) -> Self:
         """Check various estimators."""
@@ -230,7 +221,6 @@ class GeometricSOMO(ClusterOverSampler):
             deformation_factor=self.deformation_factor,
             selection_strategy=self.selection_strategy,
             random_state=self.random_state_,
-            n_jobs=self.n_jobs,
         )
 
         if self.som_estimator is None:
