@@ -204,18 +204,18 @@ class DensityDistributor(BaseDistributor):
     def _identify_filtered_clusters(self: Self, y: Targets) -> Self:
         """Identify the filtered clusters."""
         # Generate multi-label
-        multi_labels = list(zip(self.labels_, y, strict=True))
+        multi_labels: list[tuple[int, int]] = list(zip(self.labels_, y, strict=True))
 
         # Count multi-label
-        multi_labels_counts = Counter(multi_labels)
+        multi_labels_counts: dict[tuple[int, int], int] = dict(Counter(multi_labels))
 
         # Extract unique cluster and class labels
-        unique_multi_labels = [
+        unique_multi_labels: list[tuple[int, int]] = [
             multi_label for multi_label in multi_labels_counts if multi_label[1] not in self.majority_class_labels_
         ]
 
         # Identify filtered clusters
-        self.filtered_clusters_ = []
+        self.filtered_clusters_: list[tuple[int, int]] = []
         for multi_label in unique_multi_labels:
             n_minority_samples = multi_labels_counts[multi_label]
             n_majority_samples = multi_labels_counts[(multi_label[0], self.majority_class_labels_[0])]
@@ -226,7 +226,7 @@ class DensityDistributor(BaseDistributor):
 
     def _calculate_clusters_density(self: Self, X: InputData, y: Targets) -> Self:
         """Calculate the density of the filtered clusters."""
-        self.clusters_density_ = {}
+        self.clusters_density_: dict[tuple[int, int], float] = {}
 
         # Calculate density
         finite_densities = []
