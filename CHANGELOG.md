@@ -6,17 +6,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.2.6](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.6) - 2025-01-26
+
+<small>[Compare with 0.2.5](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.5...0.2.6)</small>
+
+### Bug Fixes
+
+- Set majority samples default value to zero ([4e370bf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/4e370bf17bdc8fc53f1644f392b5bbf40e641279) by georgedouzas).
+- Remove assertion of `n_jobs` ([bd68c8e](https://github.com/georgedouzas/imbalanced-learn-extra/commit/bd68c8ec027a66b10c51753a12253c3dde44a61f) by georgedouzas).
+- Remove `n_jobs` parameter ([d84211c](https://github.com/georgedouzas/imbalanced-learn-extra/commit/d84211c6c28110b75e2ec8fd3ee29e6285899936) by georgedouzas).
+
+### Chore
+
+- Fix typing errors ([6cab5be](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6cab5be16be32382229374e4fc790efadd87dbd9) by georgedouzas).
+- Update `imbalanced-learn` ([1a22ac5](https://github.com/georgedouzas/imbalanced-learn-extra/commit/1a22ac5cbfd64adbde14ddb3488d6f32bbf5cfb9) by georgedouzas).
+
 ## [0.2.5](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.5) - 2024-11-07
 
 <small>[Compare with 0.2.4](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.4...0.2.5)</small>
 
 ### Docs
 
-- Modified docstring ([bcd88cf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/bcd88cf1ab0728d25b8f0a6c31c39ad5465d0eed) by georgedouzas).
+- Modified docstring ([d414e64](https://github.com/georgedouzas/imbalanced-learn-extra/commit/d414e6454bcd19847af073b2ca878854d9eee06d) by georgedouzas).
 
 ### Chore
 
-- Update MiniSom to fix breaking API changes ([6e88faf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6e88faf3ddd5deae25deb0baaf37b25a49c2a059) by georgedouzas).
+- Release 0.2.5 ([e4cde7d](https://github.com/georgedouzas/imbalanced-learn-extra/commit/e4cde7dd7a3bb816dfba89af09611e017347f5e6) by georgedouzas).
+- Update MiniSom to fix breaking API changes ([2cae40f](https://github.com/georgedouzas/imbalanced-learn-extra/commit/2cae40fcc52270a844d1bca733a400ae47de52d1) by georgedouzas).
 
 ## [0.2.4](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.4) - 2024-10-26
 
