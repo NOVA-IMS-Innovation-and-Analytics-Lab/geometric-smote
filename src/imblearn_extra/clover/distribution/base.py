@@ -132,8 +132,8 @@ class BaseDistributor(BaseEstimator):
         X, y = check_X_y(X, y, dtype=None)
 
         # Set statistics
-        counts = Counter(y)
-        self.majority_class_labels_ = [
+        counts: dict[int, int] = dict(Counter(y))
+        self.majority_class_labels_: list[int] = [
             class_label
             for class_label, class_label_count in counts.items()
             if class_label_count == max(counts.values())

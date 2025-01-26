@@ -16,13 +16,13 @@ from ._kmeans_smote import KMeansSMOTE
 from ._somo import SOMO
 
 __all__: list[str] = [
-    'ClusterOverSampler',
-    'KMeansSMOTE',
     'SOMO',
+    'ClusterOverSampler',
     'GeometricSOMO',
-    'modify_nn',
+    'KMeansSMOTE',
     'clone_modify',
     'extract_inter_data',
     'extract_intra_data',
     'generate_in_cluster',
+    'modify_nn',
 ]

@@ -7,4 +7,4 @@ from __future__ import annotations
 
 from .geometric_smote import SELECTION_STRATEGIES, GeometricSMOTE, make_geometric_sample
 
-__all__: list[str] = ['GeometricSMOTE', 'make_geometric_sample', 'SELECTION_STRATEGIES']
+__all__: list[str] = ['SELECTION_STRATEGIES', 'GeometricSMOTE', 'make_geometric_sample']
