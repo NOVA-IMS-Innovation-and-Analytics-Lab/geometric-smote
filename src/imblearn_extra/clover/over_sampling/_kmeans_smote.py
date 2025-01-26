@@ -118,13 +118,6 @@ class KMeansSMOTE(ClusterOverSampler):
 
             - If `False`, it displays a warning.
 
-        n_jobs:
-            Number of CPU cores used.
-
-            - If `None`, it means `1` unless in a `joblib.parallel_backend` context.
-
-            - If `-1` means using all processors.
-
     Attributes:
         oversampler_ (imblearn.over_sampling.SMOTE):
             A fitted `imblearn.over_sampling.SMOTE` instance.
@@ -179,7 +172,6 @@ class KMeansSMOTE(ClusterOverSampler):
         imbalance_ratio_threshold: float | str = 'auto',
         distances_exponent: float | str = 'auto',
         raise_error: bool = True,
-        n_jobs: int | None = None,
     ) -> None:
         self.sampling_strategy = sampling_strategy
         self.random_state = random_state
@@ -188,7 +180,6 @@ class KMeansSMOTE(ClusterOverSampler):
         self.imbalance_ratio_threshold = imbalance_ratio_threshold
         self.distances_exponent = distances_exponent
         self.raise_error = raise_error
-        self.n_jobs = n_jobs
 
     def _check_estimators(self: Self, X: InputData, y: Targets) -> Self:
         """Check various estimators."""
@@ -197,7 +188,6 @@ class KMeansSMOTE(ClusterOverSampler):
             sampling_strategy=self.sampling_strategy,
             k_neighbors=self.k_neighbors,
             random_state=self.random_state_,
-            n_jobs=self.n_jobs,
         )
 
         # Check clusterer

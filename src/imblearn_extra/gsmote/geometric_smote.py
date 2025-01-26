@@ -172,12 +172,9 @@ class GeometricSMOTE(BaseOverSampler):
 
         k_neighbors:
             If `int`, number of nearest neighbours to use when synthetic
-            samples are constructed for the minority method.  If object, an estimator
+            samples are constructed for the minority method. If object, an estimator
             that inherits from `sklearn.neighbors.base.KNeighborsMixin` class that
             will be used to find the k_neighbors.
-
-        n_jobs:
-            The number of threads to open if possible.
 
     Attributes:
         n_features_in_ : int
@@ -225,7 +222,6 @@ class GeometricSMOTE(BaseOverSampler):
         selection_strategy: str = 'combined',
         categorical_features: ArrayLike | None = None,
         random_state: np.random.RandomState | int | None = None,
-        n_jobs: int | None = 1,
     ) -> None:
         """Initialize oversampler."""
         super().__init__(sampling_strategy=sampling_strategy)
@@ -235,7 +231,6 @@ class GeometricSMOTE(BaseOverSampler):
         self.selection_strategy = selection_strategy
         self.categorical_features = categorical_features
         self.random_state = random_state
-        self.n_jobs = n_jobs
 
     def _validate_estimators(self: Self, X: NDArray) -> Self:
         """Validate nearest neighbors estimators."""
@@ -251,6 +246,11 @@ class GeometricSMOTE(BaseOverSampler):
             )
             raise ValueError(error_msg)
 
+        # Number of jobs
+        n_jobs = None
+        if isinstance(self.k_neighbors, NearestNeighbors):
+            n_jobs = self.k_neighbors.n_jobs
+
         # Create nearest neighbors object for positive class
         if self.selection_strategy in ('minority', 'combined'):
             self.nns_pos_ = check_neighbors_object(
@@ -258,12 +258,12 @@ class GeometricSMOTE(BaseOverSampler):
                 self.k_neighbors,
                 additional_neighbor=1,
             )
-            self.nns_pos_.set_params(n_jobs=self.n_jobs)
+            self.nns_pos_.set_params(n_jobs=n_jobs)
 
         # Create nearest neighbors object for negative class
         if self.selection_strategy in ('majority', 'combined'):
             self.nn_neg_ = check_neighbors_object('nn_negative', nn_object=1)
-            self.nn_neg_.set_params(n_jobs=self.n_jobs)
+            self.nn_neg_.set_params(n_jobs=n_jobs)
 
         # Create one hot encoder object
         if self.categorical_features is not None:
@@ -281,7 +281,7 @@ class GeometricSMOTE(BaseOverSampler):
 
         if self.categorical_features is None:
             self.categorical_features_ = np.flatnonzero([])
-            self.continuous_features_ = np.arange(self.n_features_in_)
+            self.continuous_features_: NDArray = np.arange(self.n_features_in_)
             return self
 
         categorical_features = np.asarray(self.categorical_features)
