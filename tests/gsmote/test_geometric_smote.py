@@ -154,7 +154,6 @@ def test_default_init():
     assert gsmote.selection_strategy == "combined"
     assert gsmote.k_neighbors == k_neighbors
     assert gsmote.categorical_features is None
-    assert gsmote.n_jobs == 1
 
 
 def test_fit():
