@@ -218,7 +218,7 @@ class DensityDistributor(BaseDistributor):
         self.filtered_clusters_: list[tuple[int, int]] = []
         for multi_label in unique_multi_labels:
             n_minority_samples = multi_labels_counts[multi_label]
-            n_majority_samples = multi_labels_counts[(multi_label[0], self.majority_class_labels_[0])]
+            n_majority_samples = multi_labels_counts.get((multi_label[0], self.majority_class_labels_[0]), 0)
             if n_majority_samples <= n_minority_samples * self.filtering_threshold_:
                 self.filtered_clusters_.append(multi_label)
 
