@@ -1,10 +1,6 @@
-"""
-G-SMOTE data generation
-=======================
+"""# G-SMOTE data generation
 
-This example illustrates the Geometric SMOTE data
-generation mechanism and the usage of its
-hyperparameters.
+This example illustrates the Geometric SMOTE data generation mechanism and the usage of its hyperparameters.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -82,8 +78,7 @@ def plot_comparison(oversamplers, X, y):
 
 
 # %%
-# Generate imbalanced data
-# ------------------------
+# ## Generate imbalanced data
 #
 # We are generating a highly imbalanced non Gaussian data set. Only two samples
 # from the minority (positive) class are included to illustrate the Geometric
@@ -107,8 +102,7 @@ plot_scatter(X, y, 'Imbalanced data')
 # below.
 
 # %%
-# Truncation factor
-# .................
+# ### Truncation factor
 #
 # The hyperparameter ``truncation_factor`` determines the degree of truncation
 # that is applied on the initial geometric area. Selecting the values of
@@ -133,8 +127,7 @@ plot_hyperparameters(gsmote, X, y, 'truncation_factor', truncation_factors, n_su
 plot_hyperparameters(gsmote, X, y, 'truncation_factor', -truncation_factors, n_subplots)
 
 # %%
-# Deformation factor
-# ..................
+# ### Deformation factor
 #
 # When the ``deformation_factor`` is increased, the data generation area deforms
 # to an ellipsis and for ``deformation_factor=1.0`` becomes a line segment.
@@ -150,8 +143,7 @@ n_subplots = [2, 3]
 plot_hyperparameters(gsmote, X, y, 'deformation_factor', truncation_factors, n_subplots)
 
 # %%
-# Selection strategy
-# ..................
+# ### Selection strategy
 #
 # The hyperparameter ``selection_strategy`` determines the selection mechanism
 # of nearest neighbors. Initially, a minority class sample is selected randomly.
@@ -173,8 +165,7 @@ n_subplots = [1, 3]
 plot_hyperparameters(gsmote, X, y, 'selection_strategy', selection_strategies, n_subplots)
 
 # %%
-# Noisy samples
-# -------------
+# ## Noisy samples
 #
 # We are adding a third minority class sample to illustrate the difference
 # between SMOTE and Geometric SMOTE data generation mechanisms.

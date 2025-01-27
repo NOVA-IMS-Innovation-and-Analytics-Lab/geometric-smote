@@ -1,6 +1,4 @@
-"""
-MNIST Dataset oversampling
-==========================
+"""# MNIST Dataset oversampling
 
 The example makes use of openml's MNIST dataset.
 """
@@ -68,8 +66,7 @@ def fit_pipelines(X_train, y_train, X_test, y_test):
 
 
 # %%
-# MNIST Dataset
-# -------------
+# ## MNIST Dataset
 #
 # The MNIST database is composed of handwritten digits with 784 features,
 # the raw data is available at: http://yann.lecun.com/exdb/mnist/.
@@ -123,8 +120,7 @@ distribution
 plot_mnist_samples(X_train, y_train)
 
 # %%
-# Data Generation
-# ---------------
+# ## Data Generation
 #
 # Below is presented the generation of a new sample using the G-SMOTE
 # algorithm for each of the three selection strategies.
@@ -138,8 +134,7 @@ for strategy in ['combined', 'majority', 'minority']:
     plot_mnist_samples(X_res[len(X_train) :], y_res[len(X_train) :], f'Generated Using G-SMOTE: {strategy.title()}')
 
 # %%
-# Classification
-# --------------
+# ## Classification
 #
 # Finally we train a Random Forest Classfier algorithm and optionally use either
 # SMOTE and or G-SMOTE oversampling methods to predict the number in each picture of
