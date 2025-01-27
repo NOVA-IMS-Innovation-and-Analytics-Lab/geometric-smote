@@ -18,6 +18,7 @@ from scipy import sparse
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils.validation import validate_data
 from typing_extensions import Self
 
 SELECTION_STRATEGIES = ('combined', 'majority', 'minority')
@@ -316,7 +317,8 @@ class GeometricSMOTE(BaseOverSampler):
     ) -> tuple[NDArray, NDArray, bool]:
         """Check input and output data."""
         y, binarize_y = check_target_type(y, indicate_one_vs_all=True)
-        validated_data: tuple[NDArray | sparse.csc_matrix | sparse.csr_matrix, NDArray] = self._validate_data(
+        validated_data: tuple[NDArray | sparse.csc_matrix | sparse.csr_matrix, NDArray] = validate_data(
+            self,
             X,
             y,
             reset=True,

@@ -1,10 +1,7 @@
-"""
-G-SMOTE validation curves
-=========================
+"""# G-SMOTE validation curves
 
-In this example the impact of the Geometric SMOTE's hyperparameters is examined.
-The validation scores of a Geometric SMOTE-GBC classifier is presented for
-different values of the Geometric SMOTE's hyperparameters.
+In this example the impact of the Geometric SMOTE's hyperparameters is examined. The validation scores of a Geometric
+SMOTE-GBC classifier is presented for different values of the Geometric SMOTE's hyperparameters.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -86,8 +83,7 @@ def plot_validation_curve(validation_curve_info, scoring_name, title):
 
 
 # %%
-# Low Imbalance Ratio or high Samples to Features Ratio
-# -----------------------------------------------------
+# ## Low Imbalance Ratio or high Samples to Features Ratio
 #
 # When :math:`\text{IR} = \frac{\text{\# majority samples}}{\text{\# minority
 # samples}}` (Imbalance Ratio) is low or :math:`\text{SFR} = \frac{\text{\#
@@ -143,8 +139,7 @@ validation_curve_info = generate_validation_curve_info(
 plot_validation_curve(validation_curve_info, scoring_name, 'Selection Strategy')
 
 # %%
-# High Imbalance Ratio or low Samples to Features Ratio
-# -----------------------------------------------------
+# ## High Imbalance Ratio or low Samples to Features Ratio
 #
 # When :math:`\text{IR}` is high or :math:`\text{SFR}` is low then the majority
 # or combined selection strategies and lower absolute values of deformation factor

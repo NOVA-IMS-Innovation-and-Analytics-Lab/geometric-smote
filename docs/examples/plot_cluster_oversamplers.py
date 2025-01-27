@@ -1,11 +1,7 @@
-"""
-Clustering-based over-sampling
-==============================
+"""# Clustering-based over-sampling
 
-This example illustrates the data generation
-process and the performance of various
-over-samplers when clustering-based over-sampling
-is used.
+This example illustrates the data generation process and the performance of various over-samplers when clustering-based
+over-sampling is used.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -89,8 +85,7 @@ def compare_f1_scores(X_train, X_test, y_train, y_test, clf, oversampler, cluste
 
 
 # %%
-# Generate imbalanced data
-# ------------------------
+# ## Generate imbalanced data
 #
 # We are generating a highly imbalanced multi-class data set, using
 # `make_classification` from scikit-learn.
@@ -100,8 +95,7 @@ _, ax = plt.subplots(1, 1, figsize=(15, 7))
 plot_data(X, y, None, ax)
 
 # %%
-# Effect of clustering to over-samplers
-# -------------------------------------
+# ## Effect of clustering to over-samplers
 #
 # Clustering based over-sampling allows to identify areas of the input space
 # which are appropriate to generate artificial data. Therefore, the generation
@@ -116,8 +110,7 @@ for (ax1, ax2), oversampler in zip(axs, OVERSAMPLERS, strict=True):
 fig.tight_layout()
 
 # %%
-# Performance evaluation of clustering based over-sampling
-# --------------------------------------------------------
+# ## Performance evaluation of clustering based over-sampling
 #
 # We are evaluating various over-samplers using F1-score as evaluation metric
 # on a test set. The scores with and without clustering are compared.

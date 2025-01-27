@@ -1,9 +1,6 @@
-"""
-KMeans-SMOTE algorithm
-======================
+"""# KMeans-SMOTE algorithm
 
-This example illustrates the data generation
-process and the performance of KMeans-SMOTE.
+This example illustrates the data generation process and the performance of KMeans-SMOTE.
 """
 
 # Author: Georgios Douzas <gdouzas@icloud.com>
@@ -75,8 +72,7 @@ def compare_f1_scores(X_train, X_test, y_train, y_test, clf, oversampler):
 
 
 # %%
-# Generate imbalanced data
-# ------------------------
+# ## Generate imbalanced data
 #
 # We are generating an imbalanced multi-class data set, using
 # ``make_classification`` from scikit-learn.
@@ -86,8 +82,7 @@ _, ax = plt.subplots(1, 1, figsize=(15, 7))
 plot_data(X, y, None, ax)
 
 # %%
-# Plot resampled data
-# -------------------
+# ## Plot resampled data
 #
 # KMeans-SMOTE allows to identify areas of the input space which are appropriate to generate
 # artificial data. Therefore, the generation of noisy samples is avoided and the within-classes
@@ -100,8 +95,7 @@ for ax, oversampler in zip(axs, OVERSAMPLERS, strict=True):
 fig.tight_layout()
 
 # %%
-# Performance evaluation
-# ----------------------
+# ## Performance evaluation
 #
 # We are evaluating the performance of KMeans-SMOTE using F1-score as evaluation metric on a
 # test set. SMOTE's performance is also included.
