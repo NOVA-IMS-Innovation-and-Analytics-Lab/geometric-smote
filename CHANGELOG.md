@@ -6,20 +6,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.2.7](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.7) - 2025-02-05
+
+<small>[Compare with 0.2.6](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.6...0.2.7)</small>
+
+### Docs
+
+- Fix headers and data validation warning ([f794dd6](https://github.com/georgedouzas/imbalanced-learn-extra/commit/f794dd6a86659d91532223df83d421badbdba38c) by georgedouzas).
+
 ## [0.2.6](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.6) - 2025-01-26
 
 <small>[Compare with 0.2.5](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.5...0.2.6)</small>
 
 ### Bug Fixes
 
-- Set majority samples default value to zero ([4e370bf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/4e370bf17bdc8fc53f1644f392b5bbf40e641279) by georgedouzas).
-- Remove assertion of `n_jobs` ([bd68c8e](https://github.com/georgedouzas/imbalanced-learn-extra/commit/bd68c8ec027a66b10c51753a12253c3dde44a61f) by georgedouzas).
-- Remove `n_jobs` parameter ([d84211c](https://github.com/georgedouzas/imbalanced-learn-extra/commit/d84211c6c28110b75e2ec8fd3ee29e6285899936) by georgedouzas).
+- Set majority samples default value to zero ([866fe53](https://github.com/georgedouzas/imbalanced-learn-extra/commit/866fe533edd54cde52fb96356b4e848c4f7e7ab2) by georgedouzas).
+- Remove assertion of `n_jobs` ([6b36a66](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6b36a662a12abfd0b13067f20fb9990c2246d053) by georgedouzas).
+- Remove `n_jobs` parameter ([1222a53](https://github.com/georgedouzas/imbalanced-learn-extra/commit/1222a53063e7aa0757ffcb655996c9e84b82c361) by georgedouzas).
 
 ### Chore
 
-- Fix typing errors ([6cab5be](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6cab5be16be32382229374e4fc790efadd87dbd9) by georgedouzas).
-- Update `imbalanced-learn` ([1a22ac5](https://github.com/georgedouzas/imbalanced-learn-extra/commit/1a22ac5cbfd64adbde14ddb3488d6f32bbf5cfb9) by georgedouzas).
+- Release 0.2.6 ([5665a38](https://github.com/georgedouzas/imbalanced-learn-extra/commit/5665a38a76ba1d0483dc3c26f69c948aeab9bba0) by georgedouzas).
+- Fix typing errors ([3b27fbf](https://github.com/georgedouzas/imbalanced-learn-extra/commit/3b27fbf123913d0479a2e85f4d225abd78746b62) by georgedouzas).
+- Update `imbalanced-learn` ([637bfad](https://github.com/georgedouzas/imbalanced-learn-extra/commit/637bfadf6629a35b6715e5dd568759e05e6c408f) by georgedouzas).
 
 ## [0.2.5](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.5) - 2024-11-07
 
