@@ -6,13 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 <!-- insertion marker -->
+## [0.2.9](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.9) - 2025-02-05
+
+<small>[Compare with 0.2.8](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.8...0.2.9)</small>
+
+### Chore
+
+- Update GitHub docs actions ([6ece306](https://github.com/georgedouzas/imbalanced-learn-extra/commit/6ece306a1f5f8eed377554c16d6584f158d1b650) by georgedouzas).
+
 ## [0.2.8](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.8) - 2025-02-05
 
 <small>[Compare with 0.2.7](https://github.com/georgedouzas/imbalanced-learn-extra/compare/0.2.7...0.2.8)</small>
 
 ### Chore
 
-- Update GitHub actions ([d53d042](https://github.com/georgedouzas/imbalanced-learn-extra/commit/d53d042adfb89cc164117160b0d7751c3f0d7775) by georgedouzas).
+- Release 0.2.8 ([51a6345](https://github.com/georgedouzas/imbalanced-learn-extra/commit/51a6345138112511af03dc7858e68cdfd54c7a69) by georgedouzas).
+- Update GitHub actions ([d09a8ca](https://github.com/georgedouzas/imbalanced-learn-extra/commit/d09a8ca215328e73403753fe86615f8cd55023cb) by georgedouzas).
 
 ## [0.2.7](https://github.com/georgedouzas/imbalanced-learn-extra/releases/tag/0.2.7) - 2025-02-05
 
